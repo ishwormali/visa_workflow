@@ -1,0 +1,23 @@
+{
+  "plugins": ["typescript", "react"],
+  "settings": {
+    "react": {
+      "version": "19"
+    }
+  },
+  "ignorePatterns": [
+    ".agents",
+    ".claude",
+    ".codestudio",
+    "node_modules",
+    "dist",
+    "dist-ssr",
+    ".nitro",
+    ".tanstack",
+    ".vinxi",
+    ".output",
+    ".wrangler",
+    "src/routeTree.gen.ts"
+  ],
+  "rules": {}
+}

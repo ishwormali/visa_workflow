@@ -1,0 +1,24 @@
+{
+  "printWidth": 80,
+  "tabWidth": 2,
+  "useTabs": false,
+  "semi": false,
+  "singleQuote": false,
+  "trailingComma": "es5",
+  "sortTailwindcss": true,
+  "ignorePatterns": [
+    ".agents",
+    ".claude",
+    ".codestudio",
+    "node_modules",
+    "dist",
+    "dist-ssr",
+    ".nitro",
+    ".tanstack",
+    ".vinxi",
+    ".output",
+    ".wrangler",
+    "pnpm-lock.yaml",
+    "public"
+  ]
+}
