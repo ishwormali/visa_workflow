@@ -15,7 +15,12 @@ export const Route = createRootRoute({
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "TanStack Start Starter",
+        title: "Visa Document Workflow",
+      },
+      {
+        name: "description",
+        content:
+          "Workflow for seeding recurring visa document types, scanning Drive, generating docs, drafting Gmail messages, and tracking submission history.",
       },
     ],
     links: [

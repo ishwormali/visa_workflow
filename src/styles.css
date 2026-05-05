@@ -6,7 +6,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-heading: var(--font-sans);
+  --font-heading: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia,
+    serif;
   --font-sans: "Inter Variable", sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -49,38 +50,39 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0.008 326);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0.008 326);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0.008 326);
-  --primary: oklch(0.212 0.019 322.12);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.96 0.003 325.6);
-  --secondary-foreground: oklch(0.212 0.019 322.12);
-  --muted: oklch(0.96 0.003 325.6);
-  --muted-foreground: oklch(0.542 0.034 322.5);
-  --accent: oklch(0.96 0.003 325.6);
-  --accent-foreground: oklch(0.212 0.019 322.12);
+  --background: oklch(0.985 0.012 94);
+  --foreground: oklch(0.26 0.03 224);
+  --card: oklch(0.995 0.01 95);
+  --card-foreground: oklch(0.26 0.03 224);
+  --popover: oklch(0.995 0.01 95);
+  --popover-foreground: oklch(0.26 0.03 224);
+  --primary: oklch(0.48 0.12 202);
+  --primary-foreground: oklch(0.985 0.01 94);
+  --secondary: oklch(0.95 0.018 91);
+  --secondary-foreground: oklch(0.32 0.04 220);
+  --muted: oklch(0.95 0.018 91);
+  --muted-foreground: oklch(0.52 0.04 228);
+  --accent: oklch(0.92 0.035 170);
+  --accent-foreground: oklch(0.28 0.03 220);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0.005 325.62);
-  --input: oklch(0.922 0.005 325.62);
-  --ring: oklch(0.711 0.019 323.02);
-  --chart-1: oklch(0.865 0.012 325.68);
-  --chart-2: oklch(0.542 0.034 322.5);
-  --chart-3: oklch(0.435 0.029 321.78);
-  --chart-4: oklch(0.364 0.029 323.89);
-  --chart-5: oklch(0.263 0.024 320.12);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0.008 326);
-  --sidebar-primary: oklch(0.212 0.019 322.12);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.96 0.003 325.6);
-  --sidebar-accent-foreground: oklch(0.212 0.019 322.12);
-  --sidebar-border: oklch(0.922 0.005 325.62);
-  --sidebar-ring: oklch(0.711 0.019 323.02);
+  --border: oklch(0.9 0.015 90);
+  --input: oklch(0.96 0.015 90);
+  --ring: oklch(0.62 0.1 202);
+  --chart-1: oklch(0.82 0.08 78);
+  --chart-2: oklch(0.66 0.11 175);
+  --chart-3: oklch(0.58 0.12 204);
+  --chart-4: oklch(0.72 0.08 38);
+  --chart-5: oklch(0.55 0.09 145);
+  --radius: 0.875rem;
+  --sidebar: oklch(0.995 0.01 95);
+  --sidebar-foreground: oklch(0.26 0.03 224);
+  --sidebar-primary: oklch(0.48 0.12 202);
+  --sidebar-primary-foreground: oklch(0.985 0.01 94);
+  --sidebar-accent: oklch(0.92 0.035 170);
+  --sidebar-accent-foreground: oklch(0.28 0.03 220);
+  --sidebar-border: oklch(0.9 0.015 90);
+  --sidebar-ring: oklch(0.62 0.1 202);
+  --color-shadow: oklch(0.32 0.03 224 / 0.14);
 }
 
 .dark {
@@ -122,6 +124,10 @@
     @apply border-border outline-ring/50;
   }
   body {
+    background:
+      radial-gradient(circle at top left, color-mix(in oklab, var(--color-accent) 30%, transparent), transparent 34%),
+      radial-gradient(circle at top right, color-mix(in oklab, var(--color-primary) 18%, transparent), transparent 32%),
+      linear-gradient(180deg, color-mix(in oklab, var(--color-background) 88%, white), var(--color-background));
     @apply bg-background text-foreground;
   }
   button:not(:disabled),
@@ -130,5 +136,20 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+@layer components {
+  .panel {
+    border-color: color-mix(in oklab, var(--color-border) 80%, transparent);
+    background: color-mix(in oklab, var(--color-card) 92%, transparent);
+    box-shadow: 0 24px 80px var(--color-shadow);
+    @apply rounded-[2rem] border backdrop-blur-xl;
+  }
+
+  .field {
+    border-color: color-mix(in oklab, var(--color-border) 80%, transparent);
+    background: color-mix(in oklab, var(--color-background) 86%, white);
+    @apply w-full rounded-[1.2rem] border px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary/40 focus:ring-4 focus:ring-primary/10;
   }
 }
