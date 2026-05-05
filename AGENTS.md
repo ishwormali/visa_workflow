@@ -27,7 +27,7 @@ These instructions apply across the whole repository.
 
 - Prefer minimal, typed changes that fit the current TanStack Start and React patterns already in the repo.
 - Add new pages by creating route files in [src/routes](src/routes), not by editing the generated route tree.
-- Keep router-wide behavior in [src/router.tsx](src/router.tsx) and document shell or head changes in [src/routes/__root.tsx](src/routes/__root.tsx).
+- Keep router-wide behavior in [src/router.tsx](src/router.tsx) and document shell or head changes in [src/routes/\_\_root.tsx](src/routes/__root.tsx).
 - Reuse `cn()` from [src/lib/utils.ts](src/lib/utils.ts) for Tailwind class composition.
 - When extending UI primitives, follow the `cva` plus wrapper pattern used in [src/components/ui/button.tsx](src/components/ui/button.tsx).
 - Use the `@/` path alias for imports from `src`.
@@ -45,4 +45,4 @@ These instructions apply across the whole repository.
 ## Pitfalls
 
 - [src/routes/index.tsx](src/routes/index.tsx) is still starter content; do not treat it as a product requirement.
-- [src/routes/__root.tsx](src/routes/__root.tsx) includes devtools in the root shell. Preserve them unless the task explicitly removes or replaces them.
+- [src/routes/\_\_root.tsx](src/routes/__root.tsx) includes devtools in the root shell. Preserve them unless the task explicitly removes or replaces them.
