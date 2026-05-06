@@ -1,5 +1,6 @@
 import { History, Settings2 } from "lucide-react"
-import { useNavigate } from "@tanstack/react-router"
+import { useNavigate, useLocation } from "@tanstack/react-router"
+import { useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
 
@@ -10,6 +11,34 @@ import { WorkflowPanel } from "./workflow-panel"
 import { WorkflowSidebar } from "./workflow-sidebar"
 import { HistoryOverlay } from "./history-overlay"
 import { SettingsOverlay } from "./settings-overlay"
+
+function readStepFromPathname(pathname: string) {
+  const match = pathname.match(/\/step\/(\d+)\/?$/)
+
+  if (!match) {
+    return null
+  }
+
+  const parsed = Number(match[1])
+
+  return Number.isNaN(parsed) ? null : parsed
+}
+
+function createStepPath(pathname: string, step: number) {
+  if (pathname.startsWith("/workflow/new")) {
+    return `/workflow/new/step/${step}`
+  }
+
+  const editMatch = pathname.match(
+    /^\/workflow\/([^/]+)\/edit(?:\/step\/\d+)?\/?$/
+  )
+
+  if (!editMatch) {
+    return null
+  }
+
+  return `/workflow/${editMatch[1]}/edit/step/${step}`
+}
 
 export function VisaWorkflowEditorPage() {
   const {
@@ -52,6 +81,7 @@ export function VisaWorkflowEditorPage() {
     updateConfigEmail,
     runScan,
     createVisaFolderFromSelectedDate,
+    goToStep,
     selectedFromDate,
     selectedToDate,
     setSelectedFromDate,
@@ -65,6 +95,41 @@ export function VisaWorkflowEditorPage() {
     runSeedReview,
   } = useVisaWorkflow()
   const navigate = useNavigate()
+  const location = useLocation()
+  const routeStep = readStepFromPathname(location.pathname)
+
+  useEffect(() => {
+    if (!hydrated || routeStep === null || routeStep === currentStep) {
+      return
+    }
+
+    goToStep(routeStep as 1 | 2)
+  }, [currentStep, goToStep, hydrated, routeStep])
+
+  useEffect(() => {
+    if (!hydrated) {
+      return
+    }
+
+    if (routeStep !== null && routeStep !== currentStep) {
+      return
+    }
+
+    const nextPath = createStepPath(location.pathname, currentStep)
+
+    if (nextPath && nextPath !== location.pathname) {
+      void navigate({ to: nextPath, replace: true })
+    }
+  }, [currentStep, hydrated, location.pathname, navigate, routeStep])
+
+  function handleGoBack() {
+    if (currentStep > 1) {
+      goToStep((currentStep - 1) as 1 | 2)
+      return
+    }
+
+    void navigate({ to: "/" })
+  }
 
   if (!hydrated) {
     return <LoadingScreen />
@@ -156,6 +221,7 @@ export function VisaWorkflowEditorPage() {
             <WorkflowPanel
               currentStep={currentStep}
               currentStepLabel={currentStepLabel}
+              onGoBack={handleGoBack}
               latestSession={latestSession}
               logs={logs}
               onContinueAfterScan={continueAfterScan}

@@ -859,7 +859,11 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
   }
 
   function continueAfterScan() {
-    setCurrentStep(2)
+    goToStep(2)
+  }
+
+  function goToStep(step: WorkflowStep) {
+    setCurrentStep(normalizeWorkflowStep(step))
   }
 
   useEffect(() => {
@@ -1329,6 +1333,7 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
     expandedHistoryId,
     formatCaptionWithAi,
     generateDocuments,
+    goToStep,
     goToDraftStep: () => setCurrentStep(4),
     goToDoneStep: () => setCurrentStep(5),
     handleDateChange,

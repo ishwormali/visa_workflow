@@ -5,7 +5,7 @@ import { type GoogleDriveFile } from "@/lib/google-drive"
 import { formatDisplayDate, type WorkflowStep } from "./provider"
 import { ScanStep } from "./steps/scan-step"
 import { Button } from "../ui/button"
-import { ChevronRight, Settings2 } from "lucide-react"
+import { ChevronLeft, ChevronRight, Settings2 } from "lucide-react"
 
 const STEP_ITEMS = [
   { id: 1, label: "Select Date Range" },
@@ -15,6 +15,7 @@ const STEP_ITEMS = [
 export function WorkflowPanel({
   currentStep,
   currentStepLabel,
+  onGoBack,
   latestSession,
   logs,
   onContinueAfterScan,
@@ -34,6 +35,7 @@ export function WorkflowPanel({
 }: {
   currentStep: WorkflowStep
   currentStepLabel: string
+  onGoBack: () => void
   latestSession: VisaSessionRecord | undefined
   logs: Record<1 | 2 | 3 | 4 | 5, string[]>
   onContinueAfterScan: () => void
@@ -75,6 +77,13 @@ export function WorkflowPanel({
               : "No previous submissions"}
           </p>
         </div>
+      </div>
+
+      <div className="mt-4">
+        <Button variant="outline" onClick={onGoBack}>
+          <ChevronLeft />
+          Back
+        </Button>
       </div>
 
       <StepProgress currentStep={currentStep} />
@@ -134,6 +143,7 @@ export function WorkflowPanel({
 
       {currentStep === 2 ? (
         <ScanStep
+          autoRun
           logs={logs[2]}
           onRunScan={onRunScan}
           onCreateVisaFolder={onCreateVisaFolder}

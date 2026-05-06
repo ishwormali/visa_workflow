@@ -1,5 +1,5 @@
 import { FolderSearch, LoaderCircle } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -275,6 +275,7 @@ export function DriveRootFolderField({
 }
 
 export function ScanStep({
+  autoRun,
   logs,
   onRunScan,
   onCreateVisaFolder,
@@ -285,6 +286,7 @@ export function ScanStep({
   visaFolderMissing,
   visaFolderName,
 }: {
+  autoRun?: boolean
   logs: string[]
   onRunScan: () => Promise<void>
   onCreateVisaFolder: () => Promise<void>
@@ -295,6 +297,17 @@ export function ScanStep({
   visaFolderMissing: boolean
   visaFolderName: string
 }) {
+  const hasAutoRunRef = useRef(false)
+
+  useEffect(() => {
+    if (!autoRun || hasAutoRunRef.current) {
+      return
+    }
+
+    hasAutoRunRef.current = true
+    void onRunScan()
+  }, [autoRun, onRunScan])
+
   return (
     <div className="mt-8 space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">

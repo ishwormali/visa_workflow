@@ -11,7 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WorkflowNewRouteImport } from './routes/workflow/new'
+import { Route as WorkflowNewIndexRouteImport } from './routes/workflow/new.index'
 import { Route as WorkflowWorkflowIdEditRouteImport } from './routes/workflow/$workflowId/edit'
+import { Route as WorkflowWorkflowIdEditIndexRouteImport } from './routes/workflow/$workflowId/edit.index'
+import { Route as WorkflowNewStepStepRouteImport } from './routes/workflow/new.step.$step'
+import { Route as WorkflowWorkflowIdEditStepStepRouteImport } from './routes/workflow/$workflowId/edit.step.$step'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -23,40 +27,92 @@ const WorkflowNewRoute = WorkflowNewRouteImport.update({
   path: '/workflow/new',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WorkflowNewIndexRoute = WorkflowNewIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => WorkflowNewRoute,
+} as any)
 const WorkflowWorkflowIdEditRoute = WorkflowWorkflowIdEditRouteImport.update({
   id: '/workflow/$workflowId/edit',
   path: '/workflow/$workflowId/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WorkflowWorkflowIdEditIndexRoute =
+  WorkflowWorkflowIdEditIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => WorkflowWorkflowIdEditRoute,
+  } as any)
+const WorkflowNewStepStepRoute = WorkflowNewStepStepRouteImport.update({
+  id: '/step/$step',
+  path: '/step/$step',
+  getParentRoute: () => WorkflowNewRoute,
+} as any)
+const WorkflowWorkflowIdEditStepStepRoute =
+  WorkflowWorkflowIdEditStepStepRouteImport.update({
+    id: '/step/$step',
+    path: '/step/$step',
+    getParentRoute: () => WorkflowWorkflowIdEditRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/workflow/new': typeof WorkflowNewRoute
-  '/workflow/$workflowId/edit': typeof WorkflowWorkflowIdEditRoute
+  '/workflow/new': typeof WorkflowNewRouteWithChildren
+  '/workflow/$workflowId/edit': typeof WorkflowWorkflowIdEditRouteWithChildren
+  '/workflow/new/': typeof WorkflowNewIndexRoute
+  '/workflow/new/step/$step': typeof WorkflowNewStepStepRoute
+  '/workflow/$workflowId/edit/': typeof WorkflowWorkflowIdEditIndexRoute
+  '/workflow/$workflowId/edit/step/$step': typeof WorkflowWorkflowIdEditStepStepRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/workflow/new': typeof WorkflowNewRoute
-  '/workflow/$workflowId/edit': typeof WorkflowWorkflowIdEditRoute
+  '/workflow/new': typeof WorkflowNewIndexRoute
+  '/workflow/new/step/$step': typeof WorkflowNewStepStepRoute
+  '/workflow/$workflowId/edit': typeof WorkflowWorkflowIdEditIndexRoute
+  '/workflow/$workflowId/edit/step/$step': typeof WorkflowWorkflowIdEditStepStepRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/workflow/new': typeof WorkflowNewRoute
-  '/workflow/$workflowId/edit': typeof WorkflowWorkflowIdEditRoute
+  '/workflow/new': typeof WorkflowNewRouteWithChildren
+  '/workflow/$workflowId/edit': typeof WorkflowWorkflowIdEditRouteWithChildren
+  '/workflow/new/': typeof WorkflowNewIndexRoute
+  '/workflow/new/step/$step': typeof WorkflowNewStepStepRoute
+  '/workflow/$workflowId/edit/': typeof WorkflowWorkflowIdEditIndexRoute
+  '/workflow/$workflowId/edit/step/$step': typeof WorkflowWorkflowIdEditStepStepRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/workflow/new' | '/workflow/$workflowId/edit'
+  fullPaths:
+    | '/'
+    | '/workflow/new'
+    | '/workflow/$workflowId/edit'
+    | '/workflow/new/'
+    | '/workflow/new/step/$step'
+    | '/workflow/$workflowId/edit/'
+    | '/workflow/$workflowId/edit/step/$step'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/workflow/new' | '/workflow/$workflowId/edit'
-  id: '__root__' | '/' | '/workflow/new' | '/workflow/$workflowId/edit'
+  to:
+    | '/'
+    | '/workflow/new'
+    | '/workflow/new/step/$step'
+    | '/workflow/$workflowId/edit'
+    | '/workflow/$workflowId/edit/step/$step'
+  id:
+    | '__root__'
+    | '/'
+    | '/workflow/new'
+    | '/workflow/$workflowId/edit'
+    | '/workflow/new/'
+    | '/workflow/new/step/$step'
+    | '/workflow/$workflowId/edit/'
+    | '/workflow/$workflowId/edit/step/$step'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  WorkflowNewRoute: typeof WorkflowNewRoute
-  WorkflowWorkflowIdEditRoute: typeof WorkflowWorkflowIdEditRoute
+  WorkflowNewRoute: typeof WorkflowNewRouteWithChildren
+  WorkflowWorkflowIdEditRoute: typeof WorkflowWorkflowIdEditRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -75,6 +131,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkflowNewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/workflow/new/': {
+      id: '/workflow/new/'
+      path: '/'
+      fullPath: '/workflow/new/'
+      preLoaderRoute: typeof WorkflowNewIndexRouteImport
+      parentRoute: typeof WorkflowNewRoute
+    }
     '/workflow/$workflowId/edit': {
       id: '/workflow/$workflowId/edit'
       path: '/workflow/$workflowId/edit'
@@ -82,13 +145,64 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkflowWorkflowIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/workflow/$workflowId/edit/': {
+      id: '/workflow/$workflowId/edit/'
+      path: '/'
+      fullPath: '/workflow/$workflowId/edit/'
+      preLoaderRoute: typeof WorkflowWorkflowIdEditIndexRouteImport
+      parentRoute: typeof WorkflowWorkflowIdEditRoute
+    }
+    '/workflow/new/step/$step': {
+      id: '/workflow/new/step/$step'
+      path: '/step/$step'
+      fullPath: '/workflow/new/step/$step'
+      preLoaderRoute: typeof WorkflowNewStepStepRouteImport
+      parentRoute: typeof WorkflowNewRoute
+    }
+    '/workflow/$workflowId/edit/step/$step': {
+      id: '/workflow/$workflowId/edit/step/$step'
+      path: '/step/$step'
+      fullPath: '/workflow/$workflowId/edit/step/$step'
+      preLoaderRoute: typeof WorkflowWorkflowIdEditStepStepRouteImport
+      parentRoute: typeof WorkflowWorkflowIdEditRoute
+    }
   }
 }
 
+interface WorkflowNewRouteChildren {
+  WorkflowNewIndexRoute: typeof WorkflowNewIndexRoute
+  WorkflowNewStepStepRoute: typeof WorkflowNewStepStepRoute
+}
+
+const WorkflowNewRouteChildren: WorkflowNewRouteChildren = {
+  WorkflowNewIndexRoute: WorkflowNewIndexRoute,
+  WorkflowNewStepStepRoute: WorkflowNewStepStepRoute,
+}
+
+const WorkflowNewRouteWithChildren = WorkflowNewRoute._addFileChildren(
+  WorkflowNewRouteChildren,
+)
+
+interface WorkflowWorkflowIdEditRouteChildren {
+  WorkflowWorkflowIdEditIndexRoute: typeof WorkflowWorkflowIdEditIndexRoute
+  WorkflowWorkflowIdEditStepStepRoute: typeof WorkflowWorkflowIdEditStepStepRoute
+}
+
+const WorkflowWorkflowIdEditRouteChildren: WorkflowWorkflowIdEditRouteChildren =
+  {
+    WorkflowWorkflowIdEditIndexRoute: WorkflowWorkflowIdEditIndexRoute,
+    WorkflowWorkflowIdEditStepStepRoute: WorkflowWorkflowIdEditStepStepRoute,
+  }
+
+const WorkflowWorkflowIdEditRouteWithChildren =
+  WorkflowWorkflowIdEditRoute._addFileChildren(
+    WorkflowWorkflowIdEditRouteChildren,
+  )
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  WorkflowNewRoute: WorkflowNewRoute,
-  WorkflowWorkflowIdEditRoute: WorkflowWorkflowIdEditRoute,
+  WorkflowNewRoute: WorkflowNewRouteWithChildren,
+  WorkflowWorkflowIdEditRoute: WorkflowWorkflowIdEditRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
