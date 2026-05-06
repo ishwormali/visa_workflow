@@ -1,15 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router"
 
-import { VisaWorkflowHomePage } from "@/components/visa-workflow/page"
 import { VisaWorkflowProvider } from "@/components/visa-workflow/provider"
 import { VisaDesignApp } from "@/components/visa-design/app"
 
-export const Route = createFileRoute("/")({ component: App })
+export const Route = createFileRoute("/redesign/")({ component: App })
 
 function App() {
   return (
     <VisaWorkflowProvider>
-      <VisaWorkflowHomePage />
       <VisaDesignApp />
     </VisaWorkflowProvider>
   )

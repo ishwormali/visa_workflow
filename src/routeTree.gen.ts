@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RedesignIndexRouteImport } from './routes/redesign/index'
 import { Route as WorkflowNewRouteImport } from './routes/workflow/new'
 import { Route as WorkflowNewIndexRouteImport } from './routes/workflow/new.index'
 import { Route as WorkflowWorkflowIdEditRouteImport } from './routes/workflow/$workflowId/edit'
@@ -20,6 +21,11 @@ import { Route as WorkflowWorkflowIdEditStepStepRouteImport } from './routes/wor
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RedesignIndexRoute = RedesignIndexRouteImport.update({
+  id: '/redesign/',
+  path: '/redesign/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WorkflowNewRoute = WorkflowNewRouteImport.update({
@@ -58,6 +64,7 @@ const WorkflowWorkflowIdEditStepStepRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/workflow/new': typeof WorkflowNewRouteWithChildren
+  '/redesign/': typeof RedesignIndexRoute
   '/workflow/$workflowId/edit': typeof WorkflowWorkflowIdEditRouteWithChildren
   '/workflow/new/': typeof WorkflowNewIndexRoute
   '/workflow/new/step/$step': typeof WorkflowNewStepStepRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/redesign': typeof RedesignIndexRoute
   '/workflow/new': typeof WorkflowNewIndexRoute
   '/workflow/new/step/$step': typeof WorkflowNewStepStepRoute
   '/workflow/$workflowId/edit': typeof WorkflowWorkflowIdEditIndexRoute
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/workflow/new': typeof WorkflowNewRouteWithChildren
+  '/redesign/': typeof RedesignIndexRoute
   '/workflow/$workflowId/edit': typeof WorkflowWorkflowIdEditRouteWithChildren
   '/workflow/new/': typeof WorkflowNewIndexRoute
   '/workflow/new/step/$step': typeof WorkflowNewStepStepRoute
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/workflow/new'
+    | '/redesign/'
     | '/workflow/$workflowId/edit'
     | '/workflow/new/'
     | '/workflow/new/step/$step'
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/redesign'
     | '/workflow/new'
     | '/workflow/new/step/$step'
     | '/workflow/$workflowId/edit'
@@ -102,6 +113,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/workflow/new'
+    | '/redesign/'
     | '/workflow/$workflowId/edit'
     | '/workflow/new/'
     | '/workflow/new/step/$step'
@@ -112,6 +124,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   WorkflowNewRoute: typeof WorkflowNewRouteWithChildren
+  RedesignIndexRoute: typeof RedesignIndexRoute
   WorkflowWorkflowIdEditRoute: typeof WorkflowWorkflowIdEditRouteWithChildren
 }
 
@@ -122,6 +135,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/redesign/': {
+      id: '/redesign/'
+      path: '/redesign'
+      fullPath: '/redesign/'
+      preLoaderRoute: typeof RedesignIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/workflow/new': {
@@ -202,6 +222,7 @@ const WorkflowWorkflowIdEditRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   WorkflowNewRoute: WorkflowNewRouteWithChildren,
+  RedesignIndexRoute: RedesignIndexRoute,
   WorkflowWorkflowIdEditRoute: WorkflowWorkflowIdEditRouteWithChildren,
 }
 export const routeTree = rootRouteImport
