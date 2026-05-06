@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/inter";
+@import "./visa-design.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -120,36 +121,8 @@
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    background:
-      radial-gradient(circle at top left, color-mix(in oklab, var(--color-accent) 30%, transparent), transparent 34%),
-      radial-gradient(circle at top right, color-mix(in oklab, var(--color-primary) 18%, transparent), transparent 32%),
-      linear-gradient(180deg, color-mix(in oklab, var(--color-background) 88%, white), var(--color-background));
-    @apply bg-background text-foreground;
-  }
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
-  }
-  html {
-    @apply font-sans;
-  }
-}
-
-@layer components {
-  .panel {
-    border-color: color-mix(in oklab, var(--color-border) 80%, transparent);
-    background: color-mix(in oklab, var(--color-card) 92%, transparent);
-    box-shadow: 0 24px 80px var(--color-shadow);
-    @apply rounded-[2rem] border backdrop-blur-xl;
-  }
-
-  .field {
-    border-color: color-mix(in oklab, var(--color-border) 80%, transparent);
-    background: color-mix(in oklab, var(--color-background) 86%, white);
-    @apply w-full rounded-[1.2rem] border px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary/40 focus:ring-4 focus:ring-primary/10;
   }
 }

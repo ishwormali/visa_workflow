@@ -1,6 +1,7 @@
+import { createFileRoute } from "@tanstack/react-router"
+
 import { VisaWorkflowHomePage } from "@/components/visa-workflow/page"
 import { VisaWorkflowProvider } from "@/components/visa-workflow/provider"
-import { createFileRoute } from "@tanstack/react-router"
 
 export const Route = createFileRoute("/")({ component: App })
 

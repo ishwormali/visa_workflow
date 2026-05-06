@@ -1,0 +1,1144 @@
+/* ============================================================
+   Visa Document Workflow — Warm paper aesthetic
+   Scoped under .visa-design-app to avoid global leakage.
+   ============================================================ */
+
+.visa-design-app {
+  /* Paper / ink */
+  --paper:        oklch(98.2% 0.006 80);
+  --paper-2:      oklch(96.5% 0.008 80);
+  --paper-3:      oklch(94% 0.010 80);
+  --rule:         oklch(88% 0.012 80);
+  --rule-2:       oklch(82% 0.014 80);
+
+  --ink:          oklch(22% 0.018 60);
+  --ink-2:        oklch(38% 0.018 60);
+  --ink-3:        oklch(55% 0.014 60);
+  --ink-4:        oklch(70% 0.012 60);
+
+  --accent:       oklch(48% 0.13 255);
+  --accent-soft:  oklch(94% 0.025 255);
+  --accent-ink:   oklch(35% 0.13 255);
+
+  --ok:           oklch(48% 0.10 150);
+  --ok-soft:      oklch(94% 0.030 150);
+  --warn:         oklch(58% 0.12 70);
+  --warn-soft:    oklch(95% 0.035 70);
+  --info:         oklch(48% 0.10 230);
+  --info-soft:    oklch(94% 0.030 230);
+  --muted-bg:     oklch(92% 0.008 80);
+
+  --vd-radius:       6px;
+  --vd-radius-lg:    10px;
+
+  --font-display: 'Newsreader', 'Iowan Old Style', Georgia, serif;
+  --font-ui:      'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --vd-shadow-sm: 0 1px 0 rgba(60, 40, 20, 0.04);
+  --vd-shadow:    0 1px 2px rgba(60, 40, 20, 0.05), 0 0 0 0.5px rgba(60, 40, 20, 0.06);
+
+  position: relative;
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'cv11', 'ss01';
+}
+
+.visa-design-app[data-theme="cool"] {
+  --paper:        oklch(98.5% 0.005 240);
+  --paper-2:      oklch(96.8% 0.007 240);
+  --paper-3:      oklch(94.5% 0.009 240);
+  --rule:         oklch(88% 0.012 240);
+  --rule-2:       oklch(82% 0.014 240);
+  --ink:          oklch(20% 0.020 250);
+  --ink-2:        oklch(36% 0.020 250);
+  --ink-3:        oklch(54% 0.014 250);
+  --ink-4:        oklch(70% 0.012 250);
+}
+
+.visa-design-app[data-theme="terminal"] {
+  --paper:        oklch(16% 0.012 80);
+  --paper-2:      oklch(20% 0.014 80);
+  --paper-3:      oklch(24% 0.014 80);
+  --rule:         oklch(30% 0.014 80);
+  --rule-2:       oklch(38% 0.014 80);
+  --ink:          oklch(94% 0.010 80);
+  --ink-2:        oklch(78% 0.012 80);
+  --ink-3:        oklch(60% 0.012 80);
+  --ink-4:        oklch(48% 0.012 80);
+  --accent:       oklch(78% 0.14 80);
+  --accent-soft:  oklch(28% 0.06 80);
+  --accent-ink:   oklch(85% 0.14 80);
+  --vd-shadow-sm: 0 1px 0 rgba(0,0,0,0.4);
+  --vd-shadow:    0 1px 2px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,255,255,0.05);
+}
+
+.visa-design-app[data-density="dense"] { font-size: 13px; }
+.visa-design-app[data-density="spacious"] { font-size: 15px; }
+
+.visa-design-app * { box-sizing: border-box; }
+
+.visa-design-app::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 20% 10%, rgba(140, 90, 40, 0.025), transparent 50%),
+    radial-gradient(circle at 80% 90%, rgba(40, 60, 120, 0.020), transparent 50%);
+  z-index: 0;
+}
+.visa-design-app[data-theme="terminal"]::before { display: none; }
+
+/* ============================================================
+   Header
+   ============================================================ */
+.visa-design-app .app-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: color-mix(in oklab, var(--paper) 88%, transparent);
+  backdrop-filter: saturate(1.4) blur(10px);
+  border-bottom: 1px solid var(--rule);
+}
+.visa-design-app .app-header-inner {
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 24px;
+}
+.visa-design-app .app-mark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.visa-design-app .app-mark-glyph {
+  width: 28px;
+  height: 28px;
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 500;
+  font-style: italic;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  background: var(--paper);
+  position: relative;
+}
+.visa-design-app .app-mark-glyph::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border: 1px dashed var(--rule-2);
+  border-radius: 6px;
+  opacity: 0.5;
+}
+.visa-design-app .app-mark-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.visa-design-app .app-mark-name em {
+  font-style: italic;
+  color: var(--ink-2);
+  font-weight: 400;
+}
+.visa-design-app .app-header-spacer { flex: 1; }
+
+.visa-design-app .submission-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.visa-design-app .submission-count strong { color: var(--ink); font-weight: 500; }
+
+.visa-design-app .header-btn {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--ink-2);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--vd-radius);
+  padding: 6px 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.12s;
+}
+.visa-design-app .header-btn:hover {
+  background: var(--paper-3);
+  color: var(--ink);
+}
+.visa-design-app .header-btn[data-active="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* ============================================================
+   Main column
+   ============================================================ */
+.visa-design-app .app-main {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 24px 24px 80px;
+  position: relative;
+  z-index: 1;
+}
+.visa-design-app[data-density="dense"] .app-main { padding: 16px 24px 60px; }
+.visa-design-app[data-density="spacious"] .app-main { padding: 36px 24px 100px; }
+
+/* ============================================================
+   Step rail
+   ============================================================ */
+.visa-design-app .step-rail {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 28px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.visa-design-app .step-rail-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  cursor: pointer;
+}
+.visa-design-app .step-rail-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--rule-2);
+  background: var(--paper);
+  font-size: 10px;
+  color: var(--ink-3);
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.visa-design-app .step-rail-item[data-state="active"] .step-rail-num {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.visa-design-app .step-rail-item[data-state="done"] .step-rail-num {
+  background: var(--accent);
+  color: var(--paper);
+  border-color: var(--accent);
+}
+.visa-design-app .step-rail-item[data-state="done"] .step-rail-num::before {
+  content: '✓';
+  font-size: 11px;
+}
+.visa-design-app .step-rail-item[data-state="done"] .step-rail-num span { display: none; }
+.visa-design-app .step-rail-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.visa-design-app .step-rail-item[data-state="active"] .step-rail-label { color: var(--ink); }
+.visa-design-app .step-rail-tick {
+  flex: 1;
+  height: 1px;
+  background: var(--rule-2);
+  margin: 0 6px;
+  min-width: 8px;
+}
+.visa-design-app .step-rail-item[data-state="done"] + .step-rail-tick {
+  background: var(--accent);
+}
+
+/* ============================================================
+   Section header (per-step)
+   ============================================================ */
+.visa-design-app .step-head {
+  margin-bottom: 24px;
+}
+.visa-design-app .step-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 8px;
+}
+.visa-design-app .step-title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  line-height: 1.15;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin: 0 0 8px;
+}
+.visa-design-app .step-title em {
+  font-style: italic;
+  color: var(--accent-ink);
+}
+.visa-design-app .step-desc {
+  color: var(--ink-2);
+  font-size: 14px;
+  max-width: 56ch;
+  margin: 0;
+}
+
+/* ============================================================
+   Card / panel
+   ============================================================ */
+.visa-design-app .panel {
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-radius: var(--vd-radius-lg);
+  box-shadow: var(--vd-shadow-sm);
+  overflow: hidden;
+}
+.visa-design-app .panel + .panel { margin-top: 12px; }
+
+.visa-design-app .panel-head {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.visa-design-app .panel-head-title {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.visa-design-app .panel-body { padding: 16px; }
+.visa-design-app .panel-body.tight { padding: 0; }
+
+/* ============================================================
+   Doc type list
+   ============================================================ */
+.visa-design-app .doc-list { display: flex; flex-direction: column; }
+.visa-design-app .doc-row {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--rule);
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  gap: 12px;
+  align-items: start;
+}
+.visa-design-app .doc-row:last-child { border-bottom: none; }
+.visa-design-app .doc-row[data-inactive="true"] { opacity: 0.5; }
+
+.visa-design-app .doc-num {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  padding-top: 2px;
+}
+.visa-design-app .doc-main { min-width: 0; }
+.visa-design-app .doc-label {
+  font-size: 14px;
+  color: var(--ink);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.visa-design-app .doc-meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+.visa-design-app .doc-meta-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.visa-design-app .doc-meta-tag::before {
+  content: '';
+  width: 3px; height: 3px;
+  background: var(--ink-4);
+  border-radius: 50%;
+}
+.visa-design-app .doc-meta-tag:first-child::before { display: none; }
+
+.visa-design-app .doc-files {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--rule);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.visa-design-app .doc-file {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.visa-design-app .doc-file-icon {
+  color: var(--ink-4);
+}
+
+/* ============================================================
+   Date controls (inline)
+   ============================================================ */
+.visa-design-app .date-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+.visa-design-app .date-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.visa-design-app .date-row label {
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  width: 36px;
+  flex-shrink: 0;
+}
+.visa-design-app .date-input {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--paper);
+  border: 1px solid var(--rule-2);
+  border-radius: 4px;
+  padding: 4px 8px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.12s;
+}
+.visa-design-app .date-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+/* ============================================================
+   Badges
+   ============================================================ */
+.visa-design-app .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.visa-design-app .badge::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.visa-design-app .badge[data-kind="detected"] { color: var(--info); background: var(--info-soft); }
+.visa-design-app .badge[data-kind="ready"]    { color: var(--ok); background: var(--ok-soft); }
+.visa-design-app .badge[data-kind="pending"]  { color: var(--warn); background: var(--warn-soft); }
+.visa-design-app .badge[data-kind="skipped"]  { color: var(--ink-3); background: var(--muted-bg); }
+.visa-design-app .badge[data-kind="sent"]     { color: var(--ok); background: var(--ok-soft); }
+.visa-design-app .badge[data-kind="draft"]    { color: var(--info); background: var(--info-soft); }
+.visa-design-app .badge[data-kind="active"]   { color: var(--accent-ink); background: var(--accent-soft); }
+.visa-design-app .badge[data-kind="inactive"] { color: var(--ink-3); background: var(--muted-bg); }
+
+/* ============================================================
+   Buttons
+   ============================================================ */
+.visa-design-app .btn {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--rule-2);
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: var(--vd-radius);
+  padding: 8px 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+.visa-design-app .btn:hover { background: var(--paper-3); border-color: var(--ink-4); }
+.visa-design-app .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.visa-design-app .btn-primary {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.visa-design-app .btn-primary:hover { background: var(--ink-2); border-color: var(--ink-2); }
+
+.visa-design-app .btn-accent {
+  background: var(--accent);
+  color: var(--paper);
+  border-color: var(--accent);
+}
+.visa-design-app .btn-accent:hover {
+  background: var(--accent-ink);
+  border-color: var(--accent-ink);
+}
+
+.visa-design-app .btn-ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--ink-2);
+  padding: 6px 8px;
+}
+.visa-design-app .btn-ghost:hover { background: var(--paper-3); color: var(--ink); }
+
+.visa-design-app .btn-sm { font-size: 12px; padding: 5px 10px; }
+
+.visa-design-app .btn-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+.visa-design-app .btn-row.right { justify-content: flex-end; }
+.visa-design-app .btn-row.between { justify-content: space-between; }
+
+/* ============================================================
+   Inputs / forms
+   ============================================================ */
+.visa-design-app .field { display: flex; flex-direction: column; gap: 4px; }
+.visa-design-app .field-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.visa-design-app .input,
+.visa-design-app .textarea {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  background: var(--paper);
+  border: 1px solid var(--rule-2);
+  border-radius: var(--vd-radius);
+  padding: 8px 12px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.12s, box-shadow 0.12s;
+  width: 100%;
+}
+.visa-design-app .input:focus,
+.visa-design-app .textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.visa-design-app .textarea {
+  resize: vertical;
+  min-height: 64px;
+  font-family: var(--font-ui);
+}
+
+.visa-design-app .field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* ============================================================
+   Log box (console)
+   ============================================================ */
+.visa-design-app .console {
+  background: oklch(20% 0.014 80);
+  color: oklch(86% 0.012 80);
+  border: 1px solid var(--rule);
+  border-radius: var(--vd-radius-lg);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.55;
+  overflow: hidden;
+  margin-top: 16px;
+}
+.visa-design-app .console-head {
+  padding: 8px 14px;
+  border-bottom: 1px solid oklch(28% 0.014 80);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: oklch(18% 0.014 80);
+}
+.visa-design-app .console-title {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: oklch(60% 0.012 80);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.visa-design-app .console-title::before {
+  content: '';
+  width: 7px; height: 7px;
+  background: var(--ok);
+  border-radius: 50%;
+  box-shadow: 0 0 6px currentColor;
+  color: var(--ok);
+}
+.visa-design-app .console-meta {
+  font-size: 10px;
+  color: oklch(55% 0.012 80);
+  letter-spacing: 0.04em;
+}
+.visa-design-app .console-body {
+  padding: 12px 14px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.visa-design-app .console-line {
+  display: grid;
+  grid-template-columns: 60px 18px 1fr;
+  gap: 8px;
+  padding: 1px 0;
+}
+.visa-design-app .console-time { color: oklch(48% 0.012 80); }
+.visa-design-app .console-mark { color: oklch(58% 0.012 80); }
+.visa-design-app .console-mark[data-kind="ok"]   { color: oklch(70% 0.10 150); }
+.visa-design-app .console-mark[data-kind="warn"] { color: oklch(75% 0.12 70); }
+.visa-design-app .console-mark[data-kind="err"]  { color: oklch(70% 0.14 30); }
+.visa-design-app .console-mark[data-kind="api"]  { color: oklch(70% 0.10 230); }
+.visa-design-app .console-text { color: oklch(86% 0.012 80); }
+.visa-design-app .console-text .dim { color: oklch(58% 0.012 80); }
+.visa-design-app .console-text .accent { color: oklch(80% 0.12 80); }
+.visa-design-app .console-text .mono-file { color: oklch(75% 0.10 230); }
+
+/* ============================================================
+   Photo captioner (Step 2)
+   ============================================================ */
+.visa-design-app .photo-stage {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+.visa-design-app .photo-frame {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: var(--paper-3);
+  border: 1px solid var(--rule);
+  border-radius: var(--vd-radius-lg);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background-image:
+    repeating-linear-gradient(
+      135deg,
+      transparent 0 18px,
+      color-mix(in oklab, var(--ink-4) 20%, transparent) 18px 19px
+    );
+}
+.visa-design-app .photo-placeholder-label {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  background: color-mix(in oklab, var(--paper) 90%, transparent);
+  padding: 4px 8px;
+  border-radius: 3px;
+}
+.visa-design-app .photo-progress-bar {
+  height: 2px;
+  background: var(--rule);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.visa-design-app .photo-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s;
+}
+.visa-design-app .photo-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  margin-bottom: 12px;
+}
+
+.visa-design-app .caption-preview {
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in oklab, var(--accent) 30%, transparent);
+  border-radius: var(--vd-radius);
+  padding: 12px 14px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: var(--accent-ink);
+  font-style: italic;
+  line-height: 1.5;
+  position: relative;
+}
+.visa-design-app .caption-preview::before {
+  content: 'PREVIEW';
+  position: absolute;
+  top: -8px;
+  left: 12px;
+  background: var(--paper);
+  padding: 0 6px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--accent-ink);
+  font-style: normal;
+  font-weight: 500;
+}
+
+/* ============================================================
+   History panel
+   ============================================================ */
+.visa-design-app .history-overlay {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in oklab, var(--paper) 70%, transparent);
+  backdrop-filter: blur(6px);
+  z-index: 100;
+  overflow-y: auto;
+  padding: 40px 24px;
+}
+.visa-design-app .history-card {
+  max-width: 720px;
+  margin: 0 auto;
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(60, 40, 20, 0.12);
+  overflow: hidden;
+}
+.visa-design-app .history-card-head {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.visa-design-app .history-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.visa-design-app .history-list {
+  display: flex;
+  flex-direction: column;
+}
+.visa-design-app .history-session {
+  border-bottom: 1px solid var(--rule);
+  padding: 16px 24px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.visa-design-app .history-session:hover { background: var(--paper-3); }
+.visa-design-app .history-session:last-child { border-bottom: none; }
+.visa-design-app .history-session-head {
+  display: grid;
+  grid-template-columns: 100px 1fr auto auto;
+  gap: 16px;
+  align-items: center;
+}
+.visa-design-app .history-date {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink);
+}
+.visa-design-app .history-date small {
+  display: block;
+  color: var(--ink-3);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+.visa-design-app .history-subject {
+  font-size: 13px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.visa-design-app .history-detail {
+  padding: 12px 24px 4px;
+  background: var(--paper);
+  border-top: 1px dashed var(--rule);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.visa-design-app .history-doc-row {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  gap: 12px;
+  padding: 6px 0;
+  font-size: 12px;
+  border-bottom: 1px dashed var(--rule);
+}
+.visa-design-app .history-doc-row:last-child { border-bottom: none; }
+.visa-design-app .history-doc-row .doc-num { padding-top: 0; }
+.visa-design-app .history-doc-files {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+/* ============================================================
+   Email preview
+   ============================================================ */
+.visa-design-app .email-paper {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--vd-radius-lg);
+  padding: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  overflow: hidden;
+}
+.visa-design-app .email-headers {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--rule);
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: 4px 12px;
+  font-size: 12px;
+  margin: 0;
+}
+.visa-design-app .email-headers dt {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding-top: 3px;
+}
+.visa-design-app .email-headers dd { margin: 0; color: var(--ink); }
+.visa-design-app .email-headers .subject {
+  font-weight: 500;
+  font-size: 14px;
+}
+.visa-design-app .email-body {
+  padding: 18px;
+  white-space: pre-wrap;
+  font-family: var(--font-ui);
+  color: var(--ink);
+}
+.visa-design-app .email-body .attach-line {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.visa-design-app .email-body .attach-line .num {
+  color: var(--accent-ink);
+  font-weight: 500;
+}
+.visa-design-app .email-body .attach-line .date {
+  color: var(--ink-3);
+}
+.visa-design-app .email-attachments {
+  border-top: 1px solid var(--rule);
+  padding: 12px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--paper-2);
+}
+.visa-design-app .email-attachments-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 4px;
+}
+.visa-design-app .email-attachment {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.visa-design-app .email-attachment-icon {
+  width: 16px; height: 18px;
+  background: var(--paper-3);
+  border: 1px solid var(--rule-2);
+  border-radius: 2px;
+  position: relative;
+  flex-shrink: 0;
+}
+.visa-design-app .email-attachment-icon::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 5px; height: 5px;
+  background: var(--paper);
+  border-left: 1px solid var(--rule-2);
+  border-bottom: 1px solid var(--rule-2);
+}
+.visa-design-app .email-attachment-size {
+  margin-left: auto;
+  color: var(--ink-4);
+}
+
+/* ============================================================
+   Done step
+   ============================================================ */
+.visa-design-app .summary-card {
+  background: linear-gradient(180deg, var(--accent-soft), var(--paper-2));
+  border: 1px solid color-mix(in oklab, var(--accent) 25%, transparent);
+  border-radius: 12px;
+  padding: 28px;
+  text-align: center;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.visa-design-app .summary-stamp {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  border: 2px solid var(--accent-ink);
+  color: var(--accent-ink);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 4px;
+  transform: rotate(-6deg);
+  opacity: 0.75;
+  letter-spacing: 0.05em;
+}
+.visa-design-app .summary-big {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin: 0 0 6px;
+}
+.visa-design-app .summary-big em { font-style: italic; color: var(--accent-ink); }
+.visa-design-app .summary-sub {
+  color: var(--ink-2);
+  font-size: 14px;
+  margin: 0;
+}
+.visa-design-app .summary-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+.visa-design-app .summary-stat {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--vd-radius);
+  padding: 10px;
+}
+.visa-design-app .summary-stat-num {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.visa-design-app .summary-stat-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* ============================================================
+   Toast / inline notice
+   ============================================================ */
+.visa-design-app .notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in oklab, var(--accent) 25%, transparent);
+  border-radius: var(--vd-radius);
+  font-size: 13px;
+  color: var(--accent-ink);
+  margin-bottom: 16px;
+}
+.visa-design-app .notice[data-kind="warn"] {
+  background: var(--warn-soft);
+  border-color: color-mix(in oklab, var(--warn) 25%, transparent);
+  color: oklch(40% 0.14 70);
+}
+.visa-design-app .notice-icon { flex-shrink: 0; padding-top: 2px; }
+
+/* ============================================================
+   Settings modal
+   ============================================================ */
+.visa-design-app .settings-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.visa-design-app .settings-row:last-child { border-bottom: none; }
+.visa-design-app .settings-row-label {
+  font-size: 13px;
+  color: var(--ink);
+}
+.visa-design-app .settings-row-help {
+  font-size: 11px;
+  color: var(--ink-3);
+  margin-top: 2px;
+  font-family: var(--font-mono);
+}
+
+/* ============================================================
+   Misc
+   ============================================================ */
+.visa-design-app .divider {
+  height: 1px;
+  background: var(--rule);
+  margin: 24px 0;
+}
+.visa-design-app .kbd {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  background: var(--paper-3);
+  border: 1px solid var(--rule-2);
+  border-radius: 3px;
+  padding: 1px 5px;
+  color: var(--ink-2);
+}
+.visa-design-app .cluster { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.visa-design-app .cluster-tight { display: flex; align-items: center; gap: 4px; }
+.visa-design-app .muted { color: var(--ink-3); }
+.visa-design-app .dim { color: var(--ink-4); }
+.visa-design-app .mono { font-family: var(--font-mono); font-size: 11.5px; }
+.visa-design-app .right { margin-left: auto; }
+
+.visa-design-app .empty-state {
+  border: 1px dashed var(--rule-2);
+  border-radius: var(--vd-radius-lg);
+  padding: 32px;
+  text-align: center;
+  color: var(--ink-3);
+}
+.visa-design-app .empty-state h3 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--ink);
+  margin: 0 0 6px;
+}
+.visa-design-app .empty-state p { margin: 0 0 16px; font-size: 13px; }
+
+.visa-design-app .mini-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 16px;
+  gap: 0;
+}
+.visa-design-app .mini-tab {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 12px;
+  cursor: pointer;
+  color: var(--ink-3);
+  margin-bottom: -1px;
+}
+.visa-design-app .mini-tab[data-active="true"] {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+  font-weight: 500;
+}
+
+/* footer demo nav */
+.visa-design-app .demo-nav {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-radius: 100px;
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 8px 24px rgba(60, 40, 20, 0.10);
+  z-index: 60;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.visa-design-app .demo-nav-label {
+  padding: 0 10px;
+  color: var(--ink-3);
+}
+.visa-design-app .demo-nav-btn {
+  background: transparent;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 100px;
+  color: var(--ink-2);
+  font-family: inherit;
+  font-size: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+.visa-design-app .demo-nav-btn[data-active="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+.visa-design-app .demo-nav-btn:hover:not([data-active="true"]) {
+  background: var(--paper-3);
+  color: var(--ink);
+}
