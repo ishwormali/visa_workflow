@@ -13,6 +13,7 @@ import type {
   VisaConfig,
   VisaSessionRecord,
   WorkflowDocumentState,
+  WorkflowStepValue,
 } from "./types"
 
 function startOfMonthIso() {
@@ -22,7 +23,9 @@ function startOfMonthIso() {
   return date.toISOString().slice(0, 10)
 }
 
-export function createDefaultDateValue(dateFormat: DateFormat): DocumentDateValue {
+export function createDefaultDateValue(
+  dateFormat: DateFormat
+): DocumentDateValue {
   if (dateFormat === "range") {
     return {
       mode: "range",
@@ -37,10 +40,13 @@ export function createDefaultDateValue(dateFormat: DateFormat): DocumentDateValu
   }
 }
 
-export function createSeededConfig(rawDocumentList = SAMPLE_DOCUMENT_LIST): VisaConfig {
+export function createSeededConfig(
+  rawDocumentList = SAMPLE_DOCUMENT_LIST
+): VisaConfig {
   const docTypes = parseDocumentList(rawDocumentList).map((docType) => ({
     ...docType,
-    active: docType.number === 4 || docType.number === 7 || docType.number === 8,
+    active:
+      docType.number === 4 || docType.number === 7 || docType.number === 8,
   }))
 
   return {
@@ -73,12 +79,19 @@ export function createSessionRecord(args: {
   draftDate: string
   status: SessionStatus
   filesMoved: boolean
+  currentStep: WorkflowStepValue
+  createdAt?: string
   submittedAt?: string
 }): VisaSessionRecord {
   const folderName = createSessionFolderName(args.submittedAt ?? args.draftDate)
-  const activeDocTypes = args.config.docTypes.filter((docType) => docType.active)
+  const activeDocTypes = args.config.docTypes.filter(
+    (docType) => docType.active
+  )
+  const now = new Date().toISOString()
   const documents = args.documents.flatMap((documentState) => {
-    const docType = activeDocTypes.find((item) => item.id === documentState.docTypeId)
+    const docType = activeDocTypes.find(
+      (item) => item.id === documentState.docTypeId
+    )
 
     if (!docType) {
       return []
@@ -95,20 +108,26 @@ export function createSessionRecord(args: {
       filenames: documentState.generatedFiles.length
         ? documentState.generatedFiles
         : documentState.matchedFiles,
+      matchedFiles: documentState.matchedFiles,
+      generatedFiles: documentState.generatedFiles,
+      generatedDocId: documentState.generatedDocId,
       status: documentState.status,
+      validationMessage: documentState.validationMessage,
       captions: documentState.captions,
     }
   })
 
   return {
     id: args.id ?? `session_${Date.now()}`,
-    createdAt: new Date().toISOString(),
+    createdAt: args.createdAt ?? now,
+    updatedAt: now,
     submittedAt: args.submittedAt,
     draftDate: args.draftDate,
     folderName,
     emailSubject: createEmailSubject(args.submittedAt ?? args.draftDate),
     status: args.status,
     filesMoved: args.filesMoved,
+    currentStep: args.currentStep,
     documents,
   }
 }

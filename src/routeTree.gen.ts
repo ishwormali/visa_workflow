@@ -10,33 +10,53 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WorkflowNewRouteImport } from './routes/workflow/new'
+import { Route as WorkflowWorkflowIdEditRouteImport } from './routes/workflow/$workflowId/edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WorkflowNewRoute = WorkflowNewRouteImport.update({
+  id: '/workflow/new',
+  path: '/workflow/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WorkflowWorkflowIdEditRoute = WorkflowWorkflowIdEditRouteImport.update({
+  id: '/workflow/$workflowId/edit',
+  path: '/workflow/$workflowId/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/workflow/new': typeof WorkflowNewRoute
+  '/workflow/$workflowId/edit': typeof WorkflowWorkflowIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/workflow/new': typeof WorkflowNewRoute
+  '/workflow/$workflowId/edit': typeof WorkflowWorkflowIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/workflow/new': typeof WorkflowNewRoute
+  '/workflow/$workflowId/edit': typeof WorkflowWorkflowIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/workflow/new' | '/workflow/$workflowId/edit'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/workflow/new' | '/workflow/$workflowId/edit'
+  id: '__root__' | '/' | '/workflow/new' | '/workflow/$workflowId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  WorkflowNewRoute: typeof WorkflowNewRoute
+  WorkflowWorkflowIdEditRoute: typeof WorkflowWorkflowIdEditRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +68,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/workflow/new': {
+      id: '/workflow/new'
+      path: '/workflow/new'
+      fullPath: '/workflow/new'
+      preLoaderRoute: typeof WorkflowNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/workflow/$workflowId/edit': {
+      id: '/workflow/$workflowId/edit'
+      path: '/workflow/$workflowId/edit'
+      fullPath: '/workflow/$workflowId/edit'
+      preLoaderRoute: typeof WorkflowWorkflowIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  WorkflowNewRoute: WorkflowNewRoute,
+  WorkflowWorkflowIdEditRoute: WorkflowWorkflowIdEditRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

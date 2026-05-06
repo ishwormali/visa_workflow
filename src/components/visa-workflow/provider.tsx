@@ -32,9 +32,10 @@ import {
   type VisaConfig,
   type VisaSessionRecord,
   type WorkflowDocumentState,
+  type WorkflowStepValue,
 } from "@/lib/visa-workflow"
 
-export type WorkflowStep = 0 | 1 | 2 | 3 | 4 | 5
+export type WorkflowStep = WorkflowStepValue
 type StepWithLogs = 1 | 3 | 4 | 5
 
 type LogState = Record<StepWithLogs, string[]>
@@ -102,9 +103,11 @@ function buildWorkflowDocuments(
   config: VisaConfig,
   sessions: VisaSessionRecord[]
 ): WorkflowDocumentState[] {
-  const lastSession = sessions.find((session) => session.status === "sent") ?? sessions[0]
+  const lastSession =
+    sessions.find((session) => session.status === "sent") ?? sessions[0]
   const previousDocuments = new Map(
-    lastSession?.documents.map((document) => [document.docTypeId, document]) ?? []
+    lastSession?.documents.map((document) => [document.docTypeId, document]) ??
+      []
   )
 
   return config.docTypes
@@ -114,12 +117,52 @@ function buildWorkflowDocuments(
 
       return createWorkflowDocumentState(docType, {
         docTypeId: docType.id,
-        dates: previous ? cloneDates(previous.dates) : createDefaultDateValue(docType.dateFormat),
+        dates: previous
+          ? cloneDates(previous.dates)
+          : createDefaultDateValue(docType.dateFormat),
         matchedFiles: [],
         generatedFiles: [],
         status: "pending",
         validationMessage: "",
         captions: [],
+      })
+    })
+}
+
+function buildWorkflowDocumentsFromSession(
+  config: VisaConfig,
+  session: VisaSessionRecord
+): WorkflowDocumentState[] {
+  const savedDocuments = new Map(
+    session.documents.map((document) => [document.docTypeId, document])
+  )
+
+  return config.docTypes
+    .filter((docType) => docType.active)
+    .map((docType) => {
+      const savedDocument = savedDocuments.get(docType.id)
+
+      if (!savedDocument) {
+        return createWorkflowDocumentState(docType, {
+          docTypeId: docType.id,
+          dates: createDefaultDateValue(docType.dateFormat),
+          matchedFiles: [],
+          generatedFiles: [],
+          status: "pending",
+          validationMessage: "",
+          captions: [],
+        })
+      }
+
+      return createWorkflowDocumentState(docType, {
+        docTypeId: savedDocument.docTypeId,
+        dates: cloneDates(savedDocument.dates),
+        matchedFiles: savedDocument.matchedFiles ?? [],
+        generatedFiles: savedDocument.generatedFiles ?? [],
+        generatedDocId: savedDocument.generatedDocId,
+        status: savedDocument.status,
+        validationMessage: savedDocument.validationMessage,
+        captions: savedDocument.captions,
       })
     })
 }
@@ -148,7 +191,11 @@ function formatCaptionDate(dateValue: string) {
   return formatDisplayDate(dateValue)
 }
 
-function useVisaWorkflowState() {
+function createWorkflowId() {
+  return `session_${Date.now()}`
+}
+
+function useVisaWorkflowState(options: { sessionId?: string } = {}) {
   const [hydrated, setHydrated] = useState(false)
   const [config, setConfig] = useState<VisaConfig>(EMPTY_CONFIG)
   const [sessions, setSessions] = useState<VisaSessionRecord[]>([])
@@ -168,7 +215,13 @@ function useVisaWorkflowState() {
   const [hasGenerated, setHasGenerated] = useState(false)
   const [draftReady, setDraftReady] = useState(false)
   const [photoIndex, setPhotoIndex] = useState(0)
-  const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null)
+  const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(
+    null
+  )
+  const [workflowId, setWorkflowId] = useState(
+    () => options.sessionId ?? createWorkflowId()
+  )
+  const [missingSession, setMissingSession] = useState(false)
 
   const activeDocTypes = useMemo(
     () => config.docTypes.filter((docType) => docType.active),
@@ -188,7 +241,9 @@ function useVisaWorkflowState() {
   const photoFiles = photoState?.matchedFiles ?? []
   const currentPhotoFile = photoFiles[photoIndex]
   const currentCaption = currentPhotoFile
-    ? photoState?.captions.find((caption) => caption.fileName === currentPhotoFile)
+    ? photoState?.captions.find(
+        (caption) => caption.fileName === currentPhotoFile
+      )
     : undefined
   const draftSession = draftSessionId
     ? sessions.find((session) => session.id === draftSessionId)
@@ -196,18 +251,61 @@ function useVisaWorkflowState() {
   const currentStepLabel =
     currentStep === 0
       ? "Step 0 — Setup"
-      : STEP_ITEMS.find((step) => step.id === currentStep)?.label ?? "Workflow"
-  const sentSessionsCount = sessions.filter((session) => session.status === "sent").length
+      : (STEP_ITEMS.find((step) => step.id === currentStep)?.label ??
+        "Workflow")
+  const sentSessionsCount = sessions.filter(
+    (session) => session.status === "sent"
+  ).length
+  const pendingSessionsCount = sessions.filter(
+    (session) => session.status === "draft"
+  ).length
 
   useEffect(() => {
-    const storedConfig = readStoredJson<VisaConfig>(VISA_CONFIG_KEY, EMPTY_CONFIG)
-    const storedSessions = readStoredJson<VisaSessionRecord[]>(VISA_SESSIONS_KEY, [])
+    const storedConfig = readStoredJson<VisaConfig>(
+      VISA_CONFIG_KEY,
+      EMPTY_CONFIG
+    )
+    const storedSessions = readStoredJson<VisaSessionRecord[]>(
+      VISA_SESSIONS_KEY,
+      []
+    )
+    const targetSession = options.sessionId
+      ? storedSessions.find((session) => session.id === options.sessionId)
+      : undefined
+
+    const nextDocuments = targetSession
+      ? buildWorkflowDocumentsFromSession(storedConfig, targetSession)
+      : buildWorkflowDocuments(storedConfig, storedSessions)
+
+    const nextHasScanned = nextDocuments.some(
+      (document) => document.matchedFiles.length > 0
+    )
+    const nextHasGenerated = nextDocuments.some(
+      (document) => document.generatedFiles.length > 0
+    )
 
     setConfig(storedConfig)
     setSessions(storedSessions)
-    setDocuments(buildWorkflowDocuments(storedConfig, storedSessions))
+    setDocuments(nextDocuments)
+    setWorkflowId(targetSession?.id ?? options.sessionId ?? createWorkflowId())
+    setMissingSession(Boolean(options.sessionId && !targetSession))
+    setCurrentStep(targetSession?.currentStep ?? 0)
+    setDraftDate(targetSession?.draftDate ?? todayIso())
+    setDraftSessionId(targetSession?.id ?? null)
+    setEmailPreview(
+      targetSession
+        ? buildEmailBody({
+            config: storedConfig,
+            documents: targetSession.documents,
+          })
+        : ""
+    )
+    setHasScanned(nextHasScanned)
+    setHasGenerated(nextHasGenerated)
+    setDraftReady(Boolean(targetSession?.status === "draft"))
+    setPhotoIndex(0)
     setHydrated(true)
-  }, [])
+  }, [options.sessionId])
 
   useEffect(() => {
     if (!hydrated) {
@@ -226,13 +324,19 @@ function useVisaWorkflowState() {
   }, [hydrated, sessions])
 
   function appendSeedLog(message: string) {
-    setSeedLogs((currentLogs) => [...currentLogs, `${new Date().toLocaleTimeString()} ${message}`])
+    setSeedLogs((currentLogs) => [
+      ...currentLogs,
+      `${new Date().toLocaleTimeString()} ${message}`,
+    ])
   }
 
   function appendLog(step: StepWithLogs, message: string) {
     setLogs((currentLogs) => ({
       ...currentLogs,
-      [step]: [...currentLogs[step], `${new Date().toLocaleTimeString()} ${message}`],
+      [step]: [
+        ...currentLogs[step],
+        `${new Date().toLocaleTimeString()} ${message}`,
+      ],
     }))
   }
 
@@ -248,10 +352,15 @@ function useVisaWorkflowState() {
       setHasGenerated(false)
       setDraftReady(false)
       setPhotoIndex(0)
+      setWorkflowId(createWorkflowId())
+      setMissingSession(false)
     })
   }
 
-  function updateDocument(docTypeId: string, updater: (current: WorkflowDocumentState) => WorkflowDocumentState) {
+  function updateDocument(
+    docTypeId: string,
+    updater: (current: WorkflowDocumentState) => WorkflowDocumentState
+  ) {
     setDocuments((currentDocuments) =>
       currentDocuments.map((document) =>
         document.docTypeId === docTypeId ? updater(document) : document
@@ -291,7 +400,8 @@ function useVisaWorkflowState() {
     setSeedReview(
       parsed.map((docType) => ({
         ...docType,
-        active: docType.number === 4 || docType.number === 7 || docType.number === 8,
+        active:
+          docType.number === 4 || docType.number === 7 || docType.number === 8,
       }))
     )
     appendSeedLog(`Parsed ${parsed.length} document definitions for review.`)
@@ -308,7 +418,9 @@ function useVisaWorkflowState() {
   }
 
   function saveSeedReview() {
-    const nextDocTypes = seedReview.length ? seedReview : createSeededConfig(seedSource).docTypes
+    const nextDocTypes = seedReview.length
+      ? seedReview
+      : createSeededConfig(seedSource).docTypes
     const nextConfig: VisaConfig = {
       ...config,
       docTypes: nextDocTypes,
@@ -387,15 +499,24 @@ function useVisaWorkflowState() {
     }))
     setHasScanned(false)
 
-    appendLog(1, "Searching Google Drive for the root folder Documents requested.")
+    appendLog(
+      1,
+      "Searching Google Drive for the root folder Documents requested."
+    )
     await wait()
 
     if (!SAMPLE_DRIVE_FILES.length) {
-      appendLog(1, "Warning: root folder not found or returned no files. Scan halted.")
+      appendLog(
+        1,
+        "Warning: root folder not found or returned no files. Scan halted."
+      )
       return
     }
 
-    appendLog(1, `Found ${SAMPLE_DRIVE_FILES.length} files. Matching against configured document types.`)
+    appendLog(
+      1,
+      `Found ${SAMPLE_DRIVE_FILES.length} files. Matching against configured document types.`
+    )
     await wait()
 
     setDocuments((currentDocuments) =>
@@ -406,7 +527,9 @@ function useVisaWorkflowState() {
           return document
         }
 
-        const matchedFiles = SAMPLE_DRIVE_FILES.filter((fileName) => matchesDocType(fileName, docType))
+        const matchedFiles = SAMPLE_DRIVE_FILES.filter((fileName) =>
+          matchesDocType(fileName, docType)
+        )
         const nextStatus = matchedFiles.length ? "detected" : "pending"
 
         appendLog(
@@ -532,7 +655,10 @@ function useVisaWorkflowState() {
     const nextDraftDate = todayIso()
 
     setDraftDate(nextDraftDate)
-    appendLog(3, `Creating Drive subfolder ${createSessionFolderName(nextDraftDate)}.`)
+    appendLog(
+      3,
+      `Creating Drive subfolder ${createSessionFolderName(nextDraftDate)}.`
+    )
     await wait()
 
     setDocuments((currentDocuments) =>
@@ -545,7 +671,10 @@ function useVisaWorkflowState() {
 
         if (docType.category === "upload") {
           if (!document.matchedFiles.length) {
-            appendLog(3, `${docType.label}: skipped because no source files were detected.`)
+            appendLog(
+              3,
+              `${docType.label}: skipped because no source files were detected.`
+            )
             return {
               ...document,
               generatedFiles: [],
@@ -554,12 +683,16 @@ function useVisaWorkflowState() {
           }
 
           const generatedFiles = document.matchedFiles.map((fileName) =>
-            fileName.startsWith(`${docType.number} `) || fileName.startsWith(`${docType.number} -`)
+            fileName.startsWith(`${docType.number} `) ||
+            fileName.startsWith(`${docType.number} -`)
               ? fileName
               : `${docType.number} - ${fileName}`
           )
 
-          appendLog(3, `${docType.label}: queued ${generatedFiles.length} upload attachment(s).`)
+          appendLog(
+            3,
+            `${docType.label}: queued ${generatedFiles.length} upload attachment(s).`
+          )
           return {
             ...document,
             generatedFiles,
@@ -569,7 +702,10 @@ function useVisaWorkflowState() {
 
         if (docType.category === "gdoc") {
           const generatedFile = `${docType.number} - ${docType.label}.gdoc`
-          appendLog(3, `${docType.label}: generated Google Doc using ${formatDateLabel(document.dates)}.`)
+          appendLog(
+            3,
+            `${docType.label}: generated Google Doc using ${formatDateLabel(document.dates)}.`
+          )
           return {
             ...document,
             generatedFiles: [generatedFile],
@@ -577,10 +713,15 @@ function useVisaWorkflowState() {
           }
         }
 
-        const usableCaptions = document.captions.filter((caption) => !caption.skipped)
+        const usableCaptions = document.captions.filter(
+          (caption) => !caption.skipped
+        )
 
         if (!usableCaptions.length) {
-          appendLog(3, `${docType.label}: skipped because no photo captions were saved.`)
+          appendLog(
+            3,
+            `${docType.label}: skipped because no photo captions were saved.`
+          )
           return {
             ...document,
             generatedFiles: [],
@@ -589,7 +730,10 @@ function useVisaWorkflowState() {
         }
 
         const generatedFile = `${docType.number} - photographs of relationship.gdoc`
-        appendLog(3, `${docType.label}: generated Google Doc with ${usableCaptions.length} captions.`)
+        appendLog(
+          3,
+          `${docType.label}: generated Google Doc with ${usableCaptions.length} captions.`
+        )
         return {
           ...document,
           generatedFiles: [generatedFile],
@@ -599,7 +743,10 @@ function useVisaWorkflowState() {
     )
 
     await wait()
-    appendLog(3, "Appending generated document lines back to Document list in Drive.")
+    appendLog(
+      3,
+      "Appending generated document lines back to Document list in Drive."
+    )
     await wait()
     appendLog(3, "Document generation complete.")
     setHasGenerated(true)
@@ -612,7 +759,10 @@ function useVisaWorkflowState() {
       4: [],
     }))
 
-    const sessionId = draftSessionId ?? `session_${Date.now()}`
+    const existingSession = sessions.find(
+      (session) => session.id === workflowId
+    )
+    const sessionId = draftSessionId ?? workflowId
     const draftSessionRecord = createSessionRecord({
       id: sessionId,
       config,
@@ -620,15 +770,21 @@ function useVisaWorkflowState() {
       draftDate,
       status: "draft",
       filesMoved: false,
+      currentStep: 5,
+      createdAt: existingSession?.createdAt,
     })
     const preview = buildEmailBody({
       config,
       documents: draftSessionRecord.documents,
     })
 
+    setWorkflowId(sessionId)
     setDraftSessionId(sessionId)
     setEmailPreview(preview)
-    appendLog(4, `Building Gmail draft subject: ${createEmailSubject(draftDate)}.`)
+    appendLog(
+      4,
+      `Building Gmail draft subject: ${createEmailSubject(draftDate)}.`
+    )
     await wait()
 
     for (const document of draftSessionRecord.documents) {
@@ -640,8 +796,13 @@ function useVisaWorkflowState() {
 
     appendLog(4, "Sending payload to Gmail draft adapter.")
     await wait()
-    appendLog(4, "Draft created. Verify the Gmail drafts folder if anything looks uncertain.")
-    setSessions((currentSessions) => upsertSession(currentSessions, draftSessionRecord))
+    appendLog(
+      4,
+      "Draft created. Verify the Gmail drafts folder if anything looks uncertain."
+    )
+    setSessions((currentSessions) =>
+      upsertSession(currentSessions, draftSessionRecord)
+    )
     setDraftReady(true)
     setCurrentStep(5)
   }
@@ -652,26 +813,100 @@ function useVisaWorkflowState() {
       5: [],
     }))
 
+    const existingSession = sessions.find(
+      (session) => session.id === workflowId
+    )
     const submittedAt = new Date().toISOString()
     const sentRecord = createSessionRecord({
-      id: draftSessionId ?? undefined,
+      id: draftSessionId ?? workflowId,
       config,
       documents,
       draftDate,
       status: "sent",
       filesMoved: true,
+      currentStep: 5,
+      createdAt: existingSession?.createdAt,
       submittedAt,
     })
 
-    appendLog(5, `Recording sent session for ${formatDisplayDate(submittedAt)}.`)
+    appendLog(
+      5,
+      `Recording sent session for ${formatDisplayDate(submittedAt)}.`
+    )
     await wait()
-    appendLog(5, `Renaming folder to ${sentRecord.folderName} if the submitted date changed.`)
+    appendLog(
+      5,
+      `Renaming folder to ${sentRecord.folderName} if the submitted date changed.`
+    )
     await wait()
-    appendLog(5, "Moving generated files back to the Documents requested root folder.")
+    appendLog(
+      5,
+      "Moving generated files back to the Documents requested root folder."
+    )
     await wait()
     appendLog(5, "Session closed with status sent.")
     setSessions((currentSessions) => upsertSession(currentSessions, sentRecord))
+    setWorkflowId(sentRecord.id)
+    setDraftSessionId(sentRecord.id)
     setDraftReady(true)
+    setCurrentStep(5)
+  }
+
+  function saveWorkflow() {
+    const existingSession = sessions.find(
+      (session) => session.id === workflowId
+    )
+    const nextSession = createSessionRecord({
+      id: workflowId,
+      config,
+      documents,
+      draftDate,
+      status: "draft",
+      filesMoved: false,
+      currentStep,
+      createdAt: existingSession?.createdAt,
+    })
+
+    setSessions((currentSessions) =>
+      upsertSession(currentSessions, nextSession)
+    )
+    setDraftSessionId(nextSession.id)
+    setDraftReady(true)
+
+    if (currentStep >= 4) {
+      setEmailPreview(
+        buildEmailBody({
+          config,
+          documents: nextSession.documents,
+        })
+      )
+    }
+  }
+
+  function markSessionSent(sessionId: string) {
+    setSessions((currentSessions) => {
+      const currentSession = currentSessions.find(
+        (session) => session.id === sessionId
+      )
+
+      if (!currentSession || currentSession.status === "sent") {
+        return currentSessions
+      }
+
+      const submittedAt = new Date().toISOString()
+      const nextSession: VisaSessionRecord = {
+        ...currentSession,
+        updatedAt: submittedAt,
+        submittedAt,
+        folderName: createSessionFolderName(submittedAt),
+        emailSubject: createEmailSubject(submittedAt),
+        status: "sent",
+        filesMoved: true,
+        currentStep: 5,
+      }
+
+      return upsertSession(currentSessions, nextSession)
+    })
   }
 
   function startNextSession() {
@@ -679,7 +914,9 @@ function useVisaWorkflowState() {
   }
 
   function toggleExpandedHistory(sessionId: string) {
-    setExpandedHistoryId((currentId) => (currentId === sessionId ? null : sessionId))
+    setExpandedHistoryId((currentId) =>
+      currentId === sessionId ? null : sessionId
+    )
   }
 
   return {
@@ -712,10 +949,14 @@ function useVisaWorkflowState() {
     logs,
     latestSession,
     markEmailSent,
+    markSessionSent,
+    missingSession,
     openHistory: () => setShowHistory(true),
     openSettings: () => setShowSettings(true),
+    pendingSessionsCount,
     photoFiles,
     photoIndex,
+    saveWorkflow,
     saveCaptionAndContinue,
     saveSeedReview,
     seedError,
@@ -734,6 +975,7 @@ function useVisaWorkflowState() {
     toggleSeedReviewDocType,
     updateConfigEmail,
     updateCurrentCaption,
+    workflowId,
     runScan,
     runSeedReview,
   }
@@ -745,6 +987,22 @@ const VisaWorkflowContext = createContext<VisaWorkflowContextValue | null>(null)
 
 export function VisaWorkflowProvider({ children }: { children: ReactNode }) {
   const value = useVisaWorkflowState()
+
+  return (
+    <VisaWorkflowContext.Provider value={value}>
+      {children}
+    </VisaWorkflowContext.Provider>
+  )
+}
+
+export function VisaWorkflowRouteProvider({
+  children,
+  sessionId,
+}: {
+  children: ReactNode
+  sessionId?: string
+}) {
+  const value = useVisaWorkflowState({ sessionId })
 
   return (
     <VisaWorkflowContext.Provider value={value}>

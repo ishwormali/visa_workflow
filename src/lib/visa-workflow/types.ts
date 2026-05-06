@@ -47,6 +47,8 @@ export type PhotoCaption = {
   skipped: boolean
 }
 
+export type WorkflowStepValue = 0 | 1 | 2 | 3 | 4 | 5
+
 export type WorkflowDocumentState = {
   docTypeId: string
   dates: DocumentDateValue
@@ -67,19 +69,25 @@ export type SessionDocumentRecord = {
   dates: DocumentDateValue
   dateLabel: string
   filenames: string[]
+  matchedFiles: string[]
+  generatedFiles: string[]
+  generatedDocId?: string
   status: DocProgressStatus
+  validationMessage?: string
   captions: PhotoCaption[]
 }
 
 export type VisaSessionRecord = {
   id: string
   createdAt: string
+  updatedAt: string
   submittedAt?: string
   draftDate: string
   folderName: string
   emailSubject: string
   status: SessionStatus
   filesMoved: boolean
+  currentStep: WorkflowStepValue
   documents: SessionDocumentRecord[]
 }
 
