@@ -94,5 +94,7 @@ export type VisaSessionRecord = {
 export type VisaConfig = {
   email: EmailConfig
   docTypes: DocTypeConfig[]
+  googleDriveRootFolderId?: string
+  googleDriveRootFolderName?: string
   seededAt?: string
 }

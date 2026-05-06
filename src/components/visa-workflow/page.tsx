@@ -3,15 +3,22 @@ import {
   ChevronRight,
   FolderSearch,
   History,
+  LoaderCircle,
   Mail,
   RefreshCcw,
   Settings2,
   Sparkles,
 } from "lucide-react"
-import type { ReactNode } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import { useNavigate } from "@tanstack/react-router"
 
 import { Button } from "@/components/ui/button"
+import {
+  getGoogleDriveAccessToken,
+  hasGoogleDriveAccessToken,
+  listGoogleDriveFolders,
+  type GoogleDriveFile,
+} from "@/lib/google-drive"
 import { cn } from "@/lib/utils"
 import {
   createEmailSubject,
@@ -249,8 +256,6 @@ export function VisaWorkflowEditorPage() {
     generateDocuments,
     goToDraftStep,
     goToDoneStep,
-    goToScanStep,
-    goToSetupStep,
     handleDateChange,
     hasGenerated,
     hasScanned,
@@ -271,9 +276,15 @@ export function VisaWorkflowEditorPage() {
     seedLogs,
     seedReview,
     seedSource,
+    rootFolderError,
+    rootFolderInput,
     sentSessionsCount,
+    selectedRootFolderId,
+    selectedRootFolderName,
     sessions,
+    selectRootFolder,
     setSeedSource,
+    setRootFolderInput,
     showHistory,
     showSettings,
     skipCurrentPhoto,
@@ -370,6 +381,12 @@ export function VisaWorkflowEditorPage() {
               seedLogs={seedLogs}
               seedReview={seedReview}
               seedSource={seedSource}
+              rootFolderError={rootFolderError}
+              rootFolderInput={rootFolderInput}
+              selectedRootFolderId={selectedRootFolderId}
+              selectedRootFolderName={selectedRootFolderName}
+              onRootFolderInputChange={setRootFolderInput}
+              onSelectRootFolder={selectRootFolder}
               onRunSeedReview={runSeedReview}
               onSaveSeedReview={saveSeedReview}
               onSeedSourceChange={setSeedSource}
@@ -390,8 +407,6 @@ export function VisaWorkflowEditorPage() {
               emailPreview={emailPreview}
               goToDoneStep={goToDoneStep}
               goToDraftStep={goToDraftStep}
-              goToScanStep={goToScanStep}
-              goToSetupStep={goToSetupStep}
               handleDateChange={handleDateChange}
               hasGenerated={hasGenerated}
               hasScanned={hasScanned}
@@ -407,6 +422,7 @@ export function VisaWorkflowEditorPage() {
               onSaveCaptionAndContinue={saveCaptionAndContinue}
               onSkipCurrentPhoto={skipCurrentPhoto}
               onSkipPhotoStep={skipPhotoStep}
+              onSelectRootFolder={selectRootFolder}
               onStartNextSession={() => {
                 startNextSession()
                 navigate({ to: "/workflow/new" })
@@ -415,6 +431,11 @@ export function VisaWorkflowEditorPage() {
               onRunScan={runScan}
               photoFiles={photoFiles}
               photoIndex={photoIndex}
+              rootFolderError={rootFolderError}
+              rootFolderInput={rootFolderInput}
+              selectedRootFolderId={selectedRootFolderId}
+              selectedRootFolderName={selectedRootFolderName}
+              setRootFolderInput={setRootFolderInput}
             />
           )}
         </div>
@@ -442,11 +463,17 @@ export function VisaWorkflowEditorPage() {
           onRunSeedReview={runSeedReview}
           onSaveSeedReview={saveSeedReview}
           onSeedSourceChange={setSeedSource}
+          onRootFolderInputChange={setRootFolderInput}
+          onSelectRootFolder={selectRootFolder}
           onToggleSeedReviewDocType={toggleSeedReviewDocType}
           onUpdateConfigEmail={updateConfigEmail}
+          rootFolderError={rootFolderError}
+          rootFolderInput={rootFolderInput}
           seedLogs={seedLogs}
           seedReview={seedReview}
           seedSource={seedSource}
+          selectedRootFolderId={selectedRootFolderId}
+          selectedRootFolderName={selectedRootFolderName}
         />
       ) : null}
     </main>
@@ -454,19 +481,31 @@ export function VisaWorkflowEditorPage() {
 }
 
 function FirstRunSetup({
+  rootFolderError,
+  rootFolderInput,
   seedError,
   seedLogs,
   seedReview,
   seedSource,
+  selectedRootFolderId,
+  selectedRootFolderName,
+  onRootFolderInputChange,
+  onSelectRootFolder,
   onRunSeedReview,
   onSaveSeedReview,
   onSeedSourceChange,
   onToggleSeedReviewDocType,
 }: {
+  rootFolderError: string
+  rootFolderInput: string
   seedError: string
   seedLogs: string[]
   seedReview: DocTypeConfig[]
   seedSource: string
+  selectedRootFolderId: string
+  selectedRootFolderName?: string
+  onRootFolderInputChange: (value: string) => void
+  onSelectRootFolder: () => Promise<void>
   onRunSeedReview: () => Promise<void>
   onSaveSeedReview: () => void
   onSeedSourceChange: (value: string) => void
@@ -484,6 +523,16 @@ function FirstRunSetup({
         Pull the latest Document list, parse the recurring document definitions,
         and keep only the ones you want automated each month.
       </p>
+
+      <DriveRootFolderField
+        rootFolderError={rootFolderError}
+        rootFolderInput={rootFolderInput}
+        selectedRootFolderId={selectedRootFolderId}
+        selectedRootFolderName={selectedRootFolderName}
+        onRootFolderInputChange={onRootFolderInputChange}
+        onSelectRootFolder={onSelectRootFolder}
+        className="mt-8"
+      />
 
       <div className="border-border/70 bg-card/80 mt-8 rounded-[1.75rem] border p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -596,8 +645,6 @@ function WorkflowPanel({
   emailPreview,
   goToDoneStep,
   goToDraftStep,
-  goToScanStep,
-  goToSetupStep,
   handleDateChange,
   hasGenerated,
   hasScanned,
@@ -613,11 +660,17 @@ function WorkflowPanel({
   onSaveCaptionAndContinue,
   onSkipCurrentPhoto,
   onSkipPhotoStep,
+  onSelectRootFolder,
   onStartNextSession,
   onUpdateCurrentCaption,
   onRunScan,
   photoFiles,
   photoIndex,
+  rootFolderError,
+  rootFolderInput,
+  selectedRootFolderId,
+  selectedRootFolderName,
+  setRootFolderInput,
 }: {
   activeDocTypes: DocTypeConfig[]
   config: VisaConfig
@@ -639,8 +692,6 @@ function WorkflowPanel({
   emailPreview: string
   goToDoneStep: () => void
   goToDraftStep: () => void
-  goToScanStep: () => void
-  goToSetupStep: () => void
   handleDateChange: (
     docTypeId: string,
     key: "date" | "from" | "to",
@@ -660,6 +711,7 @@ function WorkflowPanel({
   onSaveCaptionAndContinue: () => void
   onSkipCurrentPhoto: () => void
   onSkipPhotoStep: () => void
+  onSelectRootFolder: (folderIdOrUrl?: string) => Promise<void>
   onStartNextSession: () => void
   onUpdateCurrentCaption: (
     field: "date" | "people" | "description" | "formattedCaption" | "skipped",
@@ -668,6 +720,11 @@ function WorkflowPanel({
   onRunScan: () => Promise<void>
   photoFiles: string[]
   photoIndex: number
+  rootFolderError: string
+  rootFolderInput: string
+  selectedRootFolderId: string
+  selectedRootFolderName?: string
+  setRootFolderInput: (value: string) => void
 }) {
   return (
     <section className="panel overflow-hidden p-6 sm:p-8">
@@ -680,9 +737,9 @@ function WorkflowPanel({
             {currentStepLabel}
           </h2>
           <p className="text-muted-foreground mt-3 text-sm leading-6">
-            {currentStep === 0
-              ? "Each recurring document type keeps its own date history. Confirm the defaults before scanning Google Drive."
-              : "The workflow keeps draft and sent sessions in persistent local history while remaining ready for Drive and Gmail API wiring."}
+            {currentStep === 1
+              ? "Connect Google Drive if needed, choose the root folder, confirm the date defaults, and then run the scan."
+              : "The workflow now uses live Google Drive data while still keeping draft and sent sessions in persistent local history."}
           </p>
         </div>
         <div className="border-border/70 bg-secondary/80 text-secondary-foreground rounded-[1.5rem] border px-4 py-3 text-sm">
@@ -695,35 +752,30 @@ function WorkflowPanel({
         </div>
       </div>
 
-      {currentStep >= 1 ? (
-        <StepProgress
-          currentStep={currentStep}
-          photoStepEnabled={Boolean(photoFiles.length)}
-        />
-      ) : null}
-
-      {currentStep === 0 ? (
-        <SetupStep
-          activeDocTypes={activeDocTypes}
-          config={config}
-          documents={documents}
-          latestSession={latestSession}
-          onContinue={goToScanStep}
-          onEditSettings={onOpenSettings}
-          onHandleDateChange={handleDateChange}
-        />
-      ) : null}
+      <StepProgress
+        currentStep={currentStep}
+        photoStepEnabled={Boolean(photoFiles.length)}
+      />
 
       {currentStep === 1 ? (
         <ScanStep
           activeDocTypes={activeDocTypes}
+          config={config}
           documents={documents}
           hasScanned={hasScanned}
+          latestSession={latestSession}
           logs={logs[1]}
-          onBack={goToSetupStep}
           onContinue={onContinueAfterScan}
+          onEditSettings={onOpenSettings}
+          onHandleDateChange={handleDateChange}
           onRunScan={onRunScan}
+          onSelectRootFolder={onSelectRootFolder}
           photoFiles={photoFiles}
+          rootFolderError={rootFolderError}
+          rootFolderInput={rootFolderInput}
+          selectedRootFolderId={selectedRootFolderId}
+          selectedRootFolderName={selectedRootFolderName}
+          setRootFolderInput={setRootFolderInput}
         />
       ) : null}
 
@@ -784,7 +836,6 @@ function SetupStep({
   config,
   documents,
   latestSession,
-  onContinue,
   onEditSettings,
   onHandleDateChange,
 }: {
@@ -792,7 +843,6 @@ function SetupStep({
   config: VisaConfig
   documents: WorkflowDocumentState[]
   latestSession: VisaSessionRecord | undefined
-  onContinue: () => void
   onEditSettings: () => void
   onHandleDateChange: (
     docTypeId: string,
@@ -911,10 +961,6 @@ function SetupStep({
             <Settings2 />
             Edit settings
           </Button>
-          <Button onClick={onContinue}>
-            Continue to scan
-            <ChevronRight />
-          </Button>
         </div>
       </div>
     </div>
@@ -923,34 +969,69 @@ function SetupStep({
 
 function ScanStep({
   activeDocTypes,
+  config,
   documents,
   hasScanned,
+  latestSession,
   logs,
-  onBack,
   onContinue,
+  onEditSettings,
+  onHandleDateChange,
   onRunScan,
+  onSelectRootFolder,
   photoFiles,
+  rootFolderError,
+  rootFolderInput,
+  selectedRootFolderId,
+  selectedRootFolderName,
+  setRootFolderInput,
 }: {
   activeDocTypes: DocTypeConfig[]
+  config: VisaConfig
   documents: WorkflowDocumentState[]
   hasScanned: boolean
+  latestSession: VisaSessionRecord | undefined
   logs: string[]
-  onBack: () => void
   onContinue: () => void
+  onEditSettings: () => void
+  onHandleDateChange: (
+    docTypeId: string,
+    key: "date" | "from" | "to",
+    value: string
+  ) => void
   onRunScan: () => Promise<void>
+  onSelectRootFolder: (folderIdOrUrl?: string) => Promise<void>
   photoFiles: string[]
+  rootFolderError: string
+  rootFolderInput: string
+  selectedRootFolderId: string
+  selectedRootFolderName?: string
+  setRootFolderInput: (value: string) => void
 }) {
   return (
     <div className="mt-8 space-y-5">
+      <DriveRootFolderField
+        rootFolderError={rootFolderError}
+        rootFolderInput={rootFolderInput}
+        selectedRootFolderId={selectedRootFolderId}
+        selectedRootFolderName={selectedRootFolderName}
+        onRootFolderInputChange={setRootFolderInput}
+        onSelectRootFolder={onSelectRootFolder}
+      />
+      <SetupStep
+        activeDocTypes={activeDocTypes}
+        config={config}
+        documents={documents}
+        latestSession={latestSession}
+        onEditSettings={onEditSettings}
+        onHandleDateChange={onHandleDateChange}
+      />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-muted-foreground max-w-xl text-sm leading-6">
           Scan the Documents requested Drive tree, auto-match files against the
           seeded patterns, and confirm whether photo captioning is needed.
         </p>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={onBack}>
-            Back to setup
-          </Button>
           <Button onClick={onRunScan}>
             <FolderSearch />
             Scan Drive
@@ -1394,7 +1475,7 @@ function WorkflowSidebar({
           Integration mode
         </p>
         <h2 className="font-heading mt-2 text-xl font-semibold">
-          API-ready adapters
+          Live integrations
         </h2>
         <ul className="text-muted-foreground mt-4 space-y-3 text-sm leading-6">
           <li>
@@ -1402,7 +1483,7 @@ function WorkflowSidebar({
             files.
           </li>
           <li>
-            Gmail: create draft with base64 attachments and final subject.
+            Gmail: local draft stub remains in place after Drive downloads.
           </li>
           <li>
             Anthropic: format relationship photo captions before doc generation.
@@ -1519,17 +1600,25 @@ function HistoryOverlay({
 function SettingsOverlay({
   config,
   onClose,
+  onRootFolderInputChange,
+  onSelectRootFolder,
   onRunSeedReview,
   onSaveSeedReview,
   onSeedSourceChange,
   onToggleSeedReviewDocType,
   onUpdateConfigEmail,
+  rootFolderError,
+  rootFolderInput,
   seedLogs,
   seedReview,
   seedSource,
+  selectedRootFolderId,
+  selectedRootFolderName,
 }: {
   config: VisaConfig
   onClose: () => void
+  onRootFolderInputChange: (value: string) => void
+  onSelectRootFolder: () => Promise<void>
   onRunSeedReview: () => Promise<void>
   onSaveSeedReview: () => void
   onSeedSourceChange: (value: string) => void
@@ -1538,9 +1627,13 @@ function SettingsOverlay({
     field: K,
     value: VisaConfig["email"][K]
   ) => void
+  rootFolderError: string
+  rootFolderInput: string
   seedLogs: string[]
   seedReview: DocTypeConfig[]
   seedSource: string
+  selectedRootFolderId: string
+  selectedRootFolderName?: string
 }) {
   return (
     <OverlayPanel title="Settings" onClose={onClose}>
@@ -1583,6 +1676,15 @@ function SettingsOverlay({
             />
           </Field>
         </div>
+
+        <DriveRootFolderField
+          rootFolderError={rootFolderError}
+          rootFolderInput={rootFolderInput}
+          selectedRootFolderId={selectedRootFolderId}
+          selectedRootFolderName={selectedRootFolderName}
+          onRootFolderInputChange={onRootFolderInputChange}
+          onSelectRootFolder={onSelectRootFolder}
+        />
 
         <div className="border-border/70 bg-card/80 rounded-[1.75rem] border p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1646,6 +1748,268 @@ function SettingsOverlay({
         </div>
       </div>
     </OverlayPanel>
+  )
+}
+
+function DriveRootFolderField({
+  className,
+  rootFolderError,
+  rootFolderInput,
+  selectedRootFolderId,
+  selectedRootFolderName,
+  onRootFolderInputChange,
+  onSelectRootFolder,
+}: {
+  className?: string
+  rootFolderError: string
+  rootFolderInput: string
+  selectedRootFolderId: string
+  selectedRootFolderName?: string
+  onRootFolderInputChange: (value: string) => void
+  onSelectRootFolder: (folderIdOrUrl?: string) => Promise<void>
+}) {
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isConnecting, setIsConnecting] = useState(false)
+  const [isLoadingFolders, setIsLoadingFolders] = useState(false)
+  const [dialogError, setDialogError] = useState("")
+  const [isDriveConnected, setIsDriveConnected] = useState(() =>
+    hasGoogleDriveAccessToken()
+  )
+  const [folderPath, setFolderPath] = useState<
+    Array<{ id: string; name: string }>
+  >([{ id: "root", name: "My Drive" }])
+  const [folders, setFolders] = useState<GoogleDriveFile[]>([])
+
+  async function connectDrive() {
+    setIsConnecting(true)
+    setDialogError("")
+
+    try {
+      await getGoogleDriveAccessToken({ interactive: true })
+      setIsDriveConnected(true)
+    } catch (error) {
+      setDialogError(
+        error instanceof Error
+          ? error.message
+          : "Google Drive connection failed."
+      )
+      throw error
+    } finally {
+      setIsConnecting(false)
+    }
+  }
+
+  async function loadFolders(parentId: string) {
+    setIsLoadingFolders(true)
+    setDialogError("")
+
+    try {
+      setFolders(await listGoogleDriveFolders(parentId))
+    } catch (error) {
+      setDialogError(
+        error instanceof Error ? error.message : "Failed to load Drive folders."
+      )
+    } finally {
+      setIsLoadingFolders(false)
+    }
+  }
+
+  async function openFolderDialog() {
+    setIsDialogOpen(true)
+    setFolderPath([{ id: "root", name: "My Drive" }])
+
+    if (!isDriveConnected) {
+      try {
+        await connectDrive()
+      } catch {
+        return
+      }
+    }
+
+    await loadFolders("root")
+  }
+
+  async function handleFolderSelect(
+    folder: Pick<GoogleDriveFile, "id" | "name">
+  ) {
+    onRootFolderInputChange(folder.id)
+    await onSelectRootFolder(folder.id)
+    setIsDialogOpen(false)
+  }
+
+  useEffect(() => {
+    setIsDriveConnected(hasGoogleDriveAccessToken())
+  }, [isDialogOpen])
+
+  return (
+    <>
+      <section
+        className={cn(
+          "border-border/70 bg-card/80 rounded-[1.75rem] border p-5",
+          className
+        )}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-muted-foreground text-xs tracking-[0.24em] uppercase">
+              Drive
+            </p>
+            <h3 className="font-heading mt-1 text-xl font-semibold">
+              Root folder
+            </h3>
+            <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-6">
+              Connect Google Drive if needed, then choose the folder to scan and
+              use for generated documents.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              onClick={() => void connectDrive()}
+              disabled={isConnecting}
+            >
+              {isConnecting ? <LoaderCircle className="animate-spin" /> : null}
+              {isDriveConnected ? "Reconnect Drive" : "Connect Drive"}
+            </Button>
+            <Button
+              onClick={() => void openFolderDialog()}
+              disabled={isConnecting}
+            >
+              <FolderSearch />
+              Choose folder
+            </Button>
+          </div>
+        </div>
+
+        <input
+          className="field mt-4"
+          placeholder="https://drive.google.com/drive/folders/... or folder id"
+          value={rootFolderInput}
+          onChange={(event) => onRootFolderInputChange(event.target.value)}
+        />
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => void onSelectRootFolder()}>
+            Verify typed folder
+          </Button>
+        </div>
+
+        {selectedRootFolderId ? (
+          <div className="border-border/70 bg-background/70 mt-4 rounded-[1.25rem] border px-4 py-3 text-sm">
+            <p className="font-medium">
+              {selectedRootFolderName || "Using selected Google Drive folder"}
+            </p>
+            <p className="text-muted-foreground mt-1 break-all">
+              {selectedRootFolderId}
+            </p>
+          </div>
+        ) : null}
+
+        {rootFolderError ? (
+          <div className="border-destructive/20 bg-destructive/8 text-destructive mt-4 rounded-[1.25rem] border p-4 text-sm">
+            {rootFolderError}
+          </div>
+        ) : null}
+      </section>
+
+      {isDialogOpen ? (
+        <OverlayPanel
+          title="Choose Google Drive folder"
+          onClose={() => setIsDialogOpen(false)}
+        >
+          <div className="space-y-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-muted-foreground text-sm leading-6">
+                  Browse your Drive folders and select the workflow root folder.
+                </p>
+                <p className="text-muted-foreground mt-2 text-xs tracking-[0.2em] uppercase">
+                  {folderPath.map((segment) => segment.name).join(" / ")}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => void connectDrive()}
+                  disabled={isConnecting}
+                >
+                  {isConnecting ? (
+                    <LoaderCircle className="animate-spin" />
+                  ) : null}
+                  {isDriveConnected ? "Reconnect Drive" : "Connect Drive"}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    if (folderPath.length <= 1) {
+                      return
+                    }
+
+                    const nextPath = folderPath.slice(0, -1)
+                    setFolderPath(nextPath)
+                    void loadFolders(
+                      nextPath[nextPath.length - 1]?.id ?? "root"
+                    )
+                  }}
+                  disabled={folderPath.length <= 1 || isLoadingFolders}
+                >
+                  Back
+                </Button>
+              </div>
+            </div>
+
+            {dialogError ? (
+              <div className="border-destructive/20 bg-destructive/8 text-destructive rounded-[1.25rem] border p-4 text-sm">
+                {dialogError}
+              </div>
+            ) : null}
+
+            <div className="grid gap-3">
+              {isLoadingFolders ? (
+                <div className="border-border/70 bg-card/80 text-muted-foreground rounded-[1.5rem] border p-5 text-sm">
+                  Loading folders...
+                </div>
+              ) : folders.length ? (
+                folders.map((folder) => (
+                  <article
+                    key={folder.id}
+                    className="border-border/70 bg-card/80 flex flex-wrap items-center justify-between gap-3 rounded-[1.5rem] border p-4"
+                  >
+                    <div>
+                      <p className="font-medium">{folder.name}</p>
+                      <p className="text-muted-foreground mt-1 text-xs break-all">
+                        {folder.id}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setFolderPath((currentPath) => [
+                            ...currentPath,
+                            { id: folder.id, name: folder.name },
+                          ])
+                          void loadFolders(folder.id)
+                        }}
+                      >
+                        Open
+                      </Button>
+                      <Button onClick={() => void handleFolderSelect(folder)}>
+                        Use folder
+                      </Button>
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <div className="border-border/70 bg-card/80 text-muted-foreground rounded-[1.5rem] border p-5 text-sm">
+                  No folders found here.
+                </div>
+              )}
+            </div>
+          </div>
+        </OverlayPanel>
+      ) : null}
+    </>
   )
 }
 
