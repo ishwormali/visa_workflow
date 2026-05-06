@@ -22,6 +22,7 @@ export function WorkflowPanel({
   onOpenSettings,
   onRunScan,
   onCreateVisaFolder,
+  onCreateRawFolder,
   selectedFromDate,
   selectedToDate,
   setSelectedFromDate,
@@ -42,6 +43,7 @@ export function WorkflowPanel({
   onOpenSettings: () => void
   onRunScan: () => Promise<void>
   onCreateVisaFolder: () => Promise<void>
+  onCreateRawFolder: () => Promise<void>
   selectedFromDate: string
   selectedToDate: string
   setSelectedFromDate: (value: string) => void
@@ -147,6 +149,7 @@ export function WorkflowPanel({
           logs={logs[2]}
           onRunScan={onRunScan}
           onCreateVisaFolder={onCreateVisaFolder}
+          onCreateRawFolder={onCreateRawFolder}
           rawFolderFiles={rawFolderFiles}
           rawFolderId={rawFolderId}
           rawFolderMissing={rawFolderMissing}

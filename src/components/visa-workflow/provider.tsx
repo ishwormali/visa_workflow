@@ -858,6 +858,25 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
     }
   }
 
+  async function createRawFolderInVisaFolder() {
+    if (!visaFolderId) {
+      appendLog(2, "Create the Visa folder first before adding raw.")
+      return
+    }
+
+    try {
+      appendLog(2, "Creating raw folder under the Visa folder.")
+      const folder = await createGoogleDriveFolder("raw", visaFolderId)
+      setRawFolderMissing(false)
+      setRawFolderId(folder.id)
+      setRawFolderFiles([])
+      scannedDriveFilesRef.current = createDriveFileIndex([])
+      appendLog(2, `Created raw folder ${folder.name}.`)
+    } catch (error) {
+      appendLog(2, `Failed to create raw folder: ${formatActionError(error)}`)
+    }
+  }
+
   function continueAfterScan() {
     goToStep(2)
   }
@@ -1388,6 +1407,7 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
     workflowId,
     runScan,
     createVisaFolderFromSelectedDate,
+    createRawFolderInVisaFolder,
     runSeedReview,
   }
 }

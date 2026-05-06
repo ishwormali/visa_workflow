@@ -1,4 +1,4 @@
-import { FolderSearch, LoaderCircle } from "lucide-react"
+import { FolderSearch, LoaderCircle, RefreshCcw } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -279,6 +279,7 @@ export function ScanStep({
   logs,
   onRunScan,
   onCreateVisaFolder,
+  onCreateRawFolder,
   rawFolderFiles,
   rawFolderId,
   rawFolderMissing,
@@ -290,6 +291,7 @@ export function ScanStep({
   logs: string[]
   onRunScan: () => Promise<void>
   onCreateVisaFolder: () => Promise<void>
+  onCreateRawFolder: () => Promise<void>
   rawFolderFiles: GoogleDriveFile[]
   rawFolderId: string
   rawFolderMissing: boolean
@@ -308,6 +310,13 @@ export function ScanStep({
     void onRunScan()
   }, [autoRun, onRunScan])
 
+  const photoFiles = rawFolderFiles.filter((file) =>
+    file.mimeType.toLowerCase().startsWith("image/")
+  )
+  const rawDocumentFiles = rawFolderFiles.filter(
+    (file) => !file.mimeType.toLowerCase().startsWith("image/")
+  )
+
   return (
     <div className="mt-8 space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -320,9 +329,18 @@ export function ScanStep({
             <FolderSearch />
             Find Visa folder
           </Button>
+          <Button variant="outline" onClick={onRunScan}>
+            <RefreshCcw />
+            Refresh
+          </Button>
           {visaFolderMissing ? (
             <Button variant="outline" onClick={onCreateVisaFolder}>
-              Create folder
+              Create Visa folder
+            </Button>
+          ) : null}
+          {rawFolderMissing && visaFolderId ? (
+            <Button variant="outline" onClick={onCreateRawFolder}>
+              Create raw folder
             </Button>
           ) : null}
         </div>
@@ -330,8 +348,7 @@ export function ScanStep({
 
       {visaFolderId ? (
         <div className="border-border/70 bg-card/80 rounded-[1.5rem] border p-4">
-          <p className="font-medium">Visa folder found</p>
-          <p className="text-muted-foreground mt-1 text-sm">{visaFolderName}</p>
+          <p className="text-sm font-medium">{visaFolderName}</p>
           <p className="text-muted-foreground mt-1 text-xs break-all">
             {visaFolderId}
           </p>
@@ -345,26 +362,69 @@ export function ScanStep({
       ) : null}
 
       {rawFolderId ? (
-        <div className="border-border/70 bg-card/80 rounded-[1.5rem] border p-4">
-          <p className="font-medium">Raw folder detected</p>
+        <div className="border-border/70 bg-card/80 space-y-4 rounded-[1.5rem] border p-4">
+          <div>
+            <p className="text-sm font-medium">raw</p>
+            <p className="text-muted-foreground mt-1 text-xs break-all">
+              {rawFolderId}
+            </p>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <section className="space-y-3">
+              <div>
+                <p className="font-medium">Raw files</p>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  {rawDocumentFiles.length} file(s)
+                </p>
+              </div>
+              {rawDocumentFiles.length ? (
+                <div className="flex flex-wrap gap-2">
+                  {rawDocumentFiles.map((file) => (
+                    <span
+                      key={file.id}
+                      className="border-border/70 bg-background text-muted-foreground rounded-full border px-3 py-1 text-xs"
+                    >
+                      {file.name}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-sm">
+                  No raw files found.
+                </p>
+              )}
+            </section>
+
+            <section className="space-y-3">
+              <div>
+                <p className="font-medium">Photos</p>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  {photoFiles.length} photo(s)
+                </p>
+              </div>
+              {photoFiles.length ? (
+                <div className="flex flex-wrap gap-2">
+                  {photoFiles.map((file) => (
+                    <span
+                      key={file.id}
+                      className="border-border/70 bg-background text-muted-foreground rounded-full border px-3 py-1 text-xs"
+                    >
+                      {file.name}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-sm">
+                  No photos found.
+                </p>
+              )}
+            </section>
+          </div>
+
           <p className="text-muted-foreground mt-1 text-xs break-all">
-            {rawFolderId}
+            {rawFolderFiles.length} total item(s) found in raw.
           </p>
-          <p className="text-muted-foreground mt-3 text-sm">
-            {rawFolderFiles.length} file(s) found in raw.
-          </p>
-          {rawFolderFiles.length ? (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {rawFolderFiles.map((file) => (
-                <span
-                  key={file.id}
-                  className="border-border/70 bg-background text-muted-foreground rounded-full border px-3 py-1 text-xs"
-                >
-                  {file.name}
-                </span>
-              ))}
-            </div>
-          ) : null}
         </div>
       ) : null}
 

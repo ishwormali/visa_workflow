@@ -81,6 +81,7 @@ export function VisaWorkflowEditorPage() {
     updateConfigEmail,
     runScan,
     createVisaFolderFromSelectedDate,
+    createRawFolderInVisaFolder,
     goToStep,
     selectedFromDate,
     selectedToDate,
@@ -228,6 +229,7 @@ export function VisaWorkflowEditorPage() {
               onOpenSettings={openSettings}
               onRunScan={runScan}
               onCreateVisaFolder={createVisaFolderFromSelectedDate}
+              onCreateRawFolder={createRawFolderInVisaFolder}
               selectedFromDate={selectedFromDate}
               selectedToDate={selectedToDate}
               setSelectedFromDate={setSelectedFromDate}
