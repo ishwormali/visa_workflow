@@ -15,6 +15,7 @@ import {
   createGoogleDocInDrive,
   createGoogleDriveFolder,
   downloadGoogleDriveFileAsBase64,
+  listGoogleDriveFolders,
   listGoogleDriveFilesRecursively,
   moveGoogleDriveFile,
   readGoogleDriveDefaultRootFolderId,
@@ -35,9 +36,7 @@ import {
   createSessionRecord,
   createWorkflowDocumentState,
   formatDateLabel,
-  matchesDocType,
   parseDocumentList,
-  validateDocumentDates,
   type DocTypeConfig,
   type DocumentDateValue,
   type PhotoCaption,
@@ -48,17 +47,14 @@ import {
 } from "@/lib/visa-workflow"
 
 export type WorkflowStep = WorkflowStepValue
-type StepWithLogs = 1 | 3 | 4 | 5
+type StepWithLogs = 1 | 2 | 3 | 4 | 5
 
 type LogState = Record<StepWithLogs, string[]>
 type DriveFileIndex = Map<string, GoogleDriveFile[]>
 
 const STEP_ITEMS = [
-  { id: 1, label: "Scan Drive" },
-  { id: 2, label: "Photo Captions" },
-  { id: 3, label: "Generate Docs" },
-  { id: 4, label: "Email Draft" },
-  { id: 5, label: "Done" },
+  { id: 1, label: "Select Date Range" },
+  { id: 2, label: "Visa Folder & Raw Docs" },
 ] as const
 
 const EMPTY_CONFIG: VisaConfig = {
@@ -75,12 +71,17 @@ function normalizeWorkflowStep(step?: WorkflowStep) {
     return 1
   }
 
+  if (step > 2) {
+    return 2
+  }
+
   return step
 }
 
 function createInitialLogs(): LogState {
   return {
     1: [],
+    2: [],
     3: [],
     4: [],
     5: [],
@@ -89,6 +90,31 @@ function createInitialLogs(): LogState {
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10)
+}
+
+function startOfMonthIso() {
+  const date = new Date()
+  date.setDate(1)
+  return date.toISOString().slice(0, 10)
+}
+
+function createVisaFolderNameFromToDate(toDate: string) {
+  const parsedDate = new Date(toDate)
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return ""
+  }
+
+  const displayDate = new Intl.DateTimeFormat("en", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  })
+    .format(parsedDate)
+    .replace(/,/g, "")
+    .replace(/\s+/g, "-")
+
+  return `Visa-${displayDate}`
 }
 
 export function formatDisplayDate(dateValue?: string) {
@@ -329,6 +355,8 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
   const [rootFolderError, setRootFolderError] = useState("")
   const [logs, setLogs] = useState<LogState>(createInitialLogs)
   const [draftDate, setDraftDate] = useState(todayIso())
+  const [selectedFromDate, setSelectedFromDate] = useState(startOfMonthIso())
+  const [selectedToDate, setSelectedToDate] = useState(todayIso())
   const [draftSessionId, setDraftSessionId] = useState<string | null>(null)
   const [emailPreview, setEmailPreview] = useState("")
   const [hasScanned, setHasScanned] = useState(false)
@@ -342,6 +370,12 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
     () => options.sessionId ?? createWorkflowId()
   )
   const [missingSession, setMissingSession] = useState(false)
+  const [visaFolderName, setVisaFolderName] = useState("")
+  const [visaFolderId, setVisaFolderId] = useState("")
+  const [visaFolderMissing, setVisaFolderMissing] = useState(false)
+  const [rawFolderId, setRawFolderId] = useState("")
+  const [rawFolderMissing, setRawFolderMissing] = useState(false)
+  const [rawFolderFiles, setRawFolderFiles] = useState<GoogleDriveFile[]>([])
   const scannedDriveFilesRef = useRef<DriveFileIndex>(new Map())
   const generatedDriveFilesRef = useRef<Map<string, GoogleDriveFile[]>>(
     new Map()
@@ -417,6 +451,8 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
     setMissingSession(Boolean(options.sessionId && !targetSession))
     setCurrentStep(normalizeWorkflowStep(targetSession?.currentStep))
     setDraftDate(targetSession?.draftDate ?? todayIso())
+    setSelectedFromDate(startOfMonthIso())
+    setSelectedToDate(todayIso())
     setDraftSessionId(targetSession?.id ?? null)
     setEmailPreview(
       targetSession
@@ -436,6 +472,12 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
         ""
     )
     setRootFolderError("")
+    setVisaFolderName("")
+    setVisaFolderId("")
+    setVisaFolderMissing(false)
+    setRawFolderId("")
+    setRawFolderMissing(false)
+    setRawFolderFiles([])
     scannedDriveFilesRef.current = new Map()
     generatedDriveFilesRef.current = new Map()
     sessionFolderRef.current = null
@@ -499,6 +541,8 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
       setCurrentStep(1)
       setLogs(createInitialLogs())
       setDraftDate(todayIso())
+      setSelectedFromDate(startOfMonthIso())
+      setSelectedToDate(todayIso())
       setDraftSessionId(null)
       setEmailPreview("")
       setHasScanned(false)
@@ -507,6 +551,12 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
       setPhotoIndex(0)
       setWorkflowId(createWorkflowId())
       setMissingSession(false)
+      setVisaFolderName("")
+      setVisaFolderId("")
+      setVisaFolderMissing(false)
+      setRawFolderId("")
+      setRawFolderMissing(false)
+      setRawFolderFiles([])
       scannedDriveFilesRef.current = new Map()
       generatedDriveFilesRef.current = new Map()
       sessionFolderRef.current = null
@@ -682,120 +732,134 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
     })
   }
 
-  function validateDocumentsForScan() {
-    let hasValidationError = false
-
-    setDocuments((currentDocuments) =>
-      currentDocuments.map((document) => {
-        const docType = docTypesById.get(document.docTypeId)
-
-        if (!docType) {
-          return document
-        }
-
-        const validationMessage = validateDocumentDates(docType, document)
-
-        if (validationMessage) {
-          hasValidationError = true
-        }
-
-        return {
-          ...document,
-          validationMessage,
-        }
-      })
-    )
-
-    return !hasValidationError
-  }
-
   async function runScan() {
-    if (!validateDocumentsForScan()) {
+    if (!selectedFromDate || !selectedToDate) {
+      appendLog(2, "Set both from and to dates before continuing.")
+      return
+    }
+
+    if (
+      new Date(selectedFromDate).getTime() > new Date(selectedToDate).getTime()
+    ) {
+      appendLog(2, "From date must be on or before the to date.")
       return
     }
 
     setLogs((currentLogs) => ({
       ...currentLogs,
-      1: [],
+      2: [],
     }))
     setHasScanned(false)
+    setVisaFolderMissing(false)
+    setRawFolderMissing(false)
+    setRawFolderFiles([])
+    setRawFolderId("")
+    setVisaFolderId("")
+    setVisaFolderName("")
 
-    appendLog(1, "Authorizing Google Drive access.")
+    appendLog(2, "Authorizing Google Drive access.")
 
-    let driveFiles: GoogleDriveFile[] = []
     let rootFolderId = ""
+    const expectedFolderName = createVisaFolderNameFromToDate(selectedToDate)
+
+    if (!expectedFolderName) {
+      appendLog(2, "Selected to date is invalid. Update the date and retry.")
+      return
+    }
+
+    setVisaFolderName(expectedFolderName)
 
     try {
       rootFolderId = resolveRootFolderId()
-      appendLog(1, "Searching the configured Google Drive folder recursively.")
-      driveFiles = await listGoogleDriveFilesRecursively(rootFolderId)
+      appendLog(
+        2,
+        `Looking for folder ${expectedFolderName} under the selected root folder.`
+      )
+      const rootFolders = await listGoogleDriveFolders(rootFolderId)
+      const matchedVisaFolder = rootFolders.find(
+        (folder) =>
+          folder.name === expectedFolderName ||
+          folder.name.startsWith(`${expectedFolderName}-`)
+      )
+
+      if (!matchedVisaFolder) {
+        setVisaFolderMissing(true)
+        appendLog(
+          2,
+          `No matching folder found. Create ${expectedFolderName} to continue.`
+        )
+        setHasScanned(true)
+        return
+      }
+
+      setVisaFolderId(matchedVisaFolder.id)
+      setVisaFolderName(matchedVisaFolder.name)
+      appendLog(
+        2,
+        `Found folder ${matchedVisaFolder.name}. Checking for raw folder.`
+      )
+
+      const visaSubFolders = await listGoogleDriveFolders(matchedVisaFolder.id)
+      const rawFolder = visaSubFolders.find(
+        (folder) => folder.name.trim().toLowerCase() === "raw"
+      )
+
+      if (!rawFolder) {
+        setRawFolderMissing(true)
+        appendLog(2, "Raw folder not found under the Visa folder.")
+        setHasScanned(true)
+        return
+      }
+
+      setRawFolderId(rawFolder.id)
+      appendLog(2, "Raw folder found. Reading files recursively.")
+
+      const rawFiles = await listGoogleDriveFilesRecursively(rawFolder.id)
+      setRawFolderFiles(rawFiles)
+      scannedDriveFilesRef.current = createDriveFileIndex(rawFiles)
+
+      appendLog(
+        2,
+        rawFiles.length
+          ? `Detected ${rawFiles.length} raw file(s) for later processing.`
+          : "Raw folder is currently empty."
+      )
     } catch (error) {
-      appendLog(1, `Drive scan failed: ${formatActionError(error)}`)
+      appendLog(2, `Drive lookup failed: ${formatActionError(error)}`)
       return
     }
 
-    scannedDriveFilesRef.current = createDriveFileIndex(driveFiles)
-
-    if (!driveFiles.length) {
-      appendLog(
-        1,
-        "Warning: configured Drive folder returned no files. Scan halted."
-      )
-      return
-    }
-
-    appendLog(
-      1,
-      `Found ${driveFiles.length} files. Matching against configured document types.`
-    )
     await wait()
-
-    const nextDocuments = documents.map((document) => {
-      const docType = docTypesById.get(document.docTypeId)
-
-      if (!docType) {
-        return document
-      }
-
-      const matchedFiles = driveFiles
-        .filter((file) => matchesDocType(file.name, docType))
-        .map((file) => file.name)
-      const nextStatus: WorkflowDocumentState["status"] = matchedFiles.length
-        ? "detected"
-        : "pending"
-
-      appendLog(
-        1,
-        matchedFiles.length
-          ? `${docType.label}: detected ${matchedFiles.length} matching file(s).`
-          : `${docType.label}: no files matched ${docType.matchPattern}.`
-      )
-
-      return {
-        ...document,
-        matchedFiles,
-        generatedFiles: [],
-        generatedDocId: undefined,
-        status: nextStatus,
-      }
-    })
-
-    generatedDriveFilesRef.current = new Map()
-    sessionFolderRef.current = null
-    setDocuments(nextDocuments)
-
-    await wait()
-    appendLog(1, "Drive scan complete.")
+    appendLog(2, "Visa folder lookup complete.")
     setHasScanned(true)
   }
 
-  function continueAfterScan() {
-    if (photoFiles.length) {
-      setCurrentStep(2)
+  async function createVisaFolderFromSelectedDate() {
+    const expectedFolderName = createVisaFolderNameFromToDate(selectedToDate)
+
+    if (!expectedFolderName) {
+      appendLog(2, "Selected to date is invalid. Update the date and retry.")
       return
     }
 
-    setCurrentStep(3)
+    try {
+      const rootFolderId = resolveRootFolderId()
+      appendLog(2, `Creating folder ${expectedFolderName}.`)
+      const folder = await createGoogleDriveFolder(
+        expectedFolderName,
+        rootFolderId
+      )
+      setVisaFolderMissing(false)
+      setVisaFolderName(folder.name)
+      setVisaFolderId(folder.id)
+      appendLog(2, `Created folder ${folder.name}.`)
+    } catch (error) {
+      appendLog(2, `Failed to create Visa folder: ${formatActionError(error)}`)
+    }
+  }
+
+  function continueAfterScan() {
+    setCurrentStep(2)
   }
 
   useEffect(() => {
@@ -1272,6 +1336,10 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
     hasScanned,
     hydrated,
     logs,
+    selectedFromDate,
+    selectedToDate,
+    setSelectedFromDate,
+    setSelectedToDate,
     latestSession,
     markEmailSent,
     markSessionSent,
@@ -1287,6 +1355,12 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
     seedError,
     seedLogs,
     rootFolderError,
+    visaFolderName,
+    visaFolderId,
+    visaFolderMissing,
+    rawFolderId,
+    rawFolderMissing,
+    rawFolderFiles,
     rootFolderInput,
     seedReview,
     seedSource,
@@ -1308,6 +1382,7 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
     updateCurrentCaption,
     workflowId,
     runScan,
+    createVisaFolderFromSelectedDate,
     runSeedReview,
   }
 }

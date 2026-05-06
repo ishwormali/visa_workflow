@@ -1,9 +1,4 @@
-import {
-  FolderSearch,
-  ChevronRight,
-  LoaderCircle,
-  Settings2,
-} from "lucide-react"
+import { FolderSearch, LoaderCircle } from "lucide-react"
 import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -14,150 +9,8 @@ import {
   type GoogleDriveFile,
 } from "@/lib/google-drive"
 import { cn } from "@/lib/utils"
-import {
-  type DocTypeConfig,
-  type VisaConfig,
-  type VisaSessionRecord,
-  type WorkflowDocumentState,
-} from "@/lib/visa-workflow"
 
-import { Field, LogPanel, OverlayPanel, StatusBadge } from "./shared"
-
-function SetupStep({
-  activeDocTypes,
-  config,
-  documents,
-  latestSession,
-  onEditSettings,
-  onHandleDateChange,
-}: {
-  activeDocTypes: DocTypeConfig[]
-  config: VisaConfig
-  documents: WorkflowDocumentState[]
-  latestSession: VisaSessionRecord | undefined
-  onEditSettings: () => void
-  onHandleDateChange: (
-    docTypeId: string,
-    key: "date" | "from" | "to",
-    value: string
-  ) => void
-}) {
-  return (
-    <div className="mt-8 space-y-4">
-      {activeDocTypes.map((docType) => {
-        const document = documents.find(
-          (currentDocument) => currentDocument.docTypeId === docType.id
-        )
-
-        if (!document) {
-          return null
-        }
-
-        return (
-          <article
-            key={docType.id}
-            className="border-border/70 bg-card/80 rounded-[1.75rem] border p-5"
-          >
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-xs font-medium">
-                    #{docType.number}
-                  </span>
-                  <StatusBadge status={document.status} />
-                </div>
-                <h3 className="mt-3 font-medium">{docType.label}</h3>
-                <p className="text-muted-foreground mt-1 text-xs tracking-[0.2em] uppercase">
-                  {docType.category} • {docType.dateFormat}
-                </p>
-              </div>
-              <div className="border-border/70 bg-background/80 min-w-56 rounded-[1.5rem] border px-4 py-3 text-sm">
-                <p className="text-muted-foreground">Last used</p>
-                <p className="mt-1 font-medium">
-                  {latestSession?.documents.find(
-                    (item) => item.docTypeId === docType.id
-                  )?.dateLabel ?? "No prior value"}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              {document.dates.mode === "single" ? (
-                <Field
-                  label={
-                    docType.category === "gdoc_photos"
-                      ? "Default photo date"
-                      : "Date"
-                  }
-                >
-                  <input
-                    type="date"
-                    className="field"
-                    value={document.dates.date}
-                    onChange={(event) =>
-                      onHandleDateChange(docType.id, "date", event.target.value)
-                    }
-                  />
-                </Field>
-              ) : (
-                <>
-                  <Field label="From date">
-                    <input
-                      type="date"
-                      className="field"
-                      value={document.dates.from}
-                      onChange={(event) =>
-                        onHandleDateChange(
-                          docType.id,
-                          "from",
-                          event.target.value
-                        )
-                      }
-                    />
-                  </Field>
-                  <Field label="To date">
-                    <input
-                      type="date"
-                      className="field"
-                      value={document.dates.to}
-                      onChange={(event) =>
-                        onHandleDateChange(docType.id, "to", event.target.value)
-                      }
-                    />
-                  </Field>
-                </>
-              )}
-            </div>
-
-            {document.validationMessage ? (
-              <p className="text-destructive mt-4 text-sm">
-                {document.validationMessage}
-              </p>
-            ) : null}
-          </article>
-        )
-      })}
-
-      <div className="border-border/70 bg-secondary/40 flex flex-wrap items-center justify-between gap-3 rounded-[1.75rem] border px-5 py-4">
-        <div>
-          <p className="text-secondary-foreground text-sm font-medium">
-            Email config
-          </p>
-          <p className="text-muted-foreground text-sm">
-            To {config.email.toEmail || "not set"} • CC{" "}
-            {config.email.ccEmail || "not set"}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={onEditSettings}>
-            <Settings2 />
-            Edit settings
-          </Button>
-        </div>
-      </div>
-    </div>
-  )
-}
+import { LogPanel, OverlayPanel } from "./shared"
 
 export function DriveRootFolderField({
   className,
@@ -422,131 +275,91 @@ export function DriveRootFolderField({
 }
 
 export function ScanStep({
-  activeDocTypes,
-  config,
-  documents,
-  hasScanned,
-  latestSession,
   logs,
-  onContinue,
-  onEditSettings,
-  onHandleDateChange,
   onRunScan,
-  onSelectRootFolder,
-  photoFiles,
-  rootFolderError,
-  rootFolderInput,
-  selectedRootFolderId,
-  selectedRootFolderName,
-  setRootFolderInput,
+  onCreateVisaFolder,
+  rawFolderFiles,
+  rawFolderId,
+  rawFolderMissing,
+  visaFolderId,
+  visaFolderMissing,
+  visaFolderName,
 }: {
-  activeDocTypes: DocTypeConfig[]
-  config: VisaConfig
-  documents: WorkflowDocumentState[]
-  hasScanned: boolean
-  latestSession: VisaSessionRecord | undefined
   logs: string[]
-  onContinue: () => void
-  onEditSettings: () => void
-  onHandleDateChange: (
-    docTypeId: string,
-    key: "date" | "from" | "to",
-    value: string
-  ) => void
   onRunScan: () => Promise<void>
-  onSelectRootFolder: (folderIdOrUrl?: string) => Promise<void>
-  photoFiles: string[]
-  rootFolderError: string
-  rootFolderInput: string
-  selectedRootFolderId: string
-  selectedRootFolderName?: string
-  setRootFolderInput: (value: string) => void
+  onCreateVisaFolder: () => Promise<void>
+  rawFolderFiles: GoogleDriveFile[]
+  rawFolderId: string
+  rawFolderMissing: boolean
+  visaFolderId: string
+  visaFolderMissing: boolean
+  visaFolderName: string
 }) {
   return (
     <div className="mt-8 space-y-5">
-      <DriveRootFolderField
-        rootFolderError={rootFolderError}
-        rootFolderInput={rootFolderInput}
-        selectedRootFolderId={selectedRootFolderId}
-        selectedRootFolderName={selectedRootFolderName}
-        onRootFolderInputChange={setRootFolderInput}
-        onSelectRootFolder={onSelectRootFolder}
-      />
-      <SetupStep
-        activeDocTypes={activeDocTypes}
-        config={config}
-        documents={documents}
-        latestSession={latestSession}
-        onEditSettings={onEditSettings}
-        onHandleDateChange={onHandleDateChange}
-      />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-muted-foreground max-w-xl text-sm leading-6">
-          Scan the Documents requested Drive tree, auto-match files against the
-          seeded patterns, and confirm whether photo captioning is needed.
+          Find the Visa month folder using the selected to-date and then check
+          the raw folder for available documents.
         </p>
         <div className="flex flex-wrap gap-2">
           <Button onClick={onRunScan}>
             <FolderSearch />
-            Scan Drive
+            Find Visa folder
           </Button>
+          {visaFolderMissing ? (
+            <Button variant="outline" onClick={onCreateVisaFolder}>
+              Create folder
+            </Button>
+          ) : null}
         </div>
       </div>
-      <div className="grid gap-3">
-        {activeDocTypes.map((docType) => {
-          const document = documents.find(
-            (currentDocument) => currentDocument.docTypeId === docType.id
-          )
 
-          if (!document) {
-            return null
-          }
-
-          return (
-            <div
-              key={docType.id}
-              className="border-border/70 bg-card/80 rounded-[1.5rem] border px-4 py-4"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="font-medium">{docType.label}</p>
-                  <p className="text-muted-foreground mt-1 text-sm">
-                    {document.matchedFiles.length || 0} file(s) matched
-                  </p>
-                </div>
-                <StatusBadge status={document.status} />
-              </div>
-              {document.matchedFiles.length ? (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {document.matchedFiles.map((fileName) => (
-                    <span
-                      key={fileName}
-                      className="border-border/70 bg-background text-muted-foreground rounded-full border px-3 py-1 text-xs"
-                    >
-                      {fileName}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          )
-        })}
-      </div>
-      <LogPanel
-        title="Drive scan log"
-        entries={logs}
-        emptyMessage="Scan output will stream here."
-      />
-      {hasScanned ? (
-        <div className="flex justify-end">
-          <Button onClick={onContinue}>
-            {photoFiles.length
-              ? "Continue to photo captions"
-              : "Skip to generate documents"}
-            <ChevronRight />
-          </Button>
+      {visaFolderId ? (
+        <div className="border-border/70 bg-card/80 rounded-[1.5rem] border p-4">
+          <p className="font-medium">Visa folder found</p>
+          <p className="text-muted-foreground mt-1 text-sm">{visaFolderName}</p>
+          <p className="text-muted-foreground mt-1 text-xs break-all">
+            {visaFolderId}
+          </p>
         </div>
       ) : null}
+
+      {rawFolderMissing ? (
+        <div className="rounded-[1.5rem] border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-800">
+          Raw folder was not found in the selected Visa folder.
+        </div>
+      ) : null}
+
+      {rawFolderId ? (
+        <div className="border-border/70 bg-card/80 rounded-[1.5rem] border p-4">
+          <p className="font-medium">Raw folder detected</p>
+          <p className="text-muted-foreground mt-1 text-xs break-all">
+            {rawFolderId}
+          </p>
+          <p className="text-muted-foreground mt-3 text-sm">
+            {rawFolderFiles.length} file(s) found in raw.
+          </p>
+          {rawFolderFiles.length ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {rawFolderFiles.map((file) => (
+                <span
+                  key={file.id}
+                  className="border-border/70 bg-background text-muted-foreground rounded-full border px-3 py-1 text-xs"
+                >
+                  {file.name}
+                </span>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      <LogPanel
+        title="Visa folder log"
+        entries={logs}
+        emptyMessage="Folder lookup output will appear here."
+      />
     </div>
   )
 }

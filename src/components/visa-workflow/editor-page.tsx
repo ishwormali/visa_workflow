@@ -18,36 +18,18 @@ export function VisaWorkflowEditorPage() {
     closeSettings,
     config,
     continueAfterScan,
-    createDraft,
-    currentCaption,
-    currentPhotoFile,
     currentStep,
     currentStepLabel,
-    documents,
     draftDate,
-    draftReady,
-    draftSession,
-    emailPreview,
     expandedHistoryId,
-    formatCaptionWithAi,
-    generateDocuments,
-    goToDraftStep,
-    goToDoneStep,
-    handleDateChange,
-    hasGenerated,
-    hasScanned,
     hydrated,
     logs,
     latestSession,
-    markEmailSent,
     missingSession,
     openHistory,
     openSettings,
     pendingSessionsCount,
-    photoFiles,
-    photoIndex,
     saveWorkflow,
-    saveCaptionAndContinue,
     saveSeedReview,
     seedError,
     seedLogs,
@@ -64,15 +46,22 @@ export function VisaWorkflowEditorPage() {
     setRootFolderInput,
     showHistory,
     showSettings,
-    skipCurrentPhoto,
-    skipPhotoStep,
-    startNextSession,
     workflowId,
     toggleExpandedHistory,
     toggleSeedReviewDocType,
     updateConfigEmail,
-    updateCurrentCaption,
     runScan,
+    createVisaFolderFromSelectedDate,
+    selectedFromDate,
+    selectedToDate,
+    setSelectedFromDate,
+    setSelectedToDate,
+    rawFolderFiles,
+    rawFolderId,
+    rawFolderMissing,
+    visaFolderId,
+    visaFolderMissing,
+    visaFolderName,
     runSeedReview,
   } = useVisaWorkflow()
   const navigate = useNavigate()
@@ -158,12 +147,6 @@ export function VisaWorkflowEditorPage() {
               seedLogs={seedLogs}
               seedReview={seedReview}
               seedSource={seedSource}
-              rootFolderError={rootFolderError}
-              rootFolderInput={rootFolderInput}
-              selectedRootFolderId={selectedRootFolderId}
-              selectedRootFolderName={selectedRootFolderName}
-              onRootFolderInputChange={setRootFolderInput}
-              onSelectRootFolder={selectRootFolder}
               onRunSeedReview={runSeedReview}
               onSaveSeedReview={saveSeedReview}
               onSeedSourceChange={setSeedSource}
@@ -171,48 +154,24 @@ export function VisaWorkflowEditorPage() {
             />
           ) : (
             <WorkflowPanel
-              activeDocTypes={activeDocTypes}
-              config={config}
-              currentCaption={currentCaption}
-              currentPhotoFile={currentPhotoFile}
               currentStep={currentStep}
               currentStepLabel={currentStepLabel}
-              documents={documents}
-              draftDate={draftDate}
-              draftReady={draftReady}
-              draftSession={draftSession}
-              emailPreview={emailPreview}
-              goToDoneStep={goToDoneStep}
-              goToDraftStep={goToDraftStep}
-              handleDateChange={handleDateChange}
-              hasGenerated={hasGenerated}
-              hasScanned={hasScanned}
               latestSession={latestSession}
               logs={logs}
               onContinueAfterScan={continueAfterScan}
-              onCreateDraft={createDraft}
-              onFormatCaptionWithAi={formatCaptionWithAi}
-              onGenerateDocuments={generateDocuments}
-              onMarkEmailSent={markEmailSent}
               onOpenSettings={openSettings}
-              onSaveDraft={saveWorkflow}
-              onSaveCaptionAndContinue={saveCaptionAndContinue}
-              onSkipCurrentPhoto={skipCurrentPhoto}
-              onSkipPhotoStep={skipPhotoStep}
-              onSelectRootFolder={selectRootFolder}
-              onStartNextSession={() => {
-                startNextSession()
-                navigate({ to: "/workflow/new" })
-              }}
-              onUpdateCurrentCaption={updateCurrentCaption}
               onRunScan={runScan}
-              photoFiles={photoFiles}
-              photoIndex={photoIndex}
-              rootFolderError={rootFolderError}
-              rootFolderInput={rootFolderInput}
-              selectedRootFolderId={selectedRootFolderId}
-              selectedRootFolderName={selectedRootFolderName}
-              setRootFolderInput={setRootFolderInput}
+              onCreateVisaFolder={createVisaFolderFromSelectedDate}
+              selectedFromDate={selectedFromDate}
+              selectedToDate={selectedToDate}
+              setSelectedFromDate={setSelectedFromDate}
+              setSelectedToDate={setSelectedToDate}
+              rawFolderFiles={rawFolderFiles}
+              rawFolderId={rawFolderId}
+              rawFolderMissing={rawFolderMissing}
+              visaFolderId={visaFolderId}
+              visaFolderMissing={visaFolderMissing}
+              visaFolderName={visaFolderName}
             />
           )}
         </div>

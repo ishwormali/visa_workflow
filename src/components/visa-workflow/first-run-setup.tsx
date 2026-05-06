@@ -3,35 +3,22 @@ import { CheckCheck, FolderSearch } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { type DocTypeConfig } from "@/lib/visa-workflow"
 
-import { DriveRootFolderField } from "./steps/scan-step"
 import { LogPanel, StatusBadge } from "./steps/shared"
 
 export function FirstRunSetup({
-  rootFolderError,
-  rootFolderInput,
   seedError,
   seedLogs,
   seedReview,
   seedSource,
-  selectedRootFolderId,
-  selectedRootFolderName,
-  onRootFolderInputChange,
-  onSelectRootFolder,
   onRunSeedReview,
   onSaveSeedReview,
   onSeedSourceChange,
   onToggleSeedReviewDocType,
 }: {
-  rootFolderError: string
-  rootFolderInput: string
   seedError: string
   seedLogs: string[]
   seedReview: DocTypeConfig[]
   seedSource: string
-  selectedRootFolderId: string
-  selectedRootFolderName?: string
-  onRootFolderInputChange: (value: string) => void
-  onSelectRootFolder: () => Promise<void>
   onRunSeedReview: () => Promise<void>
   onSaveSeedReview: () => void
   onSeedSourceChange: (value: string) => void
@@ -47,18 +34,9 @@ export function FirstRunSetup({
       </h2>
       <p className="text-muted-foreground mt-3 max-w-3xl text-sm leading-6">
         Pull the latest Document list, parse the recurring document definitions,
-        and keep only the ones you want automated each month.
+        and keep only the ones you want automated each month. Configure Google
+        Drive root folder from Settings.
       </p>
-
-      <DriveRootFolderField
-        rootFolderError={rootFolderError}
-        rootFolderInput={rootFolderInput}
-        selectedRootFolderId={selectedRootFolderId}
-        selectedRootFolderName={selectedRootFolderName}
-        onRootFolderInputChange={onRootFolderInputChange}
-        onSelectRootFolder={onSelectRootFolder}
-        className="mt-8"
-      />
 
       <div className="border-border/70 bg-card/80 mt-8 rounded-[1.75rem] border p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">

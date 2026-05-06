@@ -1,120 +1,55 @@
 import { cn } from "@/lib/utils"
-import {
-  type DocTypeConfig,
-  type VisaConfig,
-  type VisaSessionRecord,
-  type WorkflowDocumentState,
-} from "@/lib/visa-workflow"
+import { type VisaSessionRecord } from "@/lib/visa-workflow"
+import { type GoogleDriveFile } from "@/lib/google-drive"
 
 import { formatDisplayDate, type WorkflowStep } from "./provider"
-import { DoneStep } from "./steps/done-step"
-import { DraftStep } from "./steps/draft-step"
-import { GenerateStep } from "./steps/generate-step"
-import { PhotoStep } from "./steps/photo-step"
 import { ScanStep } from "./steps/scan-step"
+import { Button } from "../ui/button"
+import { ChevronRight, Settings2 } from "lucide-react"
 
 const STEP_ITEMS = [
-  { id: 1, label: "Scan Drive" },
-  { id: 2, label: "Photo Captions" },
-  { id: 3, label: "Generate Docs" },
-  { id: 4, label: "Email Draft" },
-  { id: 5, label: "Done" },
+  { id: 1, label: "Select Date Range" },
+  { id: 2, label: "Visa Folder & Raw Docs" },
 ] as const
 
 export function WorkflowPanel({
-  activeDocTypes,
-  config,
-  currentCaption,
-  currentPhotoFile,
   currentStep,
   currentStepLabel,
-  documents,
-  draftDate,
-  draftReady,
-  draftSession,
-  emailPreview,
-  goToDoneStep,
-  goToDraftStep,
-  handleDateChange,
-  hasGenerated,
-  hasScanned,
   latestSession,
   logs,
   onContinueAfterScan,
-  onCreateDraft,
-  onFormatCaptionWithAi,
-  onGenerateDocuments,
-  onMarkEmailSent,
   onOpenSettings,
-  onSaveDraft,
-  onSaveCaptionAndContinue,
-  onSkipCurrentPhoto,
-  onSkipPhotoStep,
-  onSelectRootFolder,
-  onStartNextSession,
-  onUpdateCurrentCaption,
   onRunScan,
-  photoFiles,
-  photoIndex,
-  rootFolderError,
-  rootFolderInput,
-  selectedRootFolderId,
-  selectedRootFolderName,
-  setRootFolderInput,
+  onCreateVisaFolder,
+  selectedFromDate,
+  selectedToDate,
+  setSelectedFromDate,
+  setSelectedToDate,
+  rawFolderFiles,
+  rawFolderId,
+  rawFolderMissing,
+  visaFolderId,
+  visaFolderMissing,
+  visaFolderName,
 }: {
-  activeDocTypes: DocTypeConfig[]
-  config: VisaConfig
-  currentCaption:
-    | {
-        date: string
-        people: string
-        description: string
-        formattedCaption: string
-      }
-    | undefined
-  currentPhotoFile: string | undefined
   currentStep: WorkflowStep
   currentStepLabel: string
-  documents: WorkflowDocumentState[]
-  draftDate: string
-  draftReady: boolean
-  draftSession: VisaSessionRecord | undefined
-  emailPreview: string
-  goToDoneStep: () => void
-  goToDraftStep: () => void
-  handleDateChange: (
-    docTypeId: string,
-    key: "date" | "from" | "to",
-    value: string
-  ) => void
-  hasGenerated: boolean
-  hasScanned: boolean
   latestSession: VisaSessionRecord | undefined
-  logs: Record<1 | 3 | 4 | 5, string[]>
+  logs: Record<1 | 2 | 3 | 4 | 5, string[]>
   onContinueAfterScan: () => void
-  onCreateDraft: () => Promise<void>
-  onFormatCaptionWithAi: () => void
-  onGenerateDocuments: () => Promise<void>
-  onMarkEmailSent: () => Promise<void>
   onOpenSettings: () => void
-  onSaveDraft: () => void
-  onSaveCaptionAndContinue: () => void
-  onSkipCurrentPhoto: () => void
-  onSkipPhotoStep: () => void
-  onSelectRootFolder: (folderIdOrUrl?: string) => Promise<void>
-  onStartNextSession: () => void
-  onUpdateCurrentCaption: (
-    field: "date" | "people" | "description" | "formattedCaption" | "skipped",
-    value: string | boolean
-  ) => void
   onRunScan: () => Promise<void>
-  photoFiles: string[]
-  photoIndex: number
-  rootFolderError: string
-  rootFolderInput: string
-  selectedRootFolderId: string
-  selectedRootFolderName?: string
-  setRootFolderInput: (value: string) => void
+  onCreateVisaFolder: () => Promise<void>
+  selectedFromDate: string
+  selectedToDate: string
+  setSelectedFromDate: (value: string) => void
+  setSelectedToDate: (value: string) => void
+  rawFolderFiles: GoogleDriveFile[]
+  rawFolderId: string
+  rawFolderMissing: boolean
+  visaFolderId: string
+  visaFolderMissing: boolean
+  visaFolderName: string
 }) {
   return (
     <section className="panel overflow-hidden p-6 sm:p-8">
@@ -128,8 +63,8 @@ export function WorkflowPanel({
           </h2>
           <p className="text-muted-foreground mt-3 text-sm leading-6">
             {currentStep === 1
-              ? "Connect Google Drive if needed, choose the root folder, confirm the date defaults, and then run the scan."
-              : "The workflow now uses live Google Drive data while still keeping draft and sent sessions in persistent local history."}
+              ? "Set the workflow from and to dates first. The to date is used to build the Visa folder name lookup in the next step."
+              : "Find or create the Visa folder and inspect the raw folder files. File processing rules can be added in the next phase."}
           </p>
         </div>
         <div className="border-border/70 bg-secondary/80 text-secondary-foreground rounded-[1.5rem] border px-4 py-3 text-sm">
@@ -142,99 +77,84 @@ export function WorkflowPanel({
         </div>
       </div>
 
-      <StepProgress
-        currentStep={currentStep}
-        photoStepEnabled={Boolean(photoFiles.length)}
-      />
+      <StepProgress currentStep={currentStep} />
 
       {currentStep === 1 ? (
-        <ScanStep
-          activeDocTypes={activeDocTypes}
-          config={config}
-          documents={documents}
-          hasScanned={hasScanned}
-          latestSession={latestSession}
-          logs={logs[1]}
-          onContinue={onContinueAfterScan}
-          onEditSettings={onOpenSettings}
-          onHandleDateChange={handleDateChange}
-          onRunScan={onRunScan}
-          onSelectRootFolder={onSelectRootFolder}
-          photoFiles={photoFiles}
-          rootFolderError={rootFolderError}
-          rootFolderInput={rootFolderInput}
-          selectedRootFolderId={selectedRootFolderId}
-          selectedRootFolderName={selectedRootFolderName}
-          setRootFolderInput={setRootFolderInput}
-        />
+        <div className="mt-8 space-y-5">
+          <section className="border-border/70 bg-card/80 rounded-[1.75rem] border p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-muted-foreground text-xs tracking-[0.24em] uppercase">
+                  Date range
+                </p>
+                <h3 className="font-heading mt-1 text-xl font-semibold">
+                  Choose workflow dates
+                </h3>
+                <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-6">
+                  In settings, connect Drive and choose the root folder. Here,
+                  only pick the date range for this run.
+                </p>
+              </div>
+              <Button variant="outline" onClick={onOpenSettings}>
+                <Settings2 />
+                Open settings
+              </Button>
+            </div>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <label className="grid gap-2">
+                <span className="text-sm font-medium">From date</span>
+                <input
+                  type="date"
+                  className="field"
+                  value={selectedFromDate}
+                  onChange={(event) => setSelectedFromDate(event.target.value)}
+                />
+              </label>
+              <label className="grid gap-2">
+                <span className="text-sm font-medium">To date</span>
+                <input
+                  type="date"
+                  className="field"
+                  value={selectedToDate}
+                  onChange={(event) => setSelectedToDate(event.target.value)}
+                />
+              </label>
+            </div>
+          </section>
+
+          <div className="flex justify-end">
+            <Button onClick={onContinueAfterScan}>
+              Continue
+              <ChevronRight />
+            </Button>
+          </div>
+        </div>
       ) : null}
 
       {currentStep === 2 ? (
-        <PhotoStep
-          currentCaption={currentCaption}
-          currentPhotoFile={currentPhotoFile}
-          onFormatCaptionWithAi={onFormatCaptionWithAi}
-          onSaveCaptionAndContinue={onSaveCaptionAndContinue}
-          onSkipCurrentPhoto={onSkipCurrentPhoto}
-          onSkipStep={onSkipPhotoStep}
-          onUpdateCurrentCaption={onUpdateCurrentCaption}
-          photoFiles={photoFiles}
-          photoIndex={photoIndex}
-        />
-      ) : null}
-
-      {currentStep === 3 ? (
-        <GenerateStep
-          activeDocTypes={activeDocTypes}
-          documents={documents}
-          hasGenerated={hasGenerated}
-          logs={logs[3]}
-          onContinue={goToDraftStep}
-          onGenerateDocuments={onGenerateDocuments}
-        />
-      ) : null}
-
-      {currentStep === 4 ? (
-        <DraftStep
-          draftDate={draftDate}
-          draftReady={draftReady}
-          emailPreview={emailPreview}
-          hasGenerated={hasGenerated}
-          logs={logs[4]}
-          onContinue={goToDoneStep}
-          onCreateDraft={onCreateDraft}
-        />
-      ) : null}
-
-      {currentStep === 5 ? (
-        <DoneStep
-          draftDate={draftDate}
-          draftReady={draftReady}
-          draftSession={draftSession}
-          logs={logs[5]}
-          onMarkEmailSent={onMarkEmailSent}
-          onSaveDraft={onSaveDraft}
-          onStartNextSession={onStartNextSession}
+        <ScanStep
+          logs={logs[2]}
+          onRunScan={onRunScan}
+          onCreateVisaFolder={onCreateVisaFolder}
+          rawFolderFiles={rawFolderFiles}
+          rawFolderId={rawFolderId}
+          rawFolderMissing={rawFolderMissing}
+          visaFolderId={visaFolderId}
+          visaFolderMissing={visaFolderMissing}
+          visaFolderName={visaFolderName}
         />
       ) : null}
     </section>
   )
 }
 
-function StepProgress({
-  currentStep,
-  photoStepEnabled,
-}: {
-  currentStep: WorkflowStep
-  photoStepEnabled: boolean
-}) {
+function StepProgress({ currentStep }: { currentStep: WorkflowStep }) {
   return (
-    <div className="mt-8 grid gap-3 sm:grid-cols-5">
+    <div className="mt-8 grid gap-3 sm:grid-cols-2">
       {STEP_ITEMS.map((step) => {
         const isCurrent = currentStep === step.id
         const isComplete = currentStep > step.id
-        const isSkippedPhotoStep =
-          step.id === 2 && !photoStepEnabled && currentStep > 2
 
         return (
           <div
@@ -253,9 +173,6 @@ function StepProgress({
               Step {step.id}
             </p>
             <p className="mt-2 font-medium">{step.label}</p>
-            {isSkippedPhotoStep ? (
-              <p className="mt-1 text-xs">Skipped</p>
-            ) : null}
           </div>
         )
       })}
