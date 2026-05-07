@@ -1,20 +1,20 @@
-import type { ReactNode } from "react"
+import type { ReactNode } from "react";
 
-import { VisaAccentText, VisaDimText, VisaMonoFileText } from "./primitives"
+import { VisaAccentText, VisaDimText, VisaMonoFileText } from "./primitives";
 
-export type DocCategory = "upload" | "gdoc" | "gdoc_photos"
-export type DateFormat = "single" | "range"
+export type DocCategory = "upload" | "gdoc" | "gdoc_photos";
+export type DateFormat = "single" | "range";
 
 export type DocType = {
-  id: string
-  number: number
-  label: string
-  category: DocCategory
-  dateFormat: DateFormat
-  active: boolean
-  matchPattern?: string
-  note?: string
-}
+  id: string;
+  number: number;
+  label: string;
+  category: DocCategory;
+  dateFormat: DateFormat;
+  active: boolean;
+  matchPattern?: string;
+  note?: string;
+};
 
 export const MOCK_DOC_TYPES: DocType[] = [
   {
@@ -98,26 +98,26 @@ export const MOCK_DOC_TYPES: DocType[] = [
     active: true,
     matchPattern: "^8[\\s\\-].*[Pp]hotograph",
   },
-]
+];
 
-export const ACTIVE_DOCS = MOCK_DOC_TYPES.filter((d) => d.active)
+export const ACTIVE_DOCS = MOCK_DOC_TYPES.filter((d) => d.active);
 
-export type DateValue = { from?: string; to?: string; single?: string }
-export type DocDates = Record<string, DateValue>
+export type DateValue = { from?: string; to?: string; single?: string };
+export type DocDates = Record<string, DateValue>;
 
 export const LAST_DATES: DocDates = {
   doc_4_upload_savers: { from: "2026-01-01", to: "2026-04-30" },
   doc_4_upload_smart: { from: "2026-01-01", to: "2026-04-30" },
   doc_7_gdoc: { from: "2026-01-01", to: "2026-04-30" },
   doc_8_gdoc_photos: { single: "2026-04-22" },
-}
+};
 
 export type ScannedFile = {
-  name: string
-  size: string
-  matchedTo: string
-  detectedAt: number
-}
+  name: string;
+  size: string;
+  matchedTo: string;
+  detectedAt: number;
+};
 
 export const SCANNED_FILES: ScannedFile[] = [
   {
@@ -162,18 +162,18 @@ export const SCANNED_FILES: ScannedFile[] = [
     matchedTo: "doc_8_gdoc_photos",
     detectedAt: 7,
   },
-]
+];
 
 export type Photo = {
-  id: string
-  file: string
-  label: string
-  date: string
-  people: string
-  description: string
-  formatted: string
-  bg: string
-}
+  id: string;
+  file: string;
+  label: string;
+  date: string;
+  people: string;
+  description: string;
+  formatted: string;
+  bg: string;
+};
 
 export const PHOTOS: Photo[] = [
   {
@@ -194,8 +194,7 @@ export const PHOTOS: Photo[] = [
     date: "2026-03-08",
     people: "Aman, Priya, Rohan",
     description: "Hiking Helvellyn with our friend Rohan",
-    formatted:
-      "08-March-2026: Aman, Priya, and Rohan hiking Helvellyn in the Lake District",
+    formatted: "08-March-2026: Aman, Priya, and Rohan hiking Helvellyn in the Lake District",
     bg: "oklch(72% 0.06 150)",
   },
   {
@@ -216,29 +215,28 @@ export const PHOTOS: Photo[] = [
     date: "2026-04-22",
     people: "Priya, Aman, Priya's parents",
     description: "Priya's parents visiting us from Pune",
-    formatted:
-      "22-April-2026: Priya, Aman and Priya's parents during their visit from Pune",
+    formatted: "22-April-2026: Priya, Aman and Priya's parents during their visit from Pune",
     bg: "oklch(72% 0.05 240)",
   },
-]
+];
 
 export type SessionDoc = {
-  number: number
-  label: string
-  range: string
-  files: string[]
-}
+  number: number;
+  label: string;
+  range: string;
+  files: string[];
+};
 
 export type PastSession = {
-  id: string
-  submittedAt: string
-  submittedAtPretty: string
-  folderName: string
-  subject: string
-  status: "sent" | "draft"
-  filesMoved: boolean
-  docs: SessionDoc[]
-}
+  id: string;
+  submittedAt: string;
+  submittedAtPretty: string;
+  folderName: string;
+  subject: string;
+  status: "sent" | "draft";
+  filesMoved: boolean;
+  docs: SessionDoc[];
+};
 
 export const PAST_SESSIONS: PastSession[] = [
   {
@@ -346,24 +344,24 @@ export const PAST_SESSIONS: PastSession[] = [
       },
     ],
   },
-]
+];
 
 export type EmailConfig = {
-  to: string
-  cc: string
-  greeting: string
-  signoff: string
-}
+  to: string;
+  cc: string;
+  greeting: string;
+  signoff: string;
+};
 
 export const EMAIL_CONFIG: EmailConfig = {
   to: "documents@visa-coordinator.example",
   cc: "priya.sharma@example.com",
   greeting: "team",
   signoff: "Aman & Priya",
-}
+};
 
-export type LogMark = "ok" | "warn" | "err" | "api" | "·"
-export type LogLine = { t: string; m: LogMark; text: ReactNode }
+export type LogMark = "ok" | "warn" | "err" | "api" | "·";
+export type LogLine = { t: string; m: LogMark; text: ReactNode };
 
 export const SCAN_LOG: LogLine[] = [
   {
@@ -376,8 +374,7 @@ export const SCAN_LOG: LogLine[] = [
     m: "ok",
     text: (
       <>
-        Found root folder{" "}
-        <VisaMonoFileText>Documents requested</VisaMonoFileText>{" "}
+        Found root folder <VisaMonoFileText>Documents requested</VisaMonoFileText>{" "}
         <VisaDimText>(id: 1aB2c…fghi)</VisaDimText>
       </>
     ),
@@ -407,8 +404,7 @@ export const SCAN_LOG: LogLine[] = [
     m: "ok",
     text: (
       <>
-        <VisaMonoFileText>4 - savers - Apr 2026.pdf</VisaMonoFileText> → doc 4
-        savers
+        <VisaMonoFileText>4 - savers - Apr 2026.pdf</VisaMonoFileText> → doc 4 savers
       </>
     ),
   },
@@ -417,8 +413,7 @@ export const SCAN_LOG: LogLine[] = [
     m: "ok",
     text: (
       <>
-        <VisaMonoFileText>4 - smart account - Apr 2026.pdf</VisaMonoFileText> →
-        doc 4 smart
+        <VisaMonoFileText>4 - smart account - Apr 2026.pdf</VisaMonoFileText> → doc 4 smart
       </>
     ),
   },
@@ -427,8 +422,7 @@ export const SCAN_LOG: LogLine[] = [
     m: "ok",
     text: (
       <>
-        <VisaMonoFileText>7 - whatsapp jan-apr.txt</VisaMonoFileText> → doc 7
-        chat history
+        <VisaMonoFileText>7 - whatsapp jan-apr.txt</VisaMonoFileText> → doc 7 chat history
       </>
     ),
   },
@@ -442,12 +436,11 @@ export const SCAN_LOG: LogLine[] = [
     m: "·",
     text: (
       <>
-        <VisaAccentText>Scan complete.</VisaAccentText> 4/4 active types
-        matched.
+        <VisaAccentText>Scan complete.</VisaAccentText> 4/4 active types matched.
       </>
     ),
   },
-]
+];
 
 export const GENERATE_LOG: LogLine[] = [
   {
@@ -460,8 +453,7 @@ export const GENERATE_LOG: LogLine[] = [
     m: "ok",
     text: (
       <>
-        Created session folder{" "}
-        <VisaMonoFileText>Visa-May-2026</VisaMonoFileText>
+        Created session folder <VisaMonoFileText>Visa-May-2026</VisaMonoFileText>
       </>
     ),
   },
@@ -489,8 +481,7 @@ export const GENERATE_LOG: LogLine[] = [
     m: "ok",
     text: (
       <>
-        Renamed{" "}
-        <VisaMonoFileText>4 - smart account - Apr 2026.pdf</VisaMonoFileText>
+        Renamed <VisaMonoFileText>4 - smart account - Apr 2026.pdf</VisaMonoFileText>
       </>
     ),
   },
@@ -538,7 +529,7 @@ export const GENERATE_LOG: LogLine[] = [
       </>
     ),
   },
-]
+];
 
 export const EMAIL_LOG: LogLine[] = [
   {
@@ -609,7 +600,7 @@ export const EMAIL_LOG: LogLine[] = [
       </>
     ),
   },
-]
+];
 
 export const DONE_LOG: LogLine[] = [
   {
@@ -634,11 +625,7 @@ export const DONE_LOG: LogLine[] = [
   {
     t: "14:22:15",
     m: "·",
-    text: (
-      <VisaDimText>
-        Moving 4 files from session folder → Documents requested…
-      </VisaDimText>
-    ),
+    text: <VisaDimText>Moving 4 files from session folder → Documents requested…</VisaDimText>,
   },
   {
     t: "14:22:16",
@@ -659,4 +646,4 @@ export const DONE_LOG: LogLine[] = [
       </>
     ),
   },
-]
+];

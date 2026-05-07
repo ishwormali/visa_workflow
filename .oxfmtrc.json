@@ -1,11 +1,8 @@
 {
-  "printWidth": 80,
-  "tabWidth": 2,
-  "useTabs": false,
-  "semi": false,
-  "singleQuote": false,
-  "trailingComma": "es5",
-  "sortTailwindcss": true,
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "arrowParens": "always",
+  "bracketSpacing": true,
+  "endOfLine": "lf",
   "ignorePatterns": [
     ".agents",
     ".claude",
@@ -19,6 +16,23 @@
     ".output",
     ".wrangler",
     "pnpm-lock.yaml",
-    "public"
-  ]
+    "public",
+    "src/routeTree.gen.ts"
+  ],
+  "printWidth": 100,
+  "quoteProps": "as-needed",
+  "semi": true,
+  "singleQuote": false,
+  "sortImports": {
+    "internalPattern": ["@/"],
+    "newlinesBetween": true,
+    "partitionByComment": true
+  },
+  "sortPackageJson": true,
+  "sortTailwindcss": {
+    "stylesheet": "./src/styles.css"
+  },
+  "tabWidth": 2,
+  "trailingComma": "all",
+  "useTabs": false
 }

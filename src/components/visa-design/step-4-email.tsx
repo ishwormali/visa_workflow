@@ -1,13 +1,13 @@
-import { ACTIVE_DOCS, EMAIL_LOG, type DocDates, type EmailConfig } from "./data"
-import { VisaButton, VisaButtonRow } from "./primitives"
-import { Console, StepHead, formatDate, formatRange } from "./ui-bits"
+import { ACTIVE_DOCS, EMAIL_LOG, type DocDates, type EmailConfig } from "./data";
+import { VisaButton, VisaButtonRow } from "./primitives";
+import { Console, StepHead, formatDate, formatRange } from "./ui-bits";
 
 type Props = {
-  docDates: DocDates
-  emailConfig: EmailConfig
-  onBack: () => void
-  onNext: () => void
-}
+  docDates: DocDates;
+  emailConfig: EmailConfig;
+  onBack: () => void;
+  onNext: () => void;
+};
 
 const ITEMS = [
   {
@@ -22,20 +22,20 @@ const ITEMS = [
   },
   { id: "doc_7_gdoc", file: "7-whatsapp-history.gdoc", size: "96 KB" },
   { id: "doc_8_gdoc_photos", file: "8-photographs.gdoc", size: "10.4 MB" },
-]
+];
 
 export function Step4Email({ docDates, emailConfig, onBack, onNext }: Props) {
-  const today = "2026-05-05"
-  const subject = `Visa Application Documents - ${formatDate(today).replace(/Apr/, "April").replace(/May/, "May")}`
+  const today = "2026-05-05";
+  const subject = `Visa Application Documents - ${formatDate(today).replace(/Apr/, "April").replace(/May/, "May")}`;
 
   const dateLabel = (id: string) => {
-    const d = ACTIVE_DOCS.find((x) => x.id === id)
-    if (!d) return ""
-    const v = docDates[id] || {}
-    if (d.category === "gdoc_photos") return "(4 photos)"
-    if (d.dateFormat === "range") return `(${formatRange(v.from, v.to)})`
-    return v.single ? `(${formatDate(v.single)})` : ""
-  }
+    const d = ACTIVE_DOCS.find((x) => x.id === id);
+    if (!d) return "";
+    const v = docDates[id] || {};
+    if (d.category === "gdoc_photos") return "(4 photos)";
+    if (d.dateFormat === "range") return `(${formatRange(v.from, v.to)})`;
+    return v.single ? `(${formatDate(v.single)})` : "";
+  };
 
   return (
     <>
@@ -49,24 +49,22 @@ export function Step4Email({ docDates, emailConfig, onBack, onNext }: Props) {
         desc="Created in your Drafts folder. Review before sending — the prototype won't send for you."
       />
 
-      <div className="overflow-hidden rounded-[var(--vd-radius-lg)] border border-[var(--rule)] bg-[var(--paper)] text-[13.5px] leading-[1.55]">
-        <dl className="m-0 grid grid-cols-[60px_1fr] gap-x-3 gap-y-1 border-b border-[var(--rule)] px-[18px] py-[14px] text-xs">
-          <dt className="pt-[3px] [font-family:var(--font-mono)] text-[10px] tracking-[0.06em] text-[var(--ink-3)] uppercase">
+      <div className="overflow-hidden rounded-(--vd-radius-lg) border border-(--rule) bg-(--paper) text-[13.5px] leading-[1.55]">
+        <dl className="m-0 grid grid-cols-[60px_1fr] gap-x-3 gap-y-1 border-b border-(--rule) px-4.5 py-3.5 text-xs">
+          <dt className="pt-0.75 font-mono text-[10px] tracking-[0.06em] text-(--ink-3) uppercase">
             To
           </dt>
-          <dd className="m-0 text-[var(--ink)]">{emailConfig.to}</dd>
-          <dt className="pt-[3px] [font-family:var(--font-mono)] text-[10px] tracking-[0.06em] text-[var(--ink-3)] uppercase">
+          <dd className="m-0 text-(--ink)">{emailConfig.to}</dd>
+          <dt className="pt-0.75 font-mono text-[10px] tracking-[0.06em] text-(--ink-3) uppercase">
             Cc
           </dt>
-          <dd className="m-0 text-[var(--ink)]">{emailConfig.cc}</dd>
-          <dt className="pt-[3px] [font-family:var(--font-mono)] text-[10px] tracking-[0.06em] text-[var(--ink-3)] uppercase">
+          <dd className="m-0 text-(--ink)">{emailConfig.cc}</dd>
+          <dt className="pt-0.75 font-mono text-[10px] tracking-[0.06em] text-(--ink-3) uppercase">
             Subject
           </dt>
-          <dd className="m-0 text-sm font-medium text-[var(--ink)]">
-            {subject}
-          </dd>
+          <dd className="m-0 text-sm font-medium text-(--ink)">{subject}</dd>
         </dl>
-        <div className="px-[18px] py-[18px] whitespace-pre-wrap text-[var(--ink)]">
+        <div className="px-4.5 py-4.5 whitespace-pre-wrap text-(--ink)">
           {`Hi ${emailConfig.greeting},
 
 Hope you guys are doing well.
@@ -74,38 +72,33 @@ Please find the attachments below:
 
 `}
           {ITEMS.map((it) => {
-            const d = ACTIVE_DOCS.find((x) => x.id === it.id)
-            if (!d) return null
+            const d = ACTIVE_DOCS.find((x) => x.id === it.id);
+            if (!d) return null;
             return (
-              <div
-                className="[font-family:var(--font-mono)] text-xs text-[var(--ink-2)]"
-                key={it.id}
-              >
-                <span className="font-medium text-[var(--accent-ink)]">
-                  * {d.number} -{" "}
-                </span>
+              <div className="font-mono text-xs text-(--ink-2)" key={it.id}>
+                <span className="font-medium text-(--accent-ink)">* {d.number} - </span>
                 <span>{d.label} </span>
-                <span className="text-[var(--ink-3)]">{dateLabel(it.id)}</span>
+                <span className="text-(--ink-3)">{dateLabel(it.id)}</span>
               </div>
-            )
+            );
           })}
           {`
 --
 Best Regards,
 ${emailConfig.signoff}`}
         </div>
-        <div className="flex flex-col gap-1 border-t border-[var(--rule)] bg-[var(--paper-2)] px-[18px] py-3">
-          <div className="mb-1 [font-family:var(--font-mono)] text-[10px] tracking-[0.08em] text-[var(--ink-3)] uppercase">
+        <div className="flex flex-col gap-1 border-t border-(--rule) bg-(--paper-2) px-4.5 py-3">
+          <div className="mb-1 font-mono text-[10px] tracking-[0.08em] text-(--ink-3) uppercase">
             Attachments · {ITEMS.length}
           </div>
           {ITEMS.map((it) => (
             <div
-              className="flex items-center gap-2 [font-family:var(--font-mono)] text-[11.5px] text-[var(--ink-2)]"
+              className="flex items-center gap-2 font-mono text-[11.5px] text-(--ink-2)"
               key={it.file}
             >
-              <span className="relative h-[18px] w-4 shrink-0 rounded-[2px] border border-[var(--rule-2)] bg-[var(--paper-3)] after:absolute after:top-0 after:right-0 after:h-[5px] after:w-[5px] after:border-b after:border-l after:border-[var(--rule-2)] after:bg-[var(--paper)] after:content-['']" />
+              <span className="relative h-4.5 w-4 shrink-0 rounded-xs border border-(--rule-2) bg-(--paper-3) after:absolute after:top-0 after:right-0 after:h-1.25 after:w-1.25 after:border-b after:border-l after:border-(--rule-2) after:bg-(--paper) after:content-['']" />
               <span>{it.file}</span>
-              <span className="ml-auto text-[var(--ink-4)]">{it.size}</span>
+              <span className="ml-auto text-(--ink-4)">{it.size}</span>
             </div>
           ))}
         </div>
@@ -122,5 +115,5 @@ ${emailConfig.signoff}`}
         </VisaButton>
       </VisaButtonRow>
     </>
-  )
+  );
 }

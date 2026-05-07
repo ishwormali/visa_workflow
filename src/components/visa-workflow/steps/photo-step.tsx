@@ -1,15 +1,15 @@
-import { ChevronRight, Sparkles } from "lucide-react"
+import { ChevronRight, Sparkles } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 
-import { Field } from "./shared"
+import { Field } from "./shared";
 
 type PhotoCaptionDraft = {
-  date: string
-  people: string
-  description: string
-  formattedCaption: string
-}
+  date: string;
+  people: string;
+  description: string;
+  formattedCaption: string;
+};
 
 export function PhotoStep({
   currentCaption,
@@ -22,29 +22,29 @@ export function PhotoStep({
   photoFiles,
   photoIndex,
 }: {
-  currentCaption: PhotoCaptionDraft | undefined
-  currentPhotoFile: string | undefined
-  onFormatCaptionWithAi: () => void
-  onSaveCaptionAndContinue: () => void
-  onSkipCurrentPhoto: () => void
-  onSkipStep: () => void
+  currentCaption: PhotoCaptionDraft | undefined;
+  currentPhotoFile: string | undefined;
+  onFormatCaptionWithAi: () => void;
+  onSaveCaptionAndContinue: () => void;
+  onSkipCurrentPhoto: () => void;
+  onSkipStep: () => void;
   onUpdateCurrentCaption: (
     field: "date" | "people" | "description" | "formattedCaption" | "skipped",
-    value: string | boolean
-  ) => void
-  photoFiles: string[]
-  photoIndex: number
+    value: string | boolean,
+  ) => void;
+  photoFiles: string[];
+  photoIndex: number;
 }) {
   return (
     <div className="mt-8 space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm text-muted-foreground">
             {photoFiles.length
               ? `Photo ${photoIndex + 1} of ${photoFiles.length}`
               : "No photos detected."}
           </p>
-          <h3 className="font-heading mt-1 text-2xl font-semibold">
+          <h3 className="mt-1 font-heading text-2xl font-semibold">
             {currentPhotoFile ?? "Relationship photos"}
           </h3>
         </div>
@@ -53,9 +53,9 @@ export function PhotoStep({
         </Button>
       </div>
 
-      <div className="bg-secondary h-2 overflow-hidden rounded-full">
+      <div className="h-2 overflow-hidden rounded-full bg-secondary">
         <div
-          className="bg-primary h-full rounded-full transition-[width]"
+          className="h-full rounded-full bg-primary transition-[width]"
           style={{
             width: `${photoFiles.length ? ((photoIndex + 1) / photoFiles.length) * 100 : 0}%`,
           }}
@@ -64,25 +64,21 @@ export function PhotoStep({
 
       {currentCaption ? (
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
-          <div className="border-border/70 bg-card/80 rounded-[1.75rem] border p-5">
+          <div className="rounded-[1.75rem] border border-border/70 bg-card/80 p-5">
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Date">
                 <input
                   type="date"
                   className="field"
                   value={currentCaption.date}
-                  onChange={(event) =>
-                    onUpdateCurrentCaption("date", event.target.value)
-                  }
+                  onChange={(event) => onUpdateCurrentCaption("date", event.target.value)}
                 />
               </Field>
               <Field label="People">
                 <input
                   className="field"
                   value={currentCaption.people}
-                  onChange={(event) =>
-                    onUpdateCurrentCaption("people", event.target.value)
-                  }
+                  onChange={(event) => onUpdateCurrentCaption("people", event.target.value)}
                   placeholder="Names in the photo"
                 />
               </Field>
@@ -91,9 +87,7 @@ export function PhotoStep({
               <textarea
                 className="field min-h-32 resize-y"
                 value={currentCaption.description}
-                onChange={(event) =>
-                  onUpdateCurrentCaption("description", event.target.value)
-                }
+                onChange={(event) => onUpdateCurrentCaption("description", event.target.value)}
                 placeholder="Where you were, why it matters, what happened"
               />
             </Field>
@@ -112,24 +106,20 @@ export function PhotoStep({
             </div>
           </div>
 
-          <div className="border-border/70 bg-secondary/40 rounded-[1.75rem] border p-5">
-            <p className="text-muted-foreground text-xs tracking-[0.24em] uppercase">
-              Preview
-            </p>
-            <h4 className="font-heading mt-2 text-xl font-semibold">
-              Formatted caption
-            </h4>
-            <p className="border-border/70 bg-background/80 text-foreground mt-4 rounded-[1.5rem] border p-4 text-sm leading-7">
+          <div className="rounded-[1.75rem] border border-border/70 bg-secondary/40 p-5">
+            <p className="text-xs tracking-[0.24em] text-muted-foreground uppercase">Preview</p>
+            <h4 className="mt-2 font-heading text-xl font-semibold">Formatted caption</h4>
+            <p className="mt-4 rounded-[1.5rem] border border-border/70 bg-background/80 p-4 text-sm leading-7 text-foreground">
               {currentCaption.formattedCaption ||
                 "Use AI format to preview the caption text saved into the Google Doc."}
             </p>
           </div>
         </div>
       ) : (
-        <div className="border-border/70 bg-card/80 text-muted-foreground rounded-[1.5rem] border p-5 text-sm">
+        <div className="rounded-[1.5rem] border border-border/70 bg-card/80 p-5 text-sm text-muted-foreground">
           No detected photos require captions. Continue to generation.
         </div>
       )}
     </div>
-  )
+  );
 }

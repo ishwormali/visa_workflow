@@ -1,9 +1,8 @@
 {
-  "plugins": ["typescript", "react"],
-  "settings": {
-    "react": {
-      "version": "19"
-    }
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error"
   },
   "ignorePatterns": [
     ".agents",
@@ -19,5 +18,26 @@
     ".wrangler",
     "src/routeTree.gen.ts"
   ],
-  "rules": {}
+  "plugins": ["oxc", "unicorn", "typescript", "react", "import", "promise", "jsx-a11y"],
+  "rules": {
+    "eqeqeq": "error",
+    "no-console": "warn",
+    "no-debugger": "error",
+    "no-duplicate-imports": "warn",
+    "no-implicit-coercion": "warn",
+    "prefer-const": ["warn", { "ignoreReadBeforeAssign": true }],
+    "jsx-a11y/anchor-is-valid": "warn",
+    "jsx-a11y/click-events-have-key-events": "warn",
+    "jsx-a11y/heading-has-content": "warn",
+    "jsx-a11y/label-has-associated-control": "warn",
+    "jsx-a11y/no-static-element-interactions": "warn",
+    "react/react-in-jsx-scope": "off",
+    "unicorn/no-array-sort": "warn",
+    "unicorn/prefer-add-event-listener": "warn"
+  },
+  "settings": {
+    "react": {
+      "version": "19"
+    }
+  }
 }

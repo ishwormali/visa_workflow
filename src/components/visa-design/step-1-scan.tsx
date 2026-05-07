@@ -1,18 +1,4 @@
-import {
-  ACTIVE_DOCS,
-  SCANNED_FILES,
-  SCAN_LOG,
-  type DocDates,
-  type ScannedFile,
-} from "./data"
-import {
-  Badge,
-  Console,
-  DocCategoryLabel,
-  StepHead,
-  formatDate,
-  formatRange,
-} from "./ui-bits"
+import { ACTIVE_DOCS, SCANNED_FILES, SCAN_LOG, type DocDates, type ScannedFile } from "./data";
 import {
   DocumentFile,
   DocumentFiles,
@@ -20,7 +6,7 @@ import {
   DocumentMeta,
   DocumentMetaTag,
   DocumentRow,
-} from "./document-list"
+} from "./document-list";
 import {
   VisaButton,
   VisaButtonRow,
@@ -29,20 +15,21 @@ import {
   VisaPanelBody,
   VisaPanelHeader,
   VisaPanelTitle,
-} from "./primitives"
+} from "./primitives";
+import { Badge, Console, DocCategoryLabel, StepHead, formatDate, formatRange } from "./ui-bits";
 
 type Props = {
-  docDates: DocDates
-  onBack: () => void
-  onNext: () => void
-}
+  docDates: DocDates;
+  onBack: () => void;
+  onNext: () => void;
+};
 
 export function Step1Scan({ docDates, onBack, onNext }: Props) {
-  const detectedByDoc: Record<string, ScannedFile[]> = {}
+  const detectedByDoc: Record<string, ScannedFile[]> = {};
   SCANNED_FILES.forEach((f) => {
-    detectedByDoc[f.matchedTo] = detectedByDoc[f.matchedTo] || []
-    detectedByDoc[f.matchedTo].push(f)
-  })
+    detectedByDoc[f.matchedTo] = detectedByDoc[f.matchedTo] || [];
+    detectedByDoc[f.matchedTo].push(f);
+  });
 
   return (
     <>
@@ -55,26 +42,22 @@ export function Step1Scan({ docDates, onBack, onNext }: Props) {
         }
         desc={
           <>
-            Searching <VisaMonoText>Documents requested</VisaMonoText>{" "}
-            recursively and matching files to active doc types via regex.
+            Searching <VisaMonoText>Documents requested</VisaMonoText> recursively and matching
+            files to active doc types via regex.
           </>
         }
       />
 
       <VisaPanel>
         <VisaPanelHeader>
-          <VisaPanelTitle>
-            Detected — {SCANNED_FILES.length} files
-          </VisaPanelTitle>
-          <VisaMonoText className="text-[var(--ink-3)]">
-            4/4 doc types matched
-          </VisaMonoText>
+          <VisaPanelTitle>Detected — {SCANNED_FILES.length} files</VisaPanelTitle>
+          <VisaMonoText className="text-(--ink-3)">4/4 doc types matched</VisaMonoText>
         </VisaPanelHeader>
         <VisaPanelBody tight>
           <DocumentList>
             {ACTIVE_DOCS.map((d) => {
-              const files = detectedByDoc[d.id] || []
-              const v = docDates[d.id] || {}
+              const files = detectedByDoc[d.id] || [];
+              const v = docDates[d.id] || {};
               return (
                 <DocumentRow
                   badge={
@@ -92,14 +75,10 @@ export function Step1Scan({ docDates, onBack, onNext }: Props) {
                         <DocCategoryLabel cat={d.category} />
                       </DocumentMetaTag>
                       {d.dateFormat === "range" && v.from && (
-                        <DocumentMetaTag>
-                          {formatRange(v.from, v.to)}
-                        </DocumentMetaTag>
+                        <DocumentMetaTag>{formatRange(v.from, v.to)}</DocumentMetaTag>
                       )}
                       {d.dateFormat === "single" && v.single && (
-                        <DocumentMetaTag>
-                          {formatDate(v.single)}
-                        </DocumentMetaTag>
+                        <DocumentMetaTag>{formatDate(v.single)}</DocumentMetaTag>
                       )}
                       {d.category === "gdoc_photos" && (
                         <DocumentMetaTag>dates per-photo</DocumentMetaTag>
@@ -119,7 +98,7 @@ export function Step1Scan({ docDates, onBack, onNext }: Props) {
                     ) : null
                   }
                 />
-              )
+              );
             })}
           </DocumentList>
         </VisaPanelBody>
@@ -136,5 +115,5 @@ export function Step1Scan({ docDates, onBack, onNext }: Props) {
         </VisaButton>
       </VisaButtonRow>
     </>
-  )
+  );
 }

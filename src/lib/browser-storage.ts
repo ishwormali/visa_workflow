@@ -1,45 +1,45 @@
 declare global {
   interface Window {
-    storage?: Storage
+    storage?: Storage;
   }
 }
 
 function getBrowserStorage() {
   if (typeof window === "undefined") {
-    return undefined
+    return undefined;
   }
 
-  window.storage ??= window.localStorage
+  window.storage ??= window.localStorage;
 
-  return window.storage
+  return window.storage;
 }
 
 export function readStoredJson<T>(key: string, fallback: T) {
-  const storage = getBrowserStorage()
+  const storage = getBrowserStorage();
 
   if (!storage) {
-    return fallback
+    return fallback;
   }
 
-  const rawValue = storage.getItem(key)
+  const rawValue = storage.getItem(key);
 
   if (!rawValue) {
-    return fallback
+    return fallback;
   }
 
   try {
-    return JSON.parse(rawValue) as T
+    return JSON.parse(rawValue) as T;
   } catch {
-    return fallback
+    return fallback;
   }
 }
 
 export function writeStoredJson<T>(key: string, value: T) {
-  const storage = getBrowserStorage()
+  const storage = getBrowserStorage();
 
   if (!storage) {
-    return
+    return;
   }
 
-  storage.setItem(key, JSON.stringify(value))
+  storage.setItem(key, JSON.stringify(value));
 }

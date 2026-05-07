@@ -1,13 +1,13 @@
-import { CheckCheck, RefreshCcw } from "lucide-react"
+import { CheckCheck, RefreshCcw } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   createEmailSubject,
   createSessionFolderName,
   type VisaSessionRecord,
-} from "@/lib/visa-workflow"
+} from "@/lib/visa-workflow";
 
-import { LogPanel, SummaryTile } from "./shared"
+import { LogPanel, SummaryTile } from "./shared";
 
 export function DoneStep({
   draftDate,
@@ -18,13 +18,13 @@ export function DoneStep({
   onSaveDraft,
   onStartNextSession,
 }: {
-  draftDate: string
-  draftReady: boolean
-  draftSession: VisaSessionRecord | undefined
-  logs: string[]
-  onMarkEmailSent: () => Promise<void>
-  onSaveDraft: () => void
-  onStartNextSession: () => void
+  draftDate: string;
+  draftReady: boolean;
+  draftSession: VisaSessionRecord | undefined;
+  logs: string[];
+  onMarkEmailSent: () => Promise<void>;
+  onSaveDraft: () => void;
+  onStartNextSession: () => void;
 }) {
   return (
     <div className="mt-8 space-y-5">
@@ -37,16 +37,12 @@ export function DoneStep({
           label="Email subject"
           value={draftSession?.emailSubject ?? createEmailSubject(draftDate)}
         />
-        <SummaryTile
-          label="Move files"
-          value={draftSession?.filesMoved ? "Yes" : "Pending"}
-        />
+        <SummaryTile label="Move files" value={draftSession?.filesMoved ? "Yes" : "Pending"} />
       </div>
-      <div className="border-border/70 bg-card/80 rounded-[1.75rem] border p-5">
-        <p className="text-muted-foreground text-sm leading-6">
-          Send the Gmail draft manually, then close the session to rename the
-          Drive folder, move generated files back to the root, and persist the
-          final sent record.
+      <div className="rounded-[1.75rem] border border-border/70 bg-card/80 p-5">
+        <p className="text-sm leading-6 text-muted-foreground">
+          Send the Gmail draft manually, then close the session to rename the Drive folder, move
+          generated files back to the root, and persist the final sent record.
         </p>
         <div className="mt-5 flex flex-wrap gap-2">
           <Button variant="outline" onClick={onSaveDraft}>
@@ -68,5 +64,5 @@ export function DoneStep({
         emptyMessage="Finalization activity will appear here."
       />
     </div>
-  )
+  );
 }

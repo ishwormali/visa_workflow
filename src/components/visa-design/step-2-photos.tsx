@@ -1,6 +1,6 @@
-import { useState } from "react"
+import { useState } from "react";
 
-import { PHOTOS } from "./data"
+import { PHOTOS } from "./data";
 import {
   VisaButton,
   VisaButtonRow,
@@ -14,24 +14,24 @@ import {
   VisaPanelHeader,
   VisaPanelTitle,
   VisaTextarea,
-} from "./primitives"
-import { StepHead } from "./ui-bits"
+} from "./primitives";
+import { StepHead } from "./ui-bits";
 
 type Props = {
-  onBack: () => void
-  onNext: () => void
-}
+  onBack: () => void;
+  onNext: () => void;
+};
 
 type Draft = {
-  date: string
-  people: string
-  description: string
-  formatted: string
-  formatting: boolean
-}
+  date: string;
+  people: string;
+  description: string;
+  formatted: string;
+  formatting: boolean;
+};
 
 export function Step2Photos({ onBack, onNext }: Props) {
-  const [idx, setIdx] = useState(0)
+  const [idx, setIdx] = useState(0);
   const [drafts, setDrafts] = useState<Draft[]>(() =>
     PHOTOS.map((p) => ({
       date: p.date,
@@ -39,27 +39,27 @@ export function Step2Photos({ onBack, onNext }: Props) {
       description: p.description,
       formatted: p.formatted,
       formatting: false,
-    }))
-  )
+    })),
+  );
 
-  const photo = PHOTOS[idx]
-  const draft = drafts[idx]
-  const progress = ((idx + 1) / PHOTOS.length) * 100
+  const photo = PHOTOS[idx];
+  const draft = drafts[idx];
+  const progress = ((idx + 1) / PHOTOS.length) * 100;
   const update = <K extends keyof Draft>(k: K, v: Draft[K]) =>
-    setDrafts((arr) => arr.map((d, i) => (i === idx ? { ...d, [k]: v } : d)))
+    setDrafts((arr) => arr.map((d, i) => (i === idx ? { ...d, [k]: v } : d)));
 
   const formatAI = () => {
-    update("formatting", true)
+    update("formatting", true);
     setTimeout(() => {
-      update("formatting", false)
-      update("formatted", photo.formatted)
-    }, 700)
-  }
+      update("formatting", false);
+      update("formatted", photo.formatted);
+    }, 700);
+  };
 
   const next = () => {
-    if (idx < PHOTOS.length - 1) setIdx(idx + 1)
-    else onNext()
-  }
+    if (idx < PHOTOS.length - 1) setIdx(idx + 1);
+    else onNext();
+  };
 
   return (
     <>
@@ -73,15 +73,15 @@ export function Step2Photos({ onBack, onNext }: Props) {
         desc="One at a time. AI Format turns your inputs into the visa-officer's expected format."
       />
 
-      <div className="mb-3 flex justify-between [font-family:var(--font-mono)] text-[11px] text-[var(--ink-3)]">
+      <div className="mb-3 flex justify-between font-mono text-[11px] text-(--ink-3)">
         <span>
           {idx + 1} / {PHOTOS.length}
         </span>
         <span>{Math.round(progress)}%</span>
       </div>
-      <div className="mb-4 h-0.5 overflow-hidden rounded-[2px] bg-[var(--rule)]">
+      <div className="mb-4 h-0.5 overflow-hidden rounded-xs bg-(--rule)">
         <div
-          className="h-full bg-[var(--accent)] transition-[width] duration-300"
+          className="h-full bg-(--accent) transition-[width] duration-300"
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -89,21 +89,19 @@ export function Step2Photos({ onBack, onNext }: Props) {
       <VisaPanel>
         <VisaPanelHeader>
           <VisaPanelTitle>{photo.label}</VisaPanelTitle>
-          <VisaMonoText className="text-[var(--ink-3)]">
-            {photo.file}
-          </VisaMonoText>
+          <VisaMonoText className="text-(--ink-3)">{photo.file}</VisaMonoText>
         </VisaPanelHeader>
         <VisaPanelBody>
           <div className="grid gap-4">
             <div
-              className="relative grid aspect-[4/3] place-items-center overflow-hidden rounded-[var(--vd-radius-lg)] border border-[var(--rule)]"
+              className="relative grid aspect-[4/3] place-items-center overflow-hidden rounded-(--vd-radius-lg) border border-(--rule)"
               style={{
                 backgroundColor: photo.bg,
                 backgroundImage:
                   "repeating-linear-gradient(135deg, transparent 0 18px, color-mix(in oklab, var(--ink-4) 20%, transparent) 18px 19px)",
               }}
             >
-              <span className="absolute bottom-3 left-3 rounded-[3px] bg-[color-mix(in_oklab,var(--paper)_90%,transparent)] px-2 py-1 [font-family:var(--font-mono)] text-[10px] tracking-[0.06em] text-[var(--ink-3)]">
+              <span className="absolute bottom-3 left-3 rounded-[3px] bg-[color-mix(in_oklab,var(--paper)_90%,transparent)] px-2 py-1 font-mono text-[10px] tracking-[0.06em] text-(--ink-3)">
                 [ photo · {photo.file} ]
               </span>
             </div>
@@ -117,10 +115,7 @@ export function Step2Photos({ onBack, onNext }: Props) {
             </VisaField>
             <VisaField>
               <VisaFieldLabel>People in photo</VisaFieldLabel>
-              <VisaInput
-                value={draft.people}
-                onChange={(e) => update("people", e.target.value)}
-              />
+              <VisaInput value={draft.people} onChange={(e) => update("people", e.target.value)} />
             </VisaField>
             <VisaField>
               <VisaFieldLabel>Description / occasion</VisaFieldLabel>
@@ -131,22 +126,15 @@ export function Step2Photos({ onBack, onNext }: Props) {
             </VisaField>
 
             <VisaCluster>
-              <VisaButton
-                onClick={formatAI}
-                disabled={draft.formatting}
-                size="sm"
-                variant="accent"
-              >
+              <VisaButton onClick={formatAI} disabled={draft.formatting} size="sm" variant="accent">
                 {draft.formatting ? "· · · formatting" : "✦ AI Format"}
               </VisaButton>
-              <VisaMonoText className="text-[var(--ink-3)]">
-                claude-sonnet-4 · ~280 tokens
-              </VisaMonoText>
+              <VisaMonoText className="text-(--ink-3)">claude-sonnet-4 · ~280 tokens</VisaMonoText>
             </VisaCluster>
 
             {draft.formatted && !draft.formatting && (
-              <div className="relative rounded-[var(--vd-radius)] border border-[color-mix(in_oklab,var(--accent)_30%,transparent)] bg-[var(--accent-soft)] px-3.5 py-3 [font-family:var(--font-display)] text-sm leading-[1.5] text-[var(--accent-ink)] italic">
-                <span className="absolute top-[-8px] left-3 bg-[var(--paper)] px-1.5 [font-family:var(--font-mono)] text-[9px] font-medium tracking-[0.1em] text-[var(--accent-ink)] not-italic">
+              <div className="relative rounded-(--vd-radius) border border-[color-mix(in_oklab,var(--accent)_30%,transparent)] bg-(--accent-soft) px-3.5 py-3 [font-family:var(--font-display)] text-sm leading-[1.5] text-(--accent-ink) italic">
+                <span className="absolute top-[-8px] left-3 bg-(--paper) px-1.5 font-mono text-[9px] font-medium tracking-[0.1em] text-(--accent-ink) not-italic">
                   PREVIEW
                 </span>
                 "{draft.formatted}"
@@ -170,5 +158,5 @@ export function Step2Photos({ onBack, onNext }: Props) {
         </VisaCluster>
       </VisaButtonRow>
     </>
-  )
+  );
 }

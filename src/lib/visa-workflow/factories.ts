@@ -1,10 +1,6 @@
-import { DEFAULT_EMAIL_CONFIG, SAMPLE_DOCUMENT_LIST } from "./constants"
-import {
-  createEmailSubject,
-  createSessionFolderName,
-  formatDateLabel,
-} from "./formatters"
-import { parseDocumentList } from "./parsers"
+import { DEFAULT_EMAIL_CONFIG, SAMPLE_DOCUMENT_LIST } from "./constants";
+import { createEmailSubject, createSessionFolderName, formatDateLabel } from "./formatters";
+import { parseDocumentList } from "./parsers";
 import type {
   DateFormat,
   DocTypeConfig,
@@ -14,51 +10,46 @@ import type {
   VisaSessionRecord,
   WorkflowDocumentState,
   WorkflowStepValue,
-} from "./types"
+} from "./types";
 
 function startOfMonthIso() {
-  const date = new Date()
-  date.setDate(1)
+  const date = new Date();
+  date.setDate(1);
 
-  return date.toISOString().slice(0, 10)
+  return date.toISOString().slice(0, 10);
 }
 
-export function createDefaultDateValue(
-  dateFormat: DateFormat
-): DocumentDateValue {
+export function createDefaultDateValue(dateFormat: DateFormat): DocumentDateValue {
   if (dateFormat === "range") {
     return {
       mode: "range",
       from: startOfMonthIso(),
       to: new Date().toISOString().slice(0, 10),
-    }
+    };
   }
 
   return {
     mode: "single",
     date: new Date().toISOString().slice(0, 10),
-  }
+  };
 }
 
-export function createSeededConfig(
-  rawDocumentList = SAMPLE_DOCUMENT_LIST
-): VisaConfig {
+export function createSeededConfig(rawDocumentList = SAMPLE_DOCUMENT_LIST): VisaConfig {
   const docTypes = parseDocumentList(rawDocumentList).map((docType) => ({
     ...docType,
-    active:
-      docType.number === 4 || docType.number === 7 || docType.number === 8,
-  }))
+    active: docType.number === 4 || docType.number === 7 || docType.number === 8,
+  }));
 
   return {
     email: DEFAULT_EMAIL_CONFIG,
     docTypes,
     seededAt: new Date().toISOString(),
-  }
+  };
 }
 
 export function createWorkflowDocumentState(
   docType: DocTypeConfig,
-  previous?: WorkflowDocumentState
+  previous?: WorkflowDocumentState,
 ): WorkflowDocumentState {
   return {
     docTypeId: docType.id,
@@ -69,32 +60,28 @@ export function createWorkflowDocumentState(
     status: previous?.status ?? "pending",
     validationMessage: previous?.validationMessage,
     captions: previous?.captions ?? [],
-  }
+  };
 }
 
 export function createSessionRecord(args: {
-  id?: string
-  config: VisaConfig
-  documents: WorkflowDocumentState[]
-  draftDate: string
-  status: SessionStatus
-  filesMoved: boolean
-  currentStep: WorkflowStepValue
-  createdAt?: string
-  submittedAt?: string
+  id?: string;
+  config: VisaConfig;
+  documents: WorkflowDocumentState[];
+  draftDate: string;
+  status: SessionStatus;
+  filesMoved: boolean;
+  currentStep: WorkflowStepValue;
+  createdAt?: string;
+  submittedAt?: string;
 }): VisaSessionRecord {
-  const folderName = createSessionFolderName(args.submittedAt ?? args.draftDate)
-  const activeDocTypes = args.config.docTypes.filter(
-    (docType) => docType.active
-  )
-  const now = new Date().toISOString()
+  const folderName = createSessionFolderName(args.submittedAt ?? args.draftDate);
+  const activeDocTypes = args.config.docTypes.filter((docType) => docType.active);
+  const now = new Date().toISOString();
   const documents = args.documents.flatMap((documentState) => {
-    const docType = activeDocTypes.find(
-      (item) => item.id === documentState.docTypeId
-    )
+    const docType = activeDocTypes.find((item) => item.id === documentState.docTypeId);
 
     if (!docType) {
-      return []
+      return [];
     }
 
     return {
@@ -114,8 +101,8 @@ export function createSessionRecord(args: {
       status: documentState.status,
       validationMessage: documentState.validationMessage,
       captions: documentState.captions,
-    }
-  })
+    };
+  });
 
   return {
     id: args.id ?? `session_${Date.now()}`,
@@ -129,5 +116,5 @@ export function createSessionRecord(args: {
     filesMoved: args.filesMoved,
     currentStep: args.currentStep,
     documents,
-  }
+  };
 }

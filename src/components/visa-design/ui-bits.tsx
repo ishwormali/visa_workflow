@@ -1,43 +1,33 @@
-import { Fragment, type ReactNode } from "react"
+import { Fragment, type ReactNode } from "react";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
-import { VisaBadge, type VisaBadgeKind } from "./primitives"
+import { VisaBadge, type VisaBadgeKind } from "./primitives";
 
-export type BadgeKind = VisaBadgeKind
+export type BadgeKind = VisaBadgeKind;
 
-export function Badge({
-  kind,
-  children,
-}: {
-  kind: BadgeKind
-  children: ReactNode
-}) {
-  return <VisaBadge kind={kind}>{children}</VisaBadge>
+export function Badge({ kind, children }: { kind: BadgeKind; children: ReactNode }) {
+  return <VisaBadge kind={kind}>{children}</VisaBadge>;
 }
 
-export type LogMark = "ok" | "warn" | "err" | "api" | "·"
-export type LogLine = { t: string; m: LogMark; text: ReactNode }
+export type LogMark = "ok" | "warn" | "err" | "api" | "·";
+export type LogLine = { t: string; m: LogMark; text: ReactNode };
 
 function parseLogEntry(entry: string): LogLine {
-  const match = entry.match(/^(\S+)\s+(.*)$/)
-  const time = match ? match[1] : ""
-  const text = match ? match[2] : entry
-  const lower = text.toLowerCase()
-  let mark: LogMark = "·"
+  const match = entry.match(/^(\S+)\s+(.*)$/);
+  const time = match ? match[1] : "";
+  const text = match ? match[2] : entry;
+  const lower = text.toLowerCase();
+  let mark: LogMark = "·";
   if (
     lower.startsWith("failed") ||
     lower.includes("failed:") ||
     lower.startsWith("error") ||
     lower.includes("error:")
   ) {
-    mark = "err"
-  } else if (
-    lower.includes("not found") ||
-    lower.includes("missing") ||
-    lower.includes("warn")
-  ) {
-    mark = "warn"
+    mark = "err";
+  } else if (lower.includes("not found") || lower.includes("missing") || lower.includes("warn")) {
+    mark = "warn";
   } else if (
     lower.startsWith("authorizing") ||
     lower.startsWith("get ") ||
@@ -52,7 +42,7 @@ function parseLogEntry(entry: string): LogLine {
     lower.includes("renaming folder") ||
     lower.includes("moving generated")
   ) {
-    mark = "api"
+    mark = "api";
   } else if (
     lower.startsWith("found") ||
     lower.startsWith("created") ||
@@ -66,9 +56,9 @@ function parseLogEntry(entry: string): LogLine {
     lower.startsWith("recorded") ||
     lower.startsWith("moved")
   ) {
-    mark = "ok"
+    mark = "ok";
   }
-  return { t: time, m: mark, text }
+  return { t: time, m: mark, text };
 }
 
 export function Console({
@@ -77,28 +67,28 @@ export function Console({
   meta,
   emptyMessage,
 }: {
-  title?: string
-  lines: LogLine[] | string[]
-  meta?: string
-  emptyMessage?: string
+  title?: string;
+  lines: LogLine[] | string[];
+  meta?: string;
+  emptyMessage?: string;
 }) {
   const normalized: LogLine[] =
     typeof lines[0] === "string" || lines.length === 0
       ? (lines as string[]).map(parseLogEntry)
-      : (lines as LogLine[])
+      : (lines as LogLine[]);
 
   return (
-    <div className="mt-4 overflow-hidden rounded-[var(--vd-radius-lg)] border border-[var(--rule)] bg-[oklch(20%_0.014_80)] text-[oklch(86%_0.012_80)]">
+    <div className="mt-4 overflow-hidden rounded-(--vd-radius-lg) border border-(--rule) bg-[oklch(20%_0.014_80)] text-[oklch(86%_0.012_80)]">
       <div className="flex items-center justify-between gap-3 border-b border-[oklch(28%_0.014_80)] bg-[oklch(18%_0.014_80)] px-3.5 py-2">
-        <div className="flex items-center gap-2 text-[10px] tracking-[0.1em] text-[oklch(60%_0.012_80)] uppercase">
-          <span className="h-[7px] w-[7px] rounded-full bg-[var(--ok)] text-[var(--ok)] shadow-[0_0_6px_currentColor]" />
+        <div className="flex items-center gap-2 text-[10px] tracking-widest text-[oklch(60%_0.012_80)] uppercase">
+          <span className="h-1.75 w-1.75 rounded-full bg-(--ok) text-(--ok) shadow-[0_0_6px_currentColor]" />
           {title || "Live output"}
         </div>
         <div className="text-[10px] tracking-[0.04em] text-[oklch(55%_0.012_80)]">
           {meta || `${normalized.length} events`}
         </div>
       </div>
-      <div className="max-h-[280px] overflow-y-auto px-3.5 py-3">
+      <div className="max-h-70 overflow-y-auto px-3.5 py-3">
         {normalized.length === 0 && emptyMessage && (
           <div className="grid grid-cols-[60px_18px_1fr] gap-2 py-px">
             <span className="text-[oklch(48%_0.012_80)]"></span>
@@ -110,9 +100,7 @@ export function Console({
         )}
         {normalized.map((l, i) => {
           const dataKind =
-            l.m === "ok" || l.m === "warn" || l.m === "err" || l.m === "api"
-              ? l.m
-              : ""
+            l.m === "ok" || l.m === "warn" || l.m === "err" || l.m === "api" ? l.m : "";
           const glyph =
             l.m === "ok"
               ? "✓"
@@ -122,7 +110,7 @@ export function Console({
                   ? "✕"
                   : l.m === "api"
                     ? "→"
-                    : "·"
+                    : "·";
           return (
             <div className="grid grid-cols-[60px_18px_1fr] gap-2 py-px" key={i}>
               <span className="text-[oklch(48%_0.012_80)]">{l.t}</span>
@@ -132,78 +120,74 @@ export function Console({
                   dataKind === "ok" && "text-[oklch(70%_0.1_150)]",
                   dataKind === "warn" && "text-[oklch(75%_0.12_70)]",
                   dataKind === "err" && "text-[oklch(70%_0.14_30)]",
-                  dataKind === "api" && "text-[oklch(70%_0.1_230)]"
+                  dataKind === "api" && "text-[oklch(70%_0.1_230)]",
                 )}
               >
                 {glyph}
               </span>
               <span className="text-[oklch(86%_0.012_80)]">{l.text}</span>
             </div>
-          )
+          );
         })}
       </div>
     </div>
-  )
+  );
 }
 
-export type StepRailItem = { n: number; label: string }
+export type StepRailItem = { n: number; label: string };
 
 export function StepRail({
   current,
   items,
   onNav,
 }: {
-  current: number
-  items: StepRailItem[]
-  onNav?: (n: number) => void
+  current: number;
+  items: StepRailItem[];
+  onNav?: (n: number) => void;
 }) {
   return (
-    <div className="mb-7 flex items-center gap-0 [font-family:var(--font-mono)] text-[10px] tracking-[0.08em] text-[var(--ink-3)] uppercase">
+    <div className="mb-7 flex items-center gap-0 font-mono text-[10px] tracking-[0.08em] text-(--ink-3) uppercase">
       {items.map((s, i) => {
-        const state =
-          current === s.n ? "active" : current > s.n ? "done" : "idle"
+        const state = current === s.n ? "active" : current > s.n ? "done" : "idle";
         return (
           <Fragment key={s.n}>
-            <div
+            <button
+              type="button"
               className={cn(
-                "flex flex-1 items-center gap-2",
-                onNav && "cursor-pointer"
+                "flex flex-1 items-center gap-2 text-left",
+                onNav ? "cursor-pointer" : "cursor-default",
               )}
+              disabled={!onNav}
               onClick={() => onNav?.(s.n)}
             >
               <div
                 className={cn(
-                  "grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full border border-[var(--rule-2)] bg-[var(--paper)] text-[10px] text-[var(--ink-3)] transition-colors",
-                  state === "active" &&
-                    "border-[var(--ink)] bg-[var(--ink)] text-[var(--paper)]",
-                  state === "done" &&
-                    "border-[var(--accent)] bg-[var(--accent)] text-[var(--paper)]"
+                  "grid h-5.5 w-5.5 shrink-0 place-items-center rounded-full border border-(--rule-2) bg-(--paper) text-[10px] text-(--ink-3) transition-colors",
+                  state === "active" && "border-(--ink) bg-(--ink) text-(--paper)",
+                  state === "done" && "border-(--accent) bg-(--accent) text-(--paper)",
                 )}
               >
                 <span>{state === "done" ? "✓" : s.n}</span>
               </div>
               <div
-                className={cn(
-                  "truncate whitespace-nowrap",
-                  state === "active" && "text-[var(--ink)]"
-                )}
+                className={cn("truncate whitespace-nowrap", state === "active" && "text-(--ink)")}
               >
                 {s.label}
               </div>
-            </div>
+            </button>
             {i < items.length - 1 && (
               <div
                 className={cn(
-                  "mx-1.5 h-px min-w-2 flex-1 bg-[var(--rule-2)]",
-                  current > s.n && "bg-[var(--accent)]"
+                  "mx-1.5 h-px min-w-2 flex-1 bg-(--rule-2)",
+                  current > s.n && "bg-(--accent)",
                 )}
               />
             )}
           </Fragment>
-        )
+        );
       })}
     </div>
-  )
+  );
 }
 
 export function StepHead({
@@ -212,63 +196,48 @@ export function StepHead({
   desc,
   children,
 }: {
-  eyebrow?: ReactNode
-  title: ReactNode
-  desc?: ReactNode
-  children?: ReactNode
+  eyebrow?: ReactNode;
+  title: ReactNode;
+  desc?: ReactNode;
+  children?: ReactNode;
 }) {
   return (
     <div className="mb-6">
       {eyebrow && (
-        <div className="mb-2 [font-family:var(--font-mono)] text-[10px] tracking-[0.12em] text-[var(--ink-3)] uppercase">
+        <div className="mb-2 font-mono text-[10px] tracking-[0.12em] text-(--ink-3) uppercase">
           {eyebrow}
         </div>
       )}
-      <h1 className="m-0 [font-family:var(--font-display)] text-[32px] leading-[1.15] font-medium tracking-[-0.02em] text-[var(--ink)] [&_em]:text-[var(--accent-ink)] [&_em]:italic">
+      <h1 className="m-0 [font-family:var(--font-display)] text-[32px] leading-[1.15] font-medium tracking-[-0.02em] text-(--ink) [&_em]:text-(--accent-ink) [&_em]:italic">
         {title}
       </h1>
-      {desc && (
-        <p className="mt-2 max-w-[56ch] text-sm text-[var(--ink-2)]">{desc}</p>
-      )}
+      {desc && <p className="mt-2 max-w-[56ch] text-sm text-(--ink-2)">{desc}</p>}
       {children}
     </div>
-  )
+  );
 }
 
-export type DocCategory = "upload" | "gdoc" | "gdoc_photos"
+export type DocCategory = "upload" | "gdoc" | "gdoc_photos";
 
 export function DocCategoryLabel({ cat }: { cat: DocCategory | string }) {
   const m: Record<string, string> = {
     upload: "Upload",
     gdoc: "Generated doc",
     gdoc_photos: "Generated doc · photos",
-  }
-  return <>{m[cat] || cat}</>
+  };
+  return <>{m[cat] || cat}</>;
 }
 
-const MONTHS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-]
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export function formatDate(iso?: string) {
-  if (!iso) return "—"
-  const [y, m, d] = iso.split("-")
-  if (!y || !m || !d) return "—"
-  return `${d}-${MONTHS[parseInt(m, 10) - 1]}-${y}`
+  if (!iso) return "—";
+  const [y, m, d] = iso.split("-");
+  if (!y || !m || !d) return "—";
+  return `${d}-${MONTHS[parseInt(m, 10) - 1]}-${y}`;
 }
 
 export function formatRange(from?: string, to?: string) {
-  if (!from || !to) return "—"
-  return `${formatDate(from)} → ${formatDate(to)}`
+  if (!from || !to) return "—";
+  return `${formatDate(from)} → ${formatDate(to)}`;
 }

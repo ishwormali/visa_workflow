@@ -1,14 +1,14 @@
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router";
 
-import { VisaWorkflowProvider } from "@/components/visa-workflow/provider"
-import { VisaDesignApp } from "@/components/visa-design/app"
+import { VisaDesignApp } from "@/components/visa-design/app";
+import { VisaWorkflowProvider } from "@/components/visa-workflow/provider";
 
-export const Route = createFileRoute("/redesign/")({ component: App })
+export const Route = createFileRoute("/redesign/")({ component: App });
 
 function App() {
   return (
     <VisaWorkflowProvider>
       <VisaDesignApp />
     </VisaWorkflowProvider>
-  )
+  );
 }

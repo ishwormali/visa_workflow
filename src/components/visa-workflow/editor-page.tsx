@@ -1,43 +1,41 @@
-import { History, Settings2 } from "lucide-react"
-import { useNavigate, useLocation } from "@tanstack/react-router"
-import { useEffect } from "react"
+import { useNavigate, useLocation } from "@tanstack/react-router";
+import { History, Settings2 } from "lucide-react";
+import { useEffect } from "react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 
-import { useVisaWorkflow } from "./provider"
-import { LoadingScreen } from "./loading-screen"
-import { FirstRunSetup } from "./first-run-setup"
-import { WorkflowPanel } from "./workflow-panel"
-import { WorkflowSidebar } from "./workflow-sidebar"
-import { HistoryOverlay } from "./history-overlay"
-import { SettingsOverlay } from "./settings-overlay"
+import { FirstRunSetup } from "./first-run-setup";
+import { HistoryOverlay } from "./history-overlay";
+import { LoadingScreen } from "./loading-screen";
+import { useVisaWorkflow } from "./provider";
+import { SettingsOverlay } from "./settings-overlay";
+import { WorkflowPanel } from "./workflow-panel";
+import { WorkflowSidebar } from "./workflow-sidebar";
 
 function readStepFromPathname(pathname: string) {
-  const match = pathname.match(/\/step\/(\d+)\/?$/)
+  const match = pathname.match(/\/step\/(\d+)\/?$/);
 
   if (!match) {
-    return null
+    return null;
   }
 
-  const parsed = Number(match[1])
+  const parsed = Number(match[1]);
 
-  return Number.isNaN(parsed) ? null : parsed
+  return Number.isNaN(parsed) ? null : parsed;
 }
 
 function createStepPath(pathname: string, step: number) {
   if (pathname.startsWith("/workflow/new")) {
-    return `/workflow/new/step/${step}`
+    return `/workflow/new/step/${step}`;
   }
 
-  const editMatch = pathname.match(
-    /^\/workflow\/([^/]+)\/edit(?:\/step\/\d+)?\/?$/
-  )
+  const editMatch = pathname.match(/^\/workflow\/([^/]+)\/edit(?:\/step\/\d+)?\/?$/);
 
   if (!editMatch) {
-    return null
+    return null;
   }
 
-  return `/workflow/${editMatch[1]}/edit/step/${step}`
+  return `/workflow/${editMatch[1]}/edit/step/${step}`;
 }
 
 export function VisaWorkflowEditorPage() {
@@ -94,100 +92,93 @@ export function VisaWorkflowEditorPage() {
     visaFolderMissing,
     visaFolderName,
     runSeedReview,
-  } = useVisaWorkflow()
-  const navigate = useNavigate()
-  const location = useLocation()
-  const routeStep = readStepFromPathname(location.pathname)
+  } = useVisaWorkflow();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const routeStep = readStepFromPathname(location.pathname);
 
   useEffect(() => {
     if (!hydrated || routeStep === null || routeStep === currentStep) {
-      return
+      return;
     }
 
-    goToStep(routeStep as 1 | 2)
-  }, [currentStep, goToStep, hydrated, routeStep])
+    goToStep(routeStep as 1 | 2);
+  }, [currentStep, goToStep, hydrated, routeStep]);
 
   useEffect(() => {
     if (!hydrated) {
-      return
+      return;
     }
 
     if (routeStep !== null && routeStep !== currentStep) {
-      return
+      return;
     }
 
-    const nextPath = createStepPath(location.pathname, currentStep)
+    const nextPath = createStepPath(location.pathname, currentStep);
 
     if (nextPath && nextPath !== location.pathname) {
-      void navigate({ to: nextPath, replace: true })
+      void navigate({ to: nextPath, replace: true });
     }
-  }, [currentStep, hydrated, location.pathname, navigate, routeStep])
+  }, [currentStep, hydrated, location.pathname, navigate, routeStep]);
 
   function handleGoBack() {
     if (currentStep > 1) {
-      goToStep((currentStep - 1) as 1 | 2)
-      return
+      goToStep((currentStep - 1) as 1 | 2);
+      return;
     }
 
-    void navigate({ to: "/" })
+    void navigate({ to: "/" });
   }
 
   if (!hydrated) {
-    return <LoadingScreen />
+    return <LoadingScreen />;
   }
 
   if (missingSession) {
     return (
       <main className="mx-auto flex min-h-svh max-w-3xl items-center justify-center px-6 py-12">
         <div className="panel w-full p-8 text-center">
-          <p className="text-muted-foreground text-sm tracking-[0.24em] uppercase">
+          <p className="text-sm tracking-[0.24em] text-muted-foreground uppercase">
             Workflow not found
           </p>
-          <h1 className="font-heading mt-3 text-3xl font-semibold">
+          <h1 className="mt-3 font-heading text-3xl font-semibold">
             This saved workflow is missing
           </h1>
-          <p className="text-muted-foreground mt-3 text-sm">
-            The requested workflow id was not found in local history. Return to
-            the list and choose another item.
+          <p className="mt-3 text-sm text-muted-foreground">
+            The requested workflow id was not found in local history. Return to the list and choose
+            another item.
           </p>
           <div className="mt-6 flex justify-center">
-            <Button onClick={() => navigate({ to: "/" })}>
-              Back to history
-            </Button>
+            <Button onClick={() => navigate({ to: "/" })}>Back to history</Button>
           </div>
         </div>
       </main>
-    )
+    );
   }
 
   return (
     <main className="mx-auto flex min-h-svh w-full max-w-5xl flex-col px-4 py-5 sm:px-6 lg:px-8">
-      <header className="border-border/70 bg-background/88 sticky top-4 z-30 rounded-[2rem] border px-4 py-4 shadow-[0_20px_60px_var(--color-shadow)] backdrop-blur-xl">
+      <header className="sticky top-4 z-30 rounded-[2rem] border border-border/70 bg-background/88 px-4 py-4 shadow-[0_20px_60px_var(--color-shadow)] backdrop-blur-xl">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-muted-foreground text-xs tracking-[0.24em] uppercase">
+            <p className="text-xs tracking-[0.24em] text-muted-foreground uppercase">
               Visa Document Workflow
             </p>
-            <h1 className="font-heading mt-1 text-2xl font-semibold sm:text-3xl">
+            <h1 className="mt-1 font-heading text-2xl font-semibold sm:text-3xl">
               Monthly support pack automation
             </h1>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Workflow id {workflowId} with local draft persistence and
-              resumable step progress.
+            <p className="mt-1 text-sm text-muted-foreground">
+              Workflow id {workflowId} with local draft persistence and resumable step progress.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="border-border/70 bg-secondary text-secondary-foreground rounded-full border px-4 py-2 text-sm">
+            <div className="rounded-full border border-border/70 bg-secondary px-4 py-2 text-sm text-secondary-foreground">
               {pendingSessionsCount} pending
             </div>
-            <div className="border-border/70 bg-secondary text-secondary-foreground rounded-full border px-4 py-2 text-sm">
+            <div className="rounded-full border border-border/70 bg-secondary px-4 py-2 text-sm text-secondary-foreground">
               {sentSessionsCount} sent
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate({ to: "/" })}
-            >
+            <Button variant="outline" size="sm" onClick={() => navigate({ to: "/" })}>
               Back to list
             </Button>
             <Button variant="outline" size="sm" onClick={saveWorkflow}>
@@ -281,5 +272,5 @@ export function VisaWorkflowEditorPage() {
         />
       ) : null}
     </main>
-  )
+  );
 }

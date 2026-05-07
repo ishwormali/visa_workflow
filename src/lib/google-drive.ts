@@ -1,216 +1,210 @@
-import { readGoogleOAuthConfig } from "./google-oauth"
+import { readGoogleOAuthConfig } from "./google-oauth";
 
-const DRIVE_API_BASE_URL = "https://www.googleapis.com/drive/v3"
-const DRIVE_UPLOAD_BASE_URL = "https://www.googleapis.com/upload/drive/v3"
-const GOOGLE_IDENTITY_SCRIPT_URL = "https://accounts.google.com/gsi/client"
-const GOOGLE_DRIVE_FOLDER_MIME_TYPE = "application/vnd.google-apps.folder"
-const GOOGLE_DOC_MIME_TYPE = "application/vnd.google-apps.document"
-const TOKEN_STORAGE_KEY = "google_drive_access_token"
+const DRIVE_API_BASE_URL = "https://www.googleapis.com/drive/v3";
+const DRIVE_UPLOAD_BASE_URL = "https://www.googleapis.com/upload/drive/v3";
+const GOOGLE_IDENTITY_SCRIPT_URL = "https://accounts.google.com/gsi/client";
+const GOOGLE_DRIVE_FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
+const GOOGLE_DOC_MIME_TYPE = "application/vnd.google-apps.document";
+const TOKEN_STORAGE_KEY = "google_drive_access_token";
 
 type CachedToken = {
-  accessToken: string
-  expiresAt: number
-  scopes: string[]
-}
+  accessToken: string;
+  expiresAt: number;
+  scopes: string[];
+};
 
 type TokenResponse = {
-  access_token?: string
-  error?: string
-  error_description?: string
-  expires_in?: number
-  scope?: string
-}
+  access_token?: string;
+  error?: string;
+  error_description?: string;
+  expires_in?: number;
+  scope?: string;
+};
 
 type TokenClient = {
-  requestAccessToken: (options?: { prompt?: string }) => void
-}
+  requestAccessToken: (options?: { prompt?: string }) => void;
+};
 
 type GoogleIdentityServices = {
   accounts?: {
     oauth2?: {
       initTokenClient: (config: {
-        client_id: string
-        scope: string
-        callback: (response: TokenResponse) => void
-        prompt?: string
-        error_callback?: (error: { message?: string; type?: string }) => void
-      }) => TokenClient
-      revoke: (token: string, callback?: () => void) => void
-    }
-  }
-}
+        client_id: string;
+        scope: string;
+        callback: (response: TokenResponse) => void;
+        prompt?: string;
+        error_callback?: (error: { message?: string; type?: string }) => void;
+      }) => TokenClient;
+      revoke: (token: string, callback?: () => void) => void;
+    };
+  };
+};
 
 export type GoogleDriveFile = {
-  id: string
-  name: string
-  mimeType: string
-  parents?: string[]
-}
+  id: string;
+  name: string;
+  mimeType: string;
+  parents?: string[];
+};
 
 type DriveListResponse = {
-  files: GoogleDriveFile[]
-  nextPageToken?: string
-}
+  files: GoogleDriveFile[];
+  nextPageToken?: string;
+};
 
 declare global {
   interface Window {
-    google?: GoogleIdentityServices
+    google?: GoogleIdentityServices;
   }
 }
 
-let googleIdentityScriptPromise: Promise<void> | null = null
-let tokenRequestPromise: Promise<string> | null = null
+let googleIdentityScriptPromise: Promise<void> | null = null;
+let tokenRequestPromise: Promise<string> | null = null;
 
 function assertBrowser() {
   if (typeof window === "undefined") {
-    throw new Error(
-      "Google Drive integration is only available in the browser."
-    )
+    throw new Error("Google Drive integration is only available in the browser.");
   }
 }
 
 function getSessionStorage() {
-  assertBrowser()
+  assertBrowser();
 
-  return window.sessionStorage
+  return window.sessionStorage;
 }
 
 function readDriveEnv(
-  name:
-    | "VITE_GOOGLE_DRIVE_ROOT_FOLDER_ID"
-    | "VITE_GOOGLE_DRIVE_DOCUMENT_LIST_FILE_ID"
+  name: "VITE_GOOGLE_DRIVE_ROOT_FOLDER_ID" | "VITE_GOOGLE_DRIVE_DOCUMENT_LIST_FILE_ID",
 ) {
-  const value = import.meta.env[name]?.trim()
+  const value = import.meta.env[name]?.trim();
 
   if (!value) {
-    throw new Error(`Missing required environment variable: ${name}`)
+    throw new Error(`Missing required environment variable: ${name}`);
   }
 
-  return value
+  return value;
 }
 
 function readOptionalDriveEnv(
-  name:
-    | "VITE_GOOGLE_DRIVE_ROOT_FOLDER_ID"
-    | "VITE_GOOGLE_DRIVE_DOCUMENT_LIST_FILE_ID"
+  name: "VITE_GOOGLE_DRIVE_ROOT_FOLDER_ID" | "VITE_GOOGLE_DRIVE_DOCUMENT_LIST_FILE_ID",
 ) {
-  const value = import.meta.env[name]?.trim()
+  const value = import.meta.env[name]?.trim();
 
-  return value || undefined
+  return value || undefined;
 }
 
 function readCachedToken() {
-  const rawValue = getSessionStorage().getItem(TOKEN_STORAGE_KEY)
+  const rawValue = getSessionStorage().getItem(TOKEN_STORAGE_KEY);
 
   if (!rawValue) {
-    return null
+    return null;
   }
 
   try {
-    const parsed = JSON.parse(rawValue) as CachedToken
-    const requiredScopes = new Set(readGoogleOAuthConfig().scopes)
-    const cachedScopes = new Set(parsed.scopes ?? [])
+    const parsed = JSON.parse(rawValue) as CachedToken;
+    const requiredScopes = new Set(readGoogleOAuthConfig().scopes);
+    const cachedScopes = new Set(parsed.scopes ?? []);
 
     if (
       !parsed.accessToken ||
       parsed.expiresAt <= Date.now() ||
       [...requiredScopes].some((scope) => !cachedScopes.has(scope))
     ) {
-      getSessionStorage().removeItem(TOKEN_STORAGE_KEY)
-      return null
+      getSessionStorage().removeItem(TOKEN_STORAGE_KEY);
+      return null;
     }
 
-    return parsed
+    return parsed;
   } catch {
-    getSessionStorage().removeItem(TOKEN_STORAGE_KEY)
-    return null
+    getSessionStorage().removeItem(TOKEN_STORAGE_KEY);
+    return null;
   }
 }
 
 function writeCachedToken(
   response: Required<Pick<TokenResponse, "access_token" | "expires_in">> & {
-    scope?: string
-  }
+    scope?: string;
+  },
 ) {
-  const configuredScopes = readGoogleOAuthConfig().scopes
+  const configuredScopes = readGoogleOAuthConfig().scopes;
   const cachedToken: CachedToken = {
     accessToken: response.access_token,
     expiresAt: Date.now() + response.expires_in * 1000 - 60_000,
-    scopes: response.scope
-      ? response.scope.split(/\s+/).filter(Boolean)
-      : configuredScopes,
-  }
+    scopes: response.scope ? response.scope.split(/\s+/).filter(Boolean) : configuredScopes,
+  };
 
-  getSessionStorage().setItem(TOKEN_STORAGE_KEY, JSON.stringify(cachedToken))
+  getSessionStorage().setItem(TOKEN_STORAGE_KEY, JSON.stringify(cachedToken));
 
-  return cachedToken.accessToken
+  return cachedToken.accessToken;
 }
 
 async function loadGoogleIdentityScript() {
-  assertBrowser()
+  assertBrowser();
 
   if (window.google?.accounts?.oauth2) {
-    return
+    return;
   }
 
   if (!googleIdentityScriptPromise) {
     googleIdentityScriptPromise = new Promise((resolve, reject) => {
       const existingScript = document.querySelector<HTMLScriptElement>(
-        `script[src="${GOOGLE_IDENTITY_SCRIPT_URL}"]`
-      )
+        `script[src="${GOOGLE_IDENTITY_SCRIPT_URL}"]`,
+      );
 
       if (existingScript) {
         existingScript.addEventListener("load", () => resolve(), {
           once: true,
-        })
+        });
         existingScript.addEventListener(
           "error",
           () => reject(new Error("Failed to load Google Identity Services.")),
-          { once: true }
-        )
+          { once: true },
+        );
 
-        return
+        return;
       }
 
-      const script = document.createElement("script")
-      script.src = GOOGLE_IDENTITY_SCRIPT_URL
-      script.async = true
-      script.defer = true
-      script.onload = () => resolve()
-      script.onerror = () => {
-        reject(new Error("Failed to load Google Identity Services."))
-      }
-      document.head.append(script)
-    })
+      const script = document.createElement("script");
+      script.src = GOOGLE_IDENTITY_SCRIPT_URL;
+      script.async = true;
+      script.defer = true;
+      script.addEventListener("load", () => resolve(), { once: true });
+      script.addEventListener(
+        "error",
+        () => {
+          reject(new Error("Failed to load Google Identity Services."));
+        },
+        { once: true },
+      );
+      document.head.append(script);
+    });
   }
 
-  await googleIdentityScriptPromise
+  await googleIdentityScriptPromise;
 
   if (!window.google?.accounts?.oauth2) {
-    throw new Error("Google Identity Services did not initialize correctly.")
+    throw new Error("Google Identity Services did not initialize correctly.");
   }
 }
 
-export async function getGoogleDriveAccessToken(
-  options: { interactive?: boolean } = {}
-) {
-  const cachedToken = readCachedToken()
+export async function getGoogleDriveAccessToken(options: { interactive?: boolean } = {}) {
+  const cachedToken = readCachedToken();
 
   if (cachedToken) {
-    return cachedToken.accessToken
+    return cachedToken.accessToken;
   }
 
-  await loadGoogleIdentityScript()
+  await loadGoogleIdentityScript();
 
-  const googleOAuth = window.google?.accounts?.oauth2
+  const googleOAuth = window.google?.accounts?.oauth2;
 
   if (!googleOAuth) {
-    throw new Error("Google Identity Services is unavailable.")
+    throw new Error("Google Identity Services is unavailable.");
   }
 
   if (!tokenRequestPromise) {
     tokenRequestPromise = new Promise<string>((resolve, reject) => {
-      const { clientId, scopes } = readGoogleOAuthConfig()
+      const { clientId, scopes } = readGoogleOAuthConfig();
       const tokenClient = googleOAuth.initTokenClient({
         client_id: clientId,
         scope: scopes.join(" "),
@@ -219,21 +213,15 @@ export async function getGoogleDriveAccessToken(
           if (response.error) {
             reject(
               new Error(
-                response.error_description ??
-                  response.error ??
-                  "Google authorization failed."
-              )
-            )
-            return
+                response.error_description ?? response.error ?? "Google authorization failed.",
+              ),
+            );
+            return;
           }
 
           if (!response.access_token || !response.expires_in) {
-            reject(
-              new Error(
-                "Google authorization response did not include an access token."
-              )
-            )
-            return
+            reject(new Error("Google authorization response did not include an access token."));
+            return;
           }
 
           resolve(
@@ -241,86 +229,82 @@ export async function getGoogleDriveAccessToken(
               access_token: response.access_token,
               expires_in: response.expires_in,
               scope: response.scope,
-            })
-          )
+            }),
+          );
         },
         error_callback: (error) => {
-          reject(
-            new Error(
-              error.message ?? error.type ?? "Google authorization failed."
-            )
-          )
+          reject(new Error(error.message ?? error.type ?? "Google authorization failed."));
         },
-      })
+      });
 
       tokenClient.requestAccessToken({
         prompt: options.interactive === false ? "" : "consent",
-      })
+      });
     }).finally(() => {
-      tokenRequestPromise = null
-    })
+      tokenRequestPromise = null;
+    });
   }
 
-  return tokenRequestPromise
+  return tokenRequestPromise;
 }
 
 export function hasGoogleDriveAccessToken() {
-  return Boolean(readCachedToken())
+  return Boolean(readCachedToken());
 }
 
 async function driveFetch(
   input: string,
-  init?: RequestInit & { responseType?: "json" | "text" | "arrayBuffer" }
+  init?: RequestInit & { responseType?: "json" | "text" | "arrayBuffer" },
 ) {
-  const accessToken = await getGoogleDriveAccessToken()
+  const accessToken = await getGoogleDriveAccessToken();
   const response = await fetch(input, {
     ...init,
     headers: {
       Authorization: `Bearer ${accessToken}`,
       ...init?.headers,
     },
-  })
+  });
 
   if (!response.ok) {
-    const errorBody = await response.text()
+    const errorBody = await response.text();
     throw new Error(
-      `Google Drive request failed (${response.status}): ${errorBody || response.statusText}`
-    )
+      `Google Drive request failed (${response.status}): ${errorBody || response.statusText}`,
+    );
   }
 
   if (init?.responseType === "text") {
-    return response.text()
+    return response.text();
   }
 
   if (init?.responseType === "arrayBuffer") {
-    return response.arrayBuffer()
+    return response.arrayBuffer();
   }
 
-  return response.json()
+  return response.json();
 }
 
 export async function readGoogleDriveDocumentList() {
-  const fileId = readDriveEnv("VITE_GOOGLE_DRIVE_DOCUMENT_LIST_FILE_ID")
+  const fileId = readDriveEnv("VITE_GOOGLE_DRIVE_DOCUMENT_LIST_FILE_ID");
   const file = (await driveFetch(
-    `${DRIVE_API_BASE_URL}/files/${fileId}?fields=id,name,mimeType`
-  )) as Pick<GoogleDriveFile, "id" | "name" | "mimeType">
+    `${DRIVE_API_BASE_URL}/files/${fileId}?fields=id,name,mimeType`,
+  )) as Pick<GoogleDriveFile, "id" | "name" | "mimeType">;
 
   if (file.mimeType === GOOGLE_DOC_MIME_TYPE) {
     return driveFetch(
       `${DRIVE_API_BASE_URL}/files/${fileId}/export?mimeType=${encodeURIComponent("text/plain")}`,
-      { responseType: "text" }
-    )
+      { responseType: "text" },
+    );
   }
 
   return driveFetch(`${DRIVE_API_BASE_URL}/files/${fileId}?alt=media`, {
     responseType: "text",
-  })
+  });
 }
 
 export async function readGoogleDriveFileMetadata(fileId: string) {
   return driveFetch(
-    `${DRIVE_API_BASE_URL}/files/${fileId}?fields=id,name,mimeType,parents&supportsAllDrives=true`
-  ) as Promise<GoogleDriveFile>
+    `${DRIVE_API_BASE_URL}/files/${fileId}?fields=id,name,mimeType,parents&supportsAllDrives=true`,
+  ) as Promise<GoogleDriveFile>;
 }
 
 async function listDriveFolderPage(folderId: string, pageToken?: string) {
@@ -331,20 +315,20 @@ async function listDriveFolderPage(folderId: string, pageToken?: string) {
     pageSize: "1000",
     supportsAllDrives: "true",
     includeItemsFromAllDrives: "true",
-  })
+  });
 
   if (pageToken) {
-    params.set("pageToken", pageToken)
+    params.set("pageToken", pageToken);
   }
 
   return driveFetch(
-    `${DRIVE_API_BASE_URL}/files?${params.toString()}`
-  ) as Promise<DriveListResponse>
+    `${DRIVE_API_BASE_URL}/files?${params.toString()}`,
+  ) as Promise<DriveListResponse>;
 }
 
 export async function listGoogleDriveFolders(parentId = "root") {
-  let pageToken: string | undefined
-  const folders: GoogleDriveFile[] = []
+  let pageToken: string | undefined;
+  const folders: GoogleDriveFile[] = [];
 
   do {
     const params = new URLSearchParams({
@@ -354,82 +338,79 @@ export async function listGoogleDriveFolders(parentId = "root") {
       pageSize: "200",
       supportsAllDrives: "true",
       includeItemsFromAllDrives: "true",
-    })
+    });
 
     if (pageToken) {
-      params.set("pageToken", pageToken)
+      params.set("pageToken", pageToken);
     }
 
     const response = (await driveFetch(
-      `${DRIVE_API_BASE_URL}/files?${params.toString()}`
-    )) as DriveListResponse
+      `${DRIVE_API_BASE_URL}/files?${params.toString()}`,
+    )) as DriveListResponse;
 
-    folders.push(...response.files)
-    pageToken = response.nextPageToken
-  } while (pageToken)
+    folders.push(...response.files);
+    pageToken = response.nextPageToken;
+  } while (pageToken);
 
-  return folders
+  return folders;
 }
 
 export async function listGoogleDriveFilesRecursively(
-  folderId = readDriveEnv("VITE_GOOGLE_DRIVE_ROOT_FOLDER_ID")
+  folderId = readDriveEnv("VITE_GOOGLE_DRIVE_ROOT_FOLDER_ID"),
 ) {
-  const queue = [folderId]
-  const files: GoogleDriveFile[] = []
+  const queue = [folderId];
+  const files: GoogleDriveFile[] = [];
 
   while (queue.length) {
-    const currentFolderId = queue.shift()
+    const currentFolderId = queue.shift();
 
     if (!currentFolderId) {
-      continue
+      continue;
     }
 
-    let pageToken: string | undefined
+    let pageToken: string | undefined;
 
     do {
-      const response = await listDriveFolderPage(currentFolderId, pageToken)
+      const response = await listDriveFolderPage(currentFolderId, pageToken);
 
       for (const file of response.files) {
-        files.push(file)
+        files.push(file);
 
         if (file.mimeType === GOOGLE_DRIVE_FOLDER_MIME_TYPE) {
-          queue.push(file.id)
+          queue.push(file.id);
         }
       }
 
-      pageToken = response.nextPageToken
-    } while (pageToken)
+      pageToken = response.nextPageToken;
+    } while (pageToken);
   }
 
-  return files.filter((file) => file.mimeType !== GOOGLE_DRIVE_FOLDER_MIME_TYPE)
+  return files.filter((file) => file.mimeType !== GOOGLE_DRIVE_FOLDER_MIME_TYPE);
 }
 
 export async function createGoogleDriveFolder(
   name: string,
-  parentId = readDriveEnv("VITE_GOOGLE_DRIVE_ROOT_FOLDER_ID")
+  parentId = readDriveEnv("VITE_GOOGLE_DRIVE_ROOT_FOLDER_ID"),
 ) {
-  const response = (await driveFetch(
-    `${DRIVE_API_BASE_URL}/files?supportsAllDrives=true`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name,
-        mimeType: GOOGLE_DRIVE_FOLDER_MIME_TYPE,
-        parents: [parentId],
-      }),
-    }
-  )) as GoogleDriveFile
+  const response = (await driveFetch(`${DRIVE_API_BASE_URL}/files?supportsAllDrives=true`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name,
+      mimeType: GOOGLE_DRIVE_FOLDER_MIME_TYPE,
+      parents: [parentId],
+    }),
+  })) as GoogleDriveFile;
 
-  return response
+  return response;
 }
 
 export async function copyGoogleDriveFile(args: {
-  fileId: string
-  name: string
-  parentId: string
+  fileId: string;
+  name: string;
+  parentId: string;
 }) {
   return (await driveFetch(
     `${DRIVE_API_BASE_URL}/files/${args.fileId}/copy?supportsAllDrives=true`,
@@ -442,15 +423,12 @@ export async function copyGoogleDriveFile(args: {
         name: args.name,
         parents: [args.parentId],
       }),
-    }
-  )) as GoogleDriveFile
+    },
+  )) as GoogleDriveFile;
 }
 
-function buildMultipartBody(
-  metadata: Record<string, unknown>,
-  content: string
-) {
-  const boundary = `visa-workflow-${crypto.randomUUID()}`
+function buildMultipartBody(metadata: Record<string, unknown>, content: string) {
+  const boundary = `visa-workflow-${crypto.randomUUID()}`;
   const body = [
     `--${boundary}`,
     "Content-Type: application/json; charset=UTF-8",
@@ -462,15 +440,15 @@ function buildMultipartBody(
     content,
     `--${boundary}--`,
     "",
-  ].join("\r\n")
+  ].join("\r\n");
 
-  return { boundary, body }
+  return { boundary, body };
 }
 
 export async function createGoogleDocInDrive(args: {
-  name: string
-  parentId: string
-  content: string
+  name: string;
+  parentId: string;
+  content: string;
 }) {
   const { boundary, body } = buildMultipartBody(
     {
@@ -478,8 +456,8 @@ export async function createGoogleDocInDrive(args: {
       mimeType: GOOGLE_DOC_MIME_TYPE,
       parents: [args.parentId],
     },
-    args.content
-  )
+    args.content,
+  );
 
   return (await driveFetch(
     `${DRIVE_UPLOAD_BASE_URL}/files?uploadType=multipart&supportsAllDrives=true`,
@@ -489,73 +467,70 @@ export async function createGoogleDocInDrive(args: {
         "Content-Type": `multipart/related; boundary=${boundary}`,
       },
       body,
-    }
-  )) as GoogleDriveFile
+    },
+  )) as GoogleDriveFile;
 }
 
 export async function downloadGoogleDriveFileAsBase64(
-  file: Pick<GoogleDriveFile, "id" | "mimeType">
+  file: Pick<GoogleDriveFile, "id" | "mimeType">,
 ) {
   const bytes = new Uint8Array(
     await (file.mimeType === GOOGLE_DOC_MIME_TYPE
       ? driveFetch(
           `${DRIVE_API_BASE_URL}/files/${file.id}/export?mimeType=${encodeURIComponent("text/plain")}`,
-          { responseType: "arrayBuffer" }
+          { responseType: "arrayBuffer" },
         )
       : driveFetch(`${DRIVE_API_BASE_URL}/files/${file.id}?alt=media`, {
           responseType: "arrayBuffer",
-        }))
-  )
+        })),
+  );
 
-  let binary = ""
+  let binary = "";
 
   for (const byte of bytes) {
-    binary += String.fromCharCode(byte)
+    binary += String.fromCharCode(byte);
   }
 
-  return btoa(binary)
+  return btoa(binary);
 }
 
 export async function moveGoogleDriveFile(args: {
-  fileId: string
-  addParentId: string
-  removeParentIds?: string[]
+  fileId: string;
+  addParentId: string;
+  removeParentIds?: string[];
 }) {
   const params = new URLSearchParams({
     addParents: args.addParentId,
     supportsAllDrives: "true",
-  })
+  });
 
   if (args.removeParentIds?.length) {
-    params.set("removeParents", args.removeParentIds.join(","))
+    params.set("removeParents", args.removeParentIds.join(","));
   }
 
-  return (await driveFetch(
-    `${DRIVE_API_BASE_URL}/files/${args.fileId}?${params.toString()}`,
-    {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({}),
-    }
-  )) as GoogleDriveFile
+  return (await driveFetch(`${DRIVE_API_BASE_URL}/files/${args.fileId}?${params.toString()}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({}),
+  })) as GoogleDriveFile;
 }
 
 export function readGoogleDriveRootFolderId() {
-  return readDriveEnv("VITE_GOOGLE_DRIVE_ROOT_FOLDER_ID")
+  return readDriveEnv("VITE_GOOGLE_DRIVE_ROOT_FOLDER_ID");
 }
 
 export function readGoogleDriveDefaultRootFolderId() {
-  return readOptionalDriveEnv("VITE_GOOGLE_DRIVE_ROOT_FOLDER_ID")
+  return readOptionalDriveEnv("VITE_GOOGLE_DRIVE_ROOT_FOLDER_ID");
 }
 
 export async function revokeGoogleDriveAccess() {
-  const cachedToken = readCachedToken()
+  const cachedToken = readCachedToken();
 
-  getSessionStorage().removeItem(TOKEN_STORAGE_KEY)
+  getSessionStorage().removeItem(TOKEN_STORAGE_KEY);
 
   if (cachedToken && window.google?.accounts?.oauth2?.revoke) {
-    window.google.accounts.oauth2.revoke(cachedToken.accessToken)
+    window.google.accounts.oauth2.revoke(cachedToken.accessToken);
   }
 }

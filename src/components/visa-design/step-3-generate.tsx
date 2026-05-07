@@ -1,4 +1,4 @@
-import { ACTIVE_DOCS, GENERATE_LOG, type DocDates } from "./data"
+import { ACTIVE_DOCS, GENERATE_LOG, type DocDates } from "./data";
 import {
   DocumentFile,
   DocumentFiles,
@@ -6,7 +6,7 @@ import {
   DocumentMeta,
   DocumentMetaTag,
   DocumentRow,
-} from "./document-list"
+} from "./document-list";
 import {
   VisaButton,
   VisaButtonRow,
@@ -17,31 +17,24 @@ import {
   VisaPanelBody,
   VisaPanelHeader,
   VisaPanelTitle,
-} from "./primitives"
-import {
-  Badge,
-  Console,
-  DocCategoryLabel,
-  StepHead,
-  formatDate,
-  formatRange,
-} from "./ui-bits"
+} from "./primitives";
+import { Badge, Console, DocCategoryLabel, StepHead, formatDate, formatRange } from "./ui-bits";
 
 type Props = {
-  docDates: DocDates
-  onBack: () => void
-  onNext: () => void
-}
+  docDates: DocDates;
+  onBack: () => void;
+  onNext: () => void;
+};
 
 const GENERATED = [
   { id: "doc_4_upload_savers", file: "4 - savers - Apr 2026.pdf" },
   { id: "doc_4_upload_smart", file: "4 - smart account - Apr 2026.pdf" },
   { id: "doc_7_gdoc", file: "7-whatsapp-history.gdoc" },
   { id: "doc_8_gdoc_photos", file: "8-photographs.gdoc" },
-]
+];
 
 export function Step3Generate({ docDates, onBack, onNext }: Props) {
-  const today = "2026-05-05"
+  const today = "2026-05-05";
 
   return (
     <>
@@ -54,8 +47,8 @@ export function Step3Generate({ docDates, onBack, onNext }: Props) {
         }
         desc={
           <>
-            Created session subfolder. Generating gdocs, renaming uploads,
-            appending to the <VisaMonoText>Document list</VisaMonoText>.
+            Created session subfolder. Generating gdocs, renaming uploads, appending to the{" "}
+            <VisaMonoText>Document list</VisaMonoText>.
           </>
         }
       />
@@ -64,9 +57,7 @@ export function Step3Generate({ docDates, onBack, onNext }: Props) {
         <VisaPanel>
           <VisaPanelHeader>
             <VisaPanelTitle>Session folder</VisaPanelTitle>
-            <VisaMonoText className="text-[var(--ink-3)]">
-              draft date: {formatDate(today)}
-            </VisaMonoText>
+            <VisaMonoText className="text-(--ink-3)">draft date: {formatDate(today)}</VisaMonoText>
           </VisaPanelHeader>
           <VisaPanelBody>
             <VisaCluster>
@@ -83,9 +74,9 @@ export function Step3Generate({ docDates, onBack, onNext }: Props) {
           <VisaPanelBody tight>
             <DocumentList>
               {GENERATED.map((g) => {
-                const d = ACTIVE_DOCS.find((x) => x.id === g.id)
-                if (!d) return null
-                const v = docDates[g.id] || {}
+                const d = ACTIVE_DOCS.find((x) => x.id === g.id);
+                if (!d) return null;
+                const v = docDates[g.id] || {};
                 return (
                   <DocumentRow
                     badge={<Badge kind="ready">ready</Badge>}
@@ -97,14 +88,10 @@ export function Step3Generate({ docDates, onBack, onNext }: Props) {
                           <DocCategoryLabel cat={d.category} />
                         </DocumentMetaTag>
                         {d.dateFormat === "range" && v.from && (
-                          <DocumentMetaTag>
-                            {formatRange(v.from, v.to)}
-                          </DocumentMetaTag>
+                          <DocumentMetaTag>{formatRange(v.from, v.to)}</DocumentMetaTag>
                         )}
                         {d.category === "gdoc_photos" && (
-                          <DocumentMetaTag>
-                            4 photos · per-photo dates
-                          </DocumentMetaTag>
+                          <DocumentMetaTag>4 photos · per-photo dates</DocumentMetaTag>
                         )}
                       </DocumentMeta>
                     }
@@ -115,18 +102,14 @@ export function Step3Generate({ docDates, onBack, onNext }: Props) {
                       </DocumentFiles>
                     }
                   />
-                )
+                );
               })}
             </DocumentList>
           </VisaPanelBody>
         </VisaPanel>
       </div>
 
-      <Console
-        title="drive.generate"
-        lines={GENERATE_LOG}
-        meta="completed in 10.2s"
-      />
+      <Console title="drive.generate" lines={GENERATE_LOG} meta="completed in 10.2s" />
 
       <VisaButtonRow align="between">
         <VisaButton onClick={onBack} size="sm" variant="ghost">
@@ -137,5 +120,5 @@ export function Step3Generate({ docDates, onBack, onNext }: Props) {
         </VisaButton>
       </VisaButtonRow>
     </>
-  )
+  );
 }
