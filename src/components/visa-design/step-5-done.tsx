@@ -71,11 +71,11 @@ function CompletionSummary({ sent }: { sent: boolean }) {
   return (
     <div className="relative mb-4 overflow-hidden rounded-[12px] border border-[color-mix(in_oklab,var(--accent)_25%,transparent)] bg-[linear-gradient(180deg,var(--accent-soft),var(--paper-2))] p-7 text-center">
       {sent && (
-        <span className="absolute top-4 right-4 [transform:rotate(-6deg)] rounded-[4px] border-2 border-(--accent-ink) px-2.5 py-1 [font-family:var(--font-display)] text-sm font-medium tracking-[0.05em] text-(--accent-ink) italic opacity-75">
+        <span className="absolute top-4 right-4 [transform:rotate(-6deg)] rounded-[4px] border-2 border-(--accent-ink) px-2.5 py-1 font-visa-display text-sm font-medium tracking-[0.05em] text-(--accent-ink) italic opacity-75">
           SENT
         </span>
       )}
-      <h2 className="m-0 [font-family:var(--font-display)] text-[28px] font-medium tracking-[-0.02em] text-(--ink) [&_em]:text-(--accent-ink) [&_em]:italic">
+      <h2 className="m-0 font-visa-display text-[28px] font-medium tracking-[-0.02em] text-(--ink) [&_em]:text-(--accent-ink) [&_em]:italic">
         {sent ? (
           <>
             <em>Visa-May-2026</em> wrapped
@@ -103,7 +103,7 @@ function CompletionSummary({ sent }: { sent: boolean }) {
 function SummaryStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-(--vd-radius) border border-(--rule) bg-(--paper) p-2.5">
-      <div className="[font-family:var(--font-display)] text-[22px] font-medium text-(--ink)">
+      <div className="font-visa-display text-[22px] font-medium text-(--ink)">
         {value}
       </div>
       <div className="font-mono text-[10px] tracking-[0.08em] text-(--ink-3) uppercase">

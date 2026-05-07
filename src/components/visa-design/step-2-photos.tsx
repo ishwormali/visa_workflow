@@ -133,7 +133,7 @@ export function Step2Photos({ onBack, onNext }: Props) {
             </VisaCluster>
 
             {draft.formatted && !draft.formatting && (
-              <div className="relative rounded-(--vd-radius) border border-[color-mix(in_oklab,var(--accent)_30%,transparent)] bg-(--accent-soft) px-3.5 py-3 [font-family:var(--font-display)] text-sm leading-[1.5] text-(--accent-ink) italic">
+              <div className="relative rounded-(--vd-radius) border border-[color-mix(in_oklab,var(--accent)_30%,transparent)] bg-(--accent-soft) px-3.5 py-3 font-visa-display text-sm leading-[1.5] text-(--accent-ink) italic">
                 <span className="absolute top-[-8px] left-3 bg-(--paper) px-1.5 font-mono text-[9px] font-medium tracking-[0.1em] text-(--accent-ink) not-italic">
                   PREVIEW
                 </span>

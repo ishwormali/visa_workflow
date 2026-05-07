@@ -71,7 +71,7 @@ export function VisaDesignApp() {
 
   return (
     <div
-      className="visa-design-app relative min-h-screen bg-(--paper) [font-family:var(--font-ui)] text-[15px] leading-[1.5] text-(--ink) antialiased"
+      className="visa-design-app relative min-h-screen bg-(--paper) font-visa-ui text-[15px] leading-[1.5] text-(--ink) antialiased"
       data-theme="warm"
       data-density="spacious"
     >
@@ -133,11 +133,11 @@ function AppHeader({
     <header className="sticky top-0 z-50 border-b border-(--rule) bg-[color-mix(in_oklab,var(--paper)_88%,transparent)] backdrop-blur-[10px] backdrop-saturate-150">
       <div className="mx-auto flex max-w-[680px] items-center gap-4 px-6 py-3.5">
         <div className="flex items-center gap-2.5">
-          <div className="relative grid h-7 w-7 place-items-center rounded-[4px] border-[1.5px] border-(--ink) bg-(--paper) [font-family:var(--font-display)] text-base font-medium tracking-[-0.02em] text-(--ink) italic">
+          <div className="relative grid h-7 w-7 place-items-center rounded-[4px] border-[1.5px] border-(--ink) bg-(--paper) font-visa-display text-base font-medium tracking-[-0.02em] text-(--ink) italic">
             V
             <div className="pointer-events-none absolute inset-[-3px] rounded-[6px] border border-dashed border-(--rule-2) opacity-50" />
           </div>
-          <div className="[font-family:var(--font-display)] text-[18px] font-medium tracking-[-0.01em] text-(--ink) [&_em]:font-normal [&_em]:text-(--ink-2) [&_em]:italic">
+          <div className="font-visa-display text-[18px] font-medium tracking-[-0.01em] text-(--ink) [&_em]:font-normal [&_em]:text-(--ink-2) [&_em]:italic">
             visa <em>workflow</em>
           </div>
         </div>

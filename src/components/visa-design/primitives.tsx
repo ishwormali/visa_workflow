@@ -168,7 +168,7 @@ export function VisaFieldLabel({ className, ...props }: HTMLAttributes<HTMLSpanE
 }
 
 const visaInputClassName =
-  "w-full rounded-(--vd-radius) border border-(--rule-2) bg-(--paper) px-3 py-2 [font-family:var(--font-ui)] text-sm text-(--ink) outline-none transition-[border-color,box-shadow] focus:border-(--accent) focus:shadow-[0_0_0_3px_var(--accent-soft)]";
+  "w-full rounded-(--vd-radius) border border-(--rule-2) bg-(--paper) px-3 py-2 font-visa-ui text-sm text-(--ink) outline-none transition-[border-color,box-shadow] focus:border-(--accent) focus:shadow-[0_0_0_3px_var(--accent-soft)]";
 
 export function VisaInput({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={cn(visaInputClassName, className)} {...props} />;
@@ -247,7 +247,7 @@ export function VisaModalTitle({
   return (
     <h2
       className={cn(
-        "m-0 [font-family:var(--font-display)] text-2xl font-medium tracking-[-0.01em] text-(--ink)",
+        "m-0 font-visa-display text-2xl font-medium tracking-[-0.01em] text-(--ink)",
         className,
       )}
       {...props}

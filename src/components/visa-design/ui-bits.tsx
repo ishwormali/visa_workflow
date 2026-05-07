@@ -208,7 +208,7 @@ export function StepHead({
           {eyebrow}
         </div>
       )}
-      <h1 className="m-0 [font-family:var(--font-display)] text-[32px] leading-[1.15] font-medium tracking-[-0.02em] text-(--ink) [&_em]:text-(--accent-ink) [&_em]:italic">
+      <h1 className="m-0 font-visa-display text-[32px] leading-[1.15] font-medium tracking-[-0.02em] text-(--ink) [&_em]:text-(--accent-ink) [&_em]:italic">
         {title}
       </h1>
       {desc && <p className="mt-2 max-w-[56ch] text-sm text-(--ink-2)">{desc}</p>}
