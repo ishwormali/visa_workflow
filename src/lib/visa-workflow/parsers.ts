@@ -12,7 +12,9 @@ function slugify(input: string) {
     .replace(/^_+|_+$/g, "")
 }
 
-export function parseDocumentList(plainText = SAMPLE_DOCUMENT_LIST): DocTypeConfig[] {
+export function parseDocumentList(
+  plainText = SAMPLE_DOCUMENT_LIST
+): DocTypeConfig[] {
   const rows = plainText.split("\n")
   const docTypes: DocTypeConfig[] = []
 

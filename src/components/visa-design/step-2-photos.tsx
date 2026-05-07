@@ -1,6 +1,20 @@
 import { useState } from "react"
 
 import { PHOTOS } from "./data"
+import {
+  VisaButton,
+  VisaButtonRow,
+  VisaCluster,
+  VisaField,
+  VisaFieldLabel,
+  VisaInput,
+  VisaMonoText,
+  VisaPanel,
+  VisaPanelBody,
+  VisaPanelHeader,
+  VisaPanelTitle,
+  VisaTextarea,
+} from "./primitives"
 import { StepHead } from "./ui-bits"
 
 type Props = {
@@ -30,6 +44,7 @@ export function Step2Photos({ onBack, onNext }: Props) {
 
   const photo = PHOTOS[idx]
   const draft = drafts[idx]
+  const progress = ((idx + 1) / PHOTOS.length) * 100
   const update = <K extends keyof Draft>(k: K, v: Draft[K]) =>
     setDrafts((arr) => arr.map((d, i) => (i === idx ? { ...d, [k]: v } : d)))
 
@@ -58,86 +73,102 @@ export function Step2Photos({ onBack, onNext }: Props) {
         desc="One at a time. AI Format turns your inputs into the visa-officer's expected format."
       />
 
-      <div className="photo-progress-meta">
+      <div className="mb-3 flex justify-between [font-family:var(--font-mono)] text-[11px] text-[var(--ink-3)]">
         <span>
           {idx + 1} / {PHOTOS.length}
         </span>
-        <span>{Math.round(((idx + 1) / PHOTOS.length) * 100)}%</span>
+        <span>{Math.round(progress)}%</span>
       </div>
-      <div className="photo-progress-bar">
+      <div className="mb-4 h-0.5 overflow-hidden rounded-[2px] bg-[var(--rule)]">
         <div
-          className="photo-progress-fill"
-          style={{ width: `${((idx + 1) / PHOTOS.length) * 100}%` }}
-        ></div>
+          className="h-full bg-[var(--accent)] transition-[width] duration-300"
+          style={{ width: `${progress}%` }}
+        />
       </div>
 
-      <div className="panel">
-        <div className="panel-head">
-          <div className="panel-head-title">{photo.label}</div>
-          <span className="mono muted">{photo.file}</span>
-        </div>
-        <div className="panel-body">
-          <div className="photo-stage">
-            <div className="photo-frame" style={{ background: photo.bg }}>
-              <span className="photo-placeholder-label">[ photo · {photo.file} ]</span>
+      <VisaPanel>
+        <VisaPanelHeader>
+          <VisaPanelTitle>{photo.label}</VisaPanelTitle>
+          <VisaMonoText className="text-[var(--ink-3)]">
+            {photo.file}
+          </VisaMonoText>
+        </VisaPanelHeader>
+        <VisaPanelBody>
+          <div className="grid gap-4">
+            <div
+              className="relative grid aspect-[4/3] place-items-center overflow-hidden rounded-[var(--vd-radius-lg)] border border-[var(--rule)]"
+              style={{
+                backgroundColor: photo.bg,
+                backgroundImage:
+                  "repeating-linear-gradient(135deg, transparent 0 18px, color-mix(in oklab, var(--ink-4) 20%, transparent) 18px 19px)",
+              }}
+            >
+              <span className="absolute bottom-3 left-3 rounded-[3px] bg-[color-mix(in_oklab,var(--paper)_90%,transparent)] px-2 py-1 [font-family:var(--font-mono)] text-[10px] tracking-[0.06em] text-[var(--ink-3)]">
+                [ photo · {photo.file} ]
+              </span>
             </div>
-            <div className="field">
-              <label className="field-label">Date taken</label>
-              <input
-                className="input"
+            <VisaField>
+              <VisaFieldLabel>Date taken</VisaFieldLabel>
+              <VisaInput
                 type="date"
                 value={draft.date}
                 onChange={(e) => update("date", e.target.value)}
               />
-            </div>
-            <div className="field">
-              <label className="field-label">People in photo</label>
-              <input
-                className="input"
+            </VisaField>
+            <VisaField>
+              <VisaFieldLabel>People in photo</VisaFieldLabel>
+              <VisaInput
                 value={draft.people}
                 onChange={(e) => update("people", e.target.value)}
               />
-            </div>
-            <div className="field">
-              <label className="field-label">Description / occasion</label>
-              <textarea
-                className="textarea"
+            </VisaField>
+            <VisaField>
+              <VisaFieldLabel>Description / occasion</VisaFieldLabel>
+              <VisaTextarea
                 value={draft.description}
                 onChange={(e) => update("description", e.target.value)}
               />
-            </div>
+            </VisaField>
 
-            <div className="cluster">
-              <button
-                className="btn btn-accent btn-sm"
+            <VisaCluster>
+              <VisaButton
                 onClick={formatAI}
                 disabled={draft.formatting}
+                size="sm"
+                variant="accent"
               >
                 {draft.formatting ? "· · · formatting" : "✦ AI Format"}
-              </button>
-              <span className="muted mono">claude-sonnet-4 · ~280 tokens</span>
-            </div>
+              </VisaButton>
+              <VisaMonoText className="text-[var(--ink-3)]">
+                claude-sonnet-4 · ~280 tokens
+              </VisaMonoText>
+            </VisaCluster>
 
             {draft.formatted && !draft.formatting && (
-              <div className="caption-preview">"{draft.formatted}"</div>
+              <div className="relative rounded-[var(--vd-radius)] border border-[color-mix(in_oklab,var(--accent)_30%,transparent)] bg-[var(--accent-soft)] px-3.5 py-3 [font-family:var(--font-display)] text-sm leading-[1.5] text-[var(--accent-ink)] italic">
+                <span className="absolute top-[-8px] left-3 bg-[var(--paper)] px-1.5 [font-family:var(--font-mono)] text-[9px] font-medium tracking-[0.1em] text-[var(--accent-ink)] not-italic">
+                  PREVIEW
+                </span>
+                "{draft.formatted}"
+              </div>
             )}
           </div>
-        </div>
-      </div>
+        </VisaPanelBody>
+      </VisaPanel>
 
-      <div className="btn-row between">
-        <button className="btn btn-ghost btn-sm" onClick={onBack}>
+      <VisaButtonRow align="between">
+        <VisaButton onClick={onBack} size="sm" variant="ghost">
           ← Back
-        </button>
-        <div className="cluster">
-          <button className="btn btn-sm" onClick={next}>
+        </VisaButton>
+        <VisaCluster>
+          <VisaButton onClick={next} size="sm">
             Skip this photo
-          </button>
-          <button className="btn btn-primary" onClick={next}>
+          </VisaButton>
+          <VisaButton onClick={next} variant="primary">
             {idx < PHOTOS.length - 1 ? "Save & next →" : "Save & continue →"}
-          </button>
-        </div>
-      </div>
+          </VisaButton>
+        </VisaCluster>
+      </VisaButtonRow>
     </>
   )
 }

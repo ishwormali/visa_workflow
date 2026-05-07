@@ -1,5 +1,24 @@
 import { ACTIVE_DOCS, GENERATE_LOG, type DocDates } from "./data"
 import {
+  DocumentFile,
+  DocumentFiles,
+  DocumentList,
+  DocumentMeta,
+  DocumentMetaTag,
+  DocumentRow,
+} from "./document-list"
+import {
+  VisaButton,
+  VisaButtonRow,
+  VisaCluster,
+  VisaDimText,
+  VisaMonoText,
+  VisaPanel,
+  VisaPanelBody,
+  VisaPanelHeader,
+  VisaPanelTitle,
+} from "./primitives"
+import {
   Badge,
   Console,
   DocCategoryLabel,
@@ -35,78 +54,88 @@ export function Step3Generate({ docDates, onBack, onNext }: Props) {
         }
         desc={
           <>
-            Created session subfolder. Generating gdocs, renaming uploads, appending to the{" "}
-            <span className="mono">Document list</span>.
+            Created session subfolder. Generating gdocs, renaming uploads,
+            appending to the <VisaMonoText>Document list</VisaMonoText>.
           </>
         }
       />
 
-      <div className="panel">
-        <div className="panel-head">
-          <div className="panel-head-title">Session folder</div>
-          <span className="mono muted">draft date: {formatDate(today)}</span>
-        </div>
-        <div className="panel-body">
-          <div className="cluster">
-            <span className="dim">📁</span>
-            <span className="mono">Documents requested / Visa-May-2026 /</span>
-          </div>
-        </div>
+      <div className="space-y-3">
+        <VisaPanel>
+          <VisaPanelHeader>
+            <VisaPanelTitle>Session folder</VisaPanelTitle>
+            <VisaMonoText className="text-[var(--ink-3)]">
+              draft date: {formatDate(today)}
+            </VisaMonoText>
+          </VisaPanelHeader>
+          <VisaPanelBody>
+            <VisaCluster>
+              <VisaDimText>📁</VisaDimText>
+              <VisaMonoText>Documents requested / Visa-May-2026 /</VisaMonoText>
+            </VisaCluster>
+          </VisaPanelBody>
+        </VisaPanel>
+
+        <VisaPanel>
+          <VisaPanelHeader>
+            <VisaPanelTitle>Generated · {GENERATED.length}</VisaPanelTitle>
+          </VisaPanelHeader>
+          <VisaPanelBody tight>
+            <DocumentList>
+              {GENERATED.map((g) => {
+                const d = ACTIVE_DOCS.find((x) => x.id === g.id)
+                if (!d) return null
+                const v = docDates[g.id] || {}
+                return (
+                  <DocumentRow
+                    badge={<Badge kind="ready">ready</Badge>}
+                    key={g.id}
+                    label={d.label}
+                    meta={
+                      <DocumentMeta>
+                        <DocumentMetaTag>
+                          <DocCategoryLabel cat={d.category} />
+                        </DocumentMetaTag>
+                        {d.dateFormat === "range" && v.from && (
+                          <DocumentMetaTag>
+                            {formatRange(v.from, v.to)}
+                          </DocumentMetaTag>
+                        )}
+                        {d.category === "gdoc_photos" && (
+                          <DocumentMetaTag>
+                            4 photos · per-photo dates
+                          </DocumentMetaTag>
+                        )}
+                      </DocumentMeta>
+                    }
+                    number={d.number}
+                    files={
+                      <DocumentFiles>
+                        <DocumentFile>{g.file}</DocumentFile>
+                      </DocumentFiles>
+                    }
+                  />
+                )
+              })}
+            </DocumentList>
+          </VisaPanelBody>
+        </VisaPanel>
       </div>
 
-      <div className="panel">
-        <div className="panel-head">
-          <div className="panel-head-title">Generated · {GENERATED.length}</div>
-        </div>
-        <div className="panel-body tight">
-          <div className="doc-list">
-            {GENERATED.map((g) => {
-              const d = ACTIVE_DOCS.find((x) => x.id === g.id)
-              if (!d) return null
-              const v = docDates[g.id] || {}
-              return (
-                <div className="doc-row" key={g.id}>
-                  <div className="doc-num">#{d.number}</div>
-                  <div className="doc-main">
-                    <div className="doc-label">{d.label}</div>
-                    <div className="doc-meta">
-                      <span className="doc-meta-tag">
-                        <DocCategoryLabel cat={d.category} />
-                      </span>
-                      {d.dateFormat === "range" && v.from && (
-                        <span className="doc-meta-tag">{formatRange(v.from, v.to)}</span>
-                      )}
-                      {d.category === "gdoc_photos" && (
-                        <span className="doc-meta-tag">4 photos · per-photo dates</span>
-                      )}
-                    </div>
-                    <div className="doc-files">
-                      <div className="doc-file">
-                        <span className="doc-file-icon">▤</span>
-                        <span>{g.file}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <Badge kind="ready">ready</Badge>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </div>
+      <Console
+        title="drive.generate"
+        lines={GENERATE_LOG}
+        meta="completed in 10.2s"
+      />
 
-      <Console title="drive.generate" lines={GENERATE_LOG} meta="completed in 10.2s" />
-
-      <div className="btn-row between">
-        <button className="btn btn-ghost btn-sm" onClick={onBack}>
+      <VisaButtonRow align="between">
+        <VisaButton onClick={onBack} size="sm" variant="ghost">
           ← Back
-        </button>
-        <button className="btn btn-primary" onClick={onNext}>
+        </VisaButton>
+        <VisaButton onClick={onNext} variant="primary">
           Build email draft →
-        </button>
-      </div>
+        </VisaButton>
+      </VisaButtonRow>
     </>
   )
 }

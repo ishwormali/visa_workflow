@@ -58,7 +58,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body className="visa-design-app" data-theme="warm" data-density="spacious">
+      <body>
         {children}
         <TanStackDevtools
           config={{

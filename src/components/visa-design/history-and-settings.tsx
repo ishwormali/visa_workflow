@@ -1,67 +1,95 @@
 import { useState } from "react"
 
 import { MOCK_DOC_TYPES, PAST_SESSIONS, type EmailConfig } from "./data"
+import {
+  DocumentList,
+  DocumentMeta,
+  DocumentMetaTag,
+  DocumentRow,
+} from "./document-list"
+import {
+  VisaButton,
+  VisaButtonRow,
+  VisaDivider,
+  VisaField,
+  VisaFieldGrid,
+  VisaFieldLabel,
+  VisaInput,
+  VisaModalCard,
+  VisaModalHeader,
+  VisaModalOverlay,
+  VisaModalTitle,
+  VisaMonoText,
+  VisaNotice,
+  VisaPanel,
+  VisaPanelBody,
+  VisaPanelHeader,
+  VisaPanelTitle,
+} from "./primitives"
 import { Badge, DocCategoryLabel, StepHead } from "./ui-bits"
 
 export function HistoryPanel({ onClose }: { onClose: () => void }) {
   const [open, setOpen] = useState<string | null>(PAST_SESSIONS[0].id)
   return (
-    <div className="history-overlay" onClick={onClose}>
-      <div className="history-card" onClick={(e) => e.stopPropagation()}>
-        <div className="history-card-head">
+    <VisaModalOverlay onClick={onClose}>
+      <VisaModalCard
+        className="max-w-[720px]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <VisaModalHeader>
           <div>
-            <h2 className="history-title">Past submissions</h2>
-            <div className="muted mono" style={{ fontSize: 11, marginTop: 2 }}>
+            <VisaModalTitle>Past submissions</VisaModalTitle>
+            <VisaMonoText className="mt-0.5 block text-[11px] text-[var(--ink-3)]">
               {PAST_SESSIONS.length} sessions · all sent · all moved
-            </div>
+            </VisaMonoText>
           </div>
-          <button className="btn btn-ghost btn-sm" onClick={onClose}>
+          <VisaButton onClick={onClose} size="sm" variant="ghost">
             Close ✕
-          </button>
-        </div>
-        <div className="history-list">
+          </VisaButton>
+        </VisaModalHeader>
+        <div className="flex flex-col">
           {PAST_SESSIONS.map((s) => (
             <div key={s.id}>
               <div
-                className="history-session"
+                className="cursor-pointer border-b border-[var(--rule)] px-6 py-4 transition-colors last:border-b-0 hover:bg-[var(--paper-3)]"
                 onClick={() => setOpen(open === s.id ? null : s.id)}
               >
-                <div className="history-session-head">
-                  <div className="history-date">
+                <div className="grid items-center gap-4 md:grid-cols-[100px_minmax(0,1fr)_auto_auto]">
+                  <div className="[font-family:var(--font-mono)] text-xs text-[var(--ink)]">
                     {s.submittedAtPretty}
-                    <small>submitted</small>
+                    <small className="mt-0.5 block text-[10px] tracking-[0.06em] text-[var(--ink-3)] uppercase">
+                      submitted
+                    </small>
                   </div>
-                  <div className="history-subject">
-                    <span className="dim">re:</span> {s.subject}
+                  <div className="truncate text-[13px] text-[var(--ink)]">
+                    <span className="text-[var(--ink-4)]">re:</span> {s.subject}
                   </div>
                   <Badge kind={s.status}>{s.status}</Badge>
-                  <span className="mono dim" style={{ fontSize: 11 }}>
+                  <VisaMonoText className="text-[11px] text-[var(--ink-4)]">
                     {s.filesMoved ? "✓ moved" : "✕ not moved"} ·{" "}
                     {open === s.id ? "▾" : "▸"}
-                  </span>
+                  </VisaMonoText>
                 </div>
               </div>
               {open === s.id && (
-                <div className="history-detail">
-                  <div
-                    className="muted mono"
-                    style={{
-                      fontSize: 10,
-                      letterSpacing: "0.06em",
-                      textTransform: "uppercase",
-                    }}
-                  >
+                <div className="flex flex-col gap-2.5 border-t border-dashed border-[var(--rule)] bg-[var(--paper)] px-6 pt-3 pb-1">
+                  <VisaMonoText className="text-[10px] tracking-[0.06em] text-[var(--ink-3)] uppercase">
                     📁 {s.folderName} · {s.docs.length} documents
-                  </div>
+                  </VisaMonoText>
                   {s.docs.map((d, i) => (
-                    <div className="history-doc-row" key={i}>
-                      <div className="doc-num">#{d.number}</div>
+                    <div
+                      className="grid grid-cols-[28px_minmax(0,1fr)_auto] gap-3 border-b border-dashed border-[var(--rule)] py-1.5 text-xs last:border-b-0"
+                      key={i}
+                    >
+                      <div className="pt-0 [font-family:var(--font-mono)] text-[11px] text-[var(--ink-3)]">
+                        #{d.number}
+                      </div>
                       <div>
                         <div>{d.label}</div>
-                        <div className="muted mono" style={{ fontSize: 11 }}>
+                        <VisaMonoText className="text-[11px] text-[var(--ink-3)]">
                           {d.range}
-                        </div>
-                        <div className="history-doc-files">
+                        </VisaMonoText>
+                        <div className="mt-0.5 flex flex-col gap-0.5 [font-family:var(--font-mono)] text-[11px] text-[var(--ink-3)]">
                           {d.files.map((f) => (
                             <div key={f}>▤ {f}</div>
                           ))}
@@ -75,8 +103,8 @@ export function HistoryPanel({ onClose }: { onClose: () => void }) {
             </div>
           ))}
         </div>
-      </div>
-    </div>
+      </VisaModalCard>
+    </VisaModalOverlay>
   )
 }
 
@@ -86,92 +114,100 @@ type SettingsProps = {
   onClose: () => void
 }
 
-export function SettingsPanel({ emailConfig, setEmailConfig, onClose }: SettingsProps) {
+export function SettingsPanel({
+  emailConfig,
+  setEmailConfig,
+  onClose,
+}: SettingsProps) {
   const [draft, setDraft] = useState<EmailConfig>(emailConfig)
   return (
-    <div className="history-overlay" onClick={onClose}>
-      <div
-        className="history-card"
-        style={{ maxWidth: 520 }}
+    <VisaModalOverlay onClick={onClose}>
+      <VisaModalCard
+        className="max-w-[520px]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="history-card-head">
-          <h2 className="history-title">Settings</h2>
-          <button className="btn btn-ghost btn-sm" onClick={onClose}>
+        <VisaModalHeader>
+          <VisaModalTitle>Settings</VisaModalTitle>
+          <VisaButton onClick={onClose} size="sm" variant="ghost">
             Close ✕
-          </button>
-        </div>
-        <div style={{ padding: "16px 24px" }}>
-          <div className="field" style={{ marginBottom: 12 }}>
-            <label className="field-label">To</label>
-            <input
-              className="input"
+          </VisaButton>
+        </VisaModalHeader>
+        <div className="px-6 py-4">
+          <VisaField className="mb-3">
+            <VisaFieldLabel>To</VisaFieldLabel>
+            <VisaInput
               value={draft.to}
               onChange={(e) => setDraft({ ...draft, to: e.target.value })}
             />
-          </div>
-          <div className="field" style={{ marginBottom: 12 }}>
-            <label className="field-label">CC</label>
-            <input
-              className="input"
+          </VisaField>
+          <VisaField className="mb-3">
+            <VisaFieldLabel>CC</VisaFieldLabel>
+            <VisaInput
               value={draft.cc}
               onChange={(e) => setDraft({ ...draft, cc: e.target.value })}
             />
-          </div>
-          <div className="field-grid" style={{ marginBottom: 12 }}>
-            <div className="field">
-              <label className="field-label">Greeting</label>
-              <input
-                className="input"
+          </VisaField>
+          <VisaFieldGrid className="mb-3">
+            <VisaField>
+              <VisaFieldLabel>Greeting</VisaFieldLabel>
+              <VisaInput
                 value={draft.greeting}
-                onChange={(e) => setDraft({ ...draft, greeting: e.target.value })}
+                onChange={(e) =>
+                  setDraft({ ...draft, greeting: e.target.value })
+                }
               />
-            </div>
-            <div className="field">
-              <label className="field-label">Sign-off</label>
-              <input
-                className="input"
+            </VisaField>
+            <VisaField>
+              <VisaFieldLabel>Sign-off</VisaFieldLabel>
+              <VisaInput
                 value={draft.signoff}
-                onChange={(e) => setDraft({ ...draft, signoff: e.target.value })}
+                onChange={(e) =>
+                  setDraft({ ...draft, signoff: e.target.value })
+                }
               />
-            </div>
-          </div>
-          <div className="divider"></div>
-          <div className="settings-row">
+            </VisaField>
+          </VisaFieldGrid>
+          <VisaDivider />
+          <div className="flex items-center justify-between border-b border-[var(--rule)] py-3">
             <div>
-              <div className="settings-row-label">Re-seed doc types</div>
-              <div className="settings-row-help">
+              <div className="text-[13px] text-[var(--ink)]">
+                Re-seed doc types
+              </div>
+              <div className="mt-0.5 [font-family:var(--font-mono)] text-[11px] text-[var(--ink-3)]">
                 Re-reads the Document list Google Doc
               </div>
             </div>
-            <button className="btn btn-sm">⟳ Re-seed</button>
+            <VisaButton size="sm">⟳ Re-seed</VisaButton>
           </div>
-          <div className="settings-row">
+          <div className="flex items-center justify-between py-3">
             <div>
-              <div className="settings-row-label">Clear all sessions</div>
-              <div className="settings-row-help">
+              <div className="text-[13px] text-[var(--ink)]">
+                Clear all sessions
+              </div>
+              <div className="mt-0.5 [font-family:var(--font-mono)] text-[11px] text-[var(--ink-3)]">
                 {PAST_SESSIONS.length} sessions stored locally
               </div>
             </div>
-            <button className="btn btn-sm">Clear…</button>
+            <VisaButton size="sm">Clear…</VisaButton>
           </div>
-          <div className="btn-row right">
-            <button className="btn btn-ghost btn-sm" onClick={onClose}>
+          <VisaButtonRow align="right">
+            <VisaButton onClick={onClose} size="sm" variant="ghost">
               Cancel
-            </button>
-            <button
-              className="btn btn-primary btn-sm"
+            </VisaButton>
+            <VisaButton
               onClick={() => {
                 setEmailConfig(draft)
                 onClose()
               }}
+              size="sm"
+              variant="primary"
             >
               Save
-            </button>
-          </div>
+            </VisaButton>
+          </VisaButtonRow>
         </div>
-      </div>
-    </div>
+      </VisaModalCard>
+    </VisaModalOverlay>
   )
 }
 
@@ -187,58 +223,62 @@ export function ConfigSeed({ onComplete }: { onComplete: () => void }) {
         }
         desc={
           <>
-            We read the table from your <span className="mono">Document list</span> Google
-            Doc. Mark recurring vs. one-off below.
+            We read the table from your{" "}
+            <VisaMonoText>Document list</VisaMonoText> Google Doc. Mark
+            recurring vs. one-off below.
           </>
         }
       />
 
-      <div className="notice">
-        <div className="notice-icon">✦</div>
+      <VisaNotice icon="✦">
         <div>
-          Parsed <strong>9 rows</strong> · 4 are recurring (monthly) · 5 look like
-          one-offs.
+          Parsed <strong>9 rows</strong> · 4 are recurring (monthly) · 5 look
+          like one-offs.
         </div>
-      </div>
+      </VisaNotice>
 
-      <div className="panel">
-        <div className="panel-head">
-          <div className="panel-head-title">Detected doc types</div>
-          <span className="muted mono">toggle to set active</span>
-        </div>
-        <div className="panel-body tight">
-          <div className="doc-list">
+      <VisaPanel>
+        <VisaPanelHeader>
+          <VisaPanelTitle>Detected doc types</VisaPanelTitle>
+          <VisaMonoText className="text-[var(--ink-3)]">
+            toggle to set active
+          </VisaMonoText>
+        </VisaPanelHeader>
+        <VisaPanelBody tight>
+          <DocumentList>
             {MOCK_DOC_TYPES.map((d) => (
-              <div className="doc-row" key={d.id} data-inactive={!d.active}>
-                <div className="doc-num">#{d.number}</div>
-                <div className="doc-main">
-                  <div className="doc-label">{d.label}</div>
-                  <div className="doc-meta">
-                    <span className="doc-meta-tag">
-                      <DocCategoryLabel cat={d.category} />
-                    </span>
-                    <span className="doc-meta-tag">{d.dateFormat}</span>
-                    {d.matchPattern && (
-                      <span className="doc-meta-tag mono">{d.matchPattern}</span>
-                    )}
-                  </div>
-                </div>
-                <div>
+              <DocumentRow
+                badge={
                   <Badge kind={d.active ? "active" : "inactive"}>
                     {d.active ? "active" : "inactive"}
                   </Badge>
-                </div>
-              </div>
+                }
+                inactive={!d.active}
+                key={d.id}
+                label={d.label}
+                meta={
+                  <DocumentMeta>
+                    <DocumentMetaTag>
+                      <DocCategoryLabel cat={d.category} />
+                    </DocumentMetaTag>
+                    <DocumentMetaTag>{d.dateFormat}</DocumentMetaTag>
+                    {d.matchPattern && (
+                      <DocumentMetaTag>{d.matchPattern}</DocumentMetaTag>
+                    )}
+                  </DocumentMeta>
+                }
+                number={d.number}
+              />
             ))}
-          </div>
-        </div>
-      </div>
+          </DocumentList>
+        </VisaPanelBody>
+      </VisaPanel>
 
-      <div className="btn-row right">
-        <button className="btn btn-primary" onClick={onComplete}>
+      <VisaButtonRow align="right">
+        <VisaButton onClick={onComplete} variant="primary">
           Save · 4 active types
-        </button>
-      </div>
+        </VisaButton>
+      </VisaButtonRow>
     </>
   )
 }

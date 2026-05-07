@@ -13,6 +13,23 @@ import {
   formatDate,
   formatRange,
 } from "./ui-bits"
+import {
+  DocumentFile,
+  DocumentFiles,
+  DocumentList,
+  DocumentMeta,
+  DocumentMetaTag,
+  DocumentRow,
+} from "./document-list"
+import {
+  VisaButton,
+  VisaButtonRow,
+  VisaMonoText,
+  VisaPanel,
+  VisaPanelBody,
+  VisaPanelHeader,
+  VisaPanelTitle,
+} from "./primitives"
 
 type Props = {
   docDates: DocDates
@@ -38,79 +55,86 @@ export function Step1Scan({ docDates, onBack, onNext }: Props) {
         }
         desc={
           <>
-            Searching <span className="mono">Documents requested</span> recursively and
-            matching files to active doc types via regex.
+            Searching <VisaMonoText>Documents requested</VisaMonoText>{" "}
+            recursively and matching files to active doc types via regex.
           </>
         }
       />
 
-      <div className="panel">
-        <div className="panel-head">
-          <div className="panel-head-title">Detected — {SCANNED_FILES.length} files</div>
-          <span className="muted mono">4/4 doc types matched</span>
-        </div>
-        <div className="panel-body tight">
-          <div className="doc-list">
+      <VisaPanel>
+        <VisaPanelHeader>
+          <VisaPanelTitle>
+            Detected — {SCANNED_FILES.length} files
+          </VisaPanelTitle>
+          <VisaMonoText className="text-[var(--ink-3)]">
+            4/4 doc types matched
+          </VisaMonoText>
+        </VisaPanelHeader>
+        <VisaPanelBody tight>
+          <DocumentList>
             {ACTIVE_DOCS.map((d) => {
               const files = detectedByDoc[d.id] || []
               const v = docDates[d.id] || {}
               return (
-                <div className="doc-row" key={d.id}>
-                  <div className="doc-num">#{d.number}</div>
-                  <div className="doc-main">
-                    <div className="doc-label">{d.label}</div>
-                    <div className="doc-meta">
-                      <span className="doc-meta-tag">
-                        <DocCategoryLabel cat={d.category} />
-                      </span>
-                      {d.dateFormat === "range" && v.from && (
-                        <span className="doc-meta-tag">{formatRange(v.from, v.to)}</span>
-                      )}
-                      {d.dateFormat === "single" && v.single && (
-                        <span className="doc-meta-tag">{formatDate(v.single)}</span>
-                      )}
-                      {d.category === "gdoc_photos" && (
-                        <span className="doc-meta-tag">dates per-photo</span>
-                      )}
-                    </div>
-                    {files.length > 0 && (
-                      <div className="doc-files">
-                        {files.map((f) => (
-                          <div className="doc-file" key={f.name}>
-                            <span className="doc-file-icon">▤</span>
-                            <span>{f.name}</span>
-                            <span className="dim" style={{ marginLeft: "auto" }}>
-                              {f.size}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div>
+                <DocumentRow
+                  badge={
                     <Badge kind={files.length ? "detected" : "pending"}>
                       {files.length
                         ? `${files.length} ${files.length === 1 ? "file" : "files"}`
                         : "pending"}
                     </Badge>
-                  </div>
-                </div>
+                  }
+                  key={d.id}
+                  label={d.label}
+                  meta={
+                    <DocumentMeta>
+                      <DocumentMetaTag>
+                        <DocCategoryLabel cat={d.category} />
+                      </DocumentMetaTag>
+                      {d.dateFormat === "range" && v.from && (
+                        <DocumentMetaTag>
+                          {formatRange(v.from, v.to)}
+                        </DocumentMetaTag>
+                      )}
+                      {d.dateFormat === "single" && v.single && (
+                        <DocumentMetaTag>
+                          {formatDate(v.single)}
+                        </DocumentMetaTag>
+                      )}
+                      {d.category === "gdoc_photos" && (
+                        <DocumentMetaTag>dates per-photo</DocumentMetaTag>
+                      )}
+                    </DocumentMeta>
+                  }
+                  number={d.number}
+                  files={
+                    files.length > 0 ? (
+                      <DocumentFiles>
+                        {files.map((f) => (
+                          <DocumentFile key={f.name} trailing={f.size}>
+                            {f.name}
+                          </DocumentFile>
+                        ))}
+                      </DocumentFiles>
+                    ) : null
+                  }
+                />
               )
             })}
-          </div>
-        </div>
-      </div>
+          </DocumentList>
+        </VisaPanelBody>
+      </VisaPanel>
 
       <Console title="drive.scan" lines={SCAN_LOG} meta="completed in 2.4s" />
 
-      <div className="btn-row between">
-        <button className="btn btn-ghost btn-sm" onClick={onBack}>
+      <VisaButtonRow align="between">
+        <VisaButton onClick={onBack} size="sm" variant="ghost">
           ← Back
-        </button>
-        <button className="btn btn-primary" onClick={onNext}>
+        </VisaButton>
+        <VisaButton onClick={onNext} variant="primary">
           4 photos detected → Caption them
-        </button>
-      </div>
+        </VisaButton>
+      </VisaButtonRow>
     </>
   )
 }

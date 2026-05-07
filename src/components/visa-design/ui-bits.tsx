@@ -1,14 +1,10 @@
 import { Fragment, type ReactNode } from "react"
 
-export type BadgeKind =
-  | "detected"
-  | "ready"
-  | "pending"
-  | "skipped"
-  | "sent"
-  | "draft"
-  | "active"
-  | "inactive"
+import { cn } from "@/lib/utils"
+
+import { VisaBadge, type VisaBadgeKind } from "./primitives"
+
+export type BadgeKind = VisaBadgeKind
 
 export function Badge({
   kind,
@@ -17,11 +13,7 @@ export function Badge({
   kind: BadgeKind
   children: ReactNode
 }) {
-  return (
-    <span className="badge" data-kind={kind}>
-      {children}
-    </span>
-  )
+  return <VisaBadge kind={kind}>{children}</VisaBadge>
 }
 
 export type LogMark = "ok" | "warn" | "err" | "api" | "·"
@@ -96,18 +88,23 @@ export function Console({
       : (lines as LogLine[])
 
   return (
-    <div className="console">
-      <div className="console-head">
-        <div className="console-title">{title || "Live output"}</div>
-        <div className="console-meta">{meta || `${normalized.length} events`}</div>
+    <div className="mt-4 overflow-hidden rounded-[var(--vd-radius-lg)] border border-[var(--rule)] bg-[oklch(20%_0.014_80)] text-[oklch(86%_0.012_80)]">
+      <div className="flex items-center justify-between gap-3 border-b border-[oklch(28%_0.014_80)] bg-[oklch(18%_0.014_80)] px-3.5 py-2">
+        <div className="flex items-center gap-2 text-[10px] tracking-[0.1em] text-[oklch(60%_0.012_80)] uppercase">
+          <span className="h-[7px] w-[7px] rounded-full bg-[var(--ok)] text-[var(--ok)] shadow-[0_0_6px_currentColor]" />
+          {title || "Live output"}
+        </div>
+        <div className="text-[10px] tracking-[0.04em] text-[oklch(55%_0.012_80)]">
+          {meta || `${normalized.length} events`}
+        </div>
       </div>
-      <div className="console-body">
+      <div className="max-h-[280px] overflow-y-auto px-3.5 py-3">
         {normalized.length === 0 && emptyMessage && (
-          <div className="console-line">
-            <span className="console-time"></span>
-            <span className="console-mark">·</span>
-            <span className="console-text">
-              <span className="dim">{emptyMessage}</span>
+          <div className="grid grid-cols-[60px_18px_1fr] gap-2 py-px">
+            <span className="text-[oklch(48%_0.012_80)]"></span>
+            <span className="text-[oklch(58%_0.012_80)]">·</span>
+            <span className="text-[oklch(86%_0.012_80)]">
+              <span className="text-[oklch(58%_0.012_80)]">{emptyMessage}</span>
             </span>
           </div>
         )}
@@ -127,12 +124,20 @@ export function Console({
                     ? "→"
                     : "·"
           return (
-            <div className="console-line" key={i}>
-              <span className="console-time">{l.t}</span>
-              <span className="console-mark" data-kind={dataKind}>
+            <div className="grid grid-cols-[60px_18px_1fr] gap-2 py-px" key={i}>
+              <span className="text-[oklch(48%_0.012_80)]">{l.t}</span>
+              <span
+                className={cn(
+                  "text-[oklch(58%_0.012_80)]",
+                  dataKind === "ok" && "text-[oklch(70%_0.1_150)]",
+                  dataKind === "warn" && "text-[oklch(75%_0.12_70)]",
+                  dataKind === "err" && "text-[oklch(70%_0.14_30)]",
+                  dataKind === "api" && "text-[oklch(70%_0.1_230)]"
+                )}
+              >
                 {glyph}
               </span>
-              <span className="console-text">{l.text}</span>
+              <span className="text-[oklch(86%_0.012_80)]">{l.text}</span>
             </div>
           )
         })}
@@ -153,22 +158,47 @@ export function StepRail({
   onNav?: (n: number) => void
 }) {
   return (
-    <div className="step-rail">
+    <div className="mb-7 flex items-center gap-0 [font-family:var(--font-mono)] text-[10px] tracking-[0.08em] text-[var(--ink-3)] uppercase">
       {items.map((s, i) => {
-        const state = current === s.n ? "active" : current > s.n ? "done" : "idle"
+        const state =
+          current === s.n ? "active" : current > s.n ? "done" : "idle"
         return (
           <Fragment key={s.n}>
             <div
-              className="step-rail-item"
-              data-state={state}
+              className={cn(
+                "flex flex-1 items-center gap-2",
+                onNav && "cursor-pointer"
+              )}
               onClick={() => onNav?.(s.n)}
             >
-              <div className="step-rail-num">
-                <span>{s.n}</span>
+              <div
+                className={cn(
+                  "grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full border border-[var(--rule-2)] bg-[var(--paper)] text-[10px] text-[var(--ink-3)] transition-colors",
+                  state === "active" &&
+                    "border-[var(--ink)] bg-[var(--ink)] text-[var(--paper)]",
+                  state === "done" &&
+                    "border-[var(--accent)] bg-[var(--accent)] text-[var(--paper)]"
+                )}
+              >
+                <span>{state === "done" ? "✓" : s.n}</span>
               </div>
-              <div className="step-rail-label">{s.label}</div>
+              <div
+                className={cn(
+                  "truncate whitespace-nowrap",
+                  state === "active" && "text-[var(--ink)]"
+                )}
+              >
+                {s.label}
+              </div>
             </div>
-            {i < items.length - 1 && <div className="step-rail-tick"></div>}
+            {i < items.length - 1 && (
+              <div
+                className={cn(
+                  "mx-1.5 h-px min-w-2 flex-1 bg-[var(--rule-2)]",
+                  current > s.n && "bg-[var(--accent)]"
+                )}
+              />
+            )}
           </Fragment>
         )
       })}
@@ -188,10 +218,18 @@ export function StepHead({
   children?: ReactNode
 }) {
   return (
-    <div className="step-head">
-      {eyebrow && <div className="step-eyebrow">{eyebrow}</div>}
-      <h1 className="step-title">{title}</h1>
-      {desc && <p className="step-desc">{desc}</p>}
+    <div className="mb-6">
+      {eyebrow && (
+        <div className="mb-2 [font-family:var(--font-mono)] text-[10px] tracking-[0.12em] text-[var(--ink-3)] uppercase">
+          {eyebrow}
+        </div>
+      )}
+      <h1 className="m-0 [font-family:var(--font-display)] text-[32px] leading-[1.15] font-medium tracking-[-0.02em] text-[var(--ink)] [&_em]:text-[var(--accent-ink)] [&_em]:italic">
+        {title}
+      </h1>
+      {desc && (
+        <p className="mt-2 max-w-[56ch] text-sm text-[var(--ink-2)]">{desc}</p>
+      )}
       {children}
     </div>
   )

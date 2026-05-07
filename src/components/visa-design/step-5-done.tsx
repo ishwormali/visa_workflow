@@ -1,4 +1,12 @@
 import { DONE_LOG } from "./data"
+import { cn } from "@/lib/utils"
+
+import {
+  VisaButton,
+  VisaButtonRow,
+  VisaNotice,
+  visaButtonVariants,
+} from "./primitives"
 import { Console, StepHead } from "./ui-bits"
 
 type Props = {
@@ -30,74 +38,91 @@ export function Step5Done({ sent, onSent, onReset }: Props) {
         }
       />
 
-      <div className="summary-card">
-        {sent && <span className="summary-stamp">SENT</span>}
-        <h2 className="summary-big">
-          {sent ? (
-            <>
-              <em>Visa-May-2026</em> wrapped
-            </>
-          ) : (
-            <>
-              Almost <em>there</em>
-            </>
-          )}
-        </h2>
-        <p className="summary-sub">
-          {sent
-            ? "Submitted on 05-May-2026 at 14:22"
-            : "Subject: Visa Application Documents - 05-May-2026"}
-        </p>
-        <div className="summary-stats">
-          <div className="summary-stat">
-            <div className="summary-stat-num">4</div>
-            <div className="summary-stat-label">documents</div>
-          </div>
-          <div className="summary-stat">
-            <div className="summary-stat-num">4</div>
-            <div className="summary-stat-label">photos</div>
-          </div>
-          <div className="summary-stat">
-            <div className="summary-stat-num">12.9 MB</div>
-            <div className="summary-stat-label">attached</div>
-          </div>
-        </div>
-      </div>
+      <CompletionSummary sent={sent} />
 
       {!sent ? (
         <>
-          <div className="notice">
-            <div className="notice-icon">✦</div>
+          <VisaNotice icon="✦">
             <div>
-              Sending the draft is a one-click manual step in Gmail. Once you've sent it,
-              click below to record the submission, move files into the root folder, and
-              start fresh.
+              Sending the draft is a one-click manual step in Gmail. Once you've
+              sent it, click below to record the submission, move files into the
+              root folder, and start fresh.
             </div>
-          </div>
+          </VisaNotice>
 
-          <div className="btn-row between">
+          <VisaButtonRow align="between">
             <a
-              className="btn btn-sm"
+              className={cn(visaButtonVariants({ size: "sm" }))}
               href="#"
               onClick={(e) => e.preventDefault()}
             >
               ↗ Open Gmail Drafts
             </a>
-            <button className="btn btn-accent" onClick={onSent}>
+            <VisaButton onClick={onSent} variant="accent">
               Email sent — close session
-            </button>
-          </div>
+            </VisaButton>
+          </VisaButtonRow>
         </>
       ) : (
         <>
-          <Console title="session.close" lines={DONE_LOG} meta="completed in 2.1s" />
-          <div className="btn-row right">
-            <button className="btn btn-primary" onClick={onReset}>
+          <Console
+            title="session.close"
+            lines={DONE_LOG}
+            meta="completed in 2.1s"
+          />
+          <VisaButtonRow align="right">
+            <VisaButton onClick={onReset} variant="primary">
               Start next session →
-            </button>
-          </div>
+            </VisaButton>
+          </VisaButtonRow>
         </>
       )}
     </>
+  )
+}
+
+function CompletionSummary({ sent }: { sent: boolean }) {
+  return (
+    <div className="relative mb-4 overflow-hidden rounded-[12px] border border-[color-mix(in_oklab,var(--accent)_25%,transparent)] bg-[linear-gradient(180deg,var(--accent-soft),var(--paper-2))] p-7 text-center">
+      {sent && (
+        <span className="absolute top-4 right-4 [transform:rotate(-6deg)] rounded-[4px] border-2 border-[var(--accent-ink)] px-2.5 py-1 [font-family:var(--font-display)] text-sm font-medium tracking-[0.05em] text-[var(--accent-ink)] italic opacity-75">
+          SENT
+        </span>
+      )}
+      <h2 className="m-0 [font-family:var(--font-display)] text-[28px] font-medium tracking-[-0.02em] text-[var(--ink)] [&_em]:text-[var(--accent-ink)] [&_em]:italic">
+        {sent ? (
+          <>
+            <em>Visa-May-2026</em> wrapped
+          </>
+        ) : (
+          <>
+            Almost <em>there</em>
+          </>
+        )}
+      </h2>
+      <p className="mt-1 text-sm text-[var(--ink-2)]">
+        {sent
+          ? "Submitted on 05-May-2026 at 14:22"
+          : "Subject: Visa Application Documents - 05-May-2026"}
+      </p>
+      <div className="mt-4 grid grid-cols-3 gap-3">
+        <SummaryStat label="documents" value="4" />
+        <SummaryStat label="photos" value="4" />
+        <SummaryStat label="attached" value="12.9 MB" />
+      </div>
+    </div>
+  )
+}
+
+function SummaryStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[var(--vd-radius)] border border-[var(--rule)] bg-[var(--paper)] p-2.5">
+      <div className="[font-family:var(--font-display)] text-[22px] font-medium text-[var(--ink)]">
+        {value}
+      </div>
+      <div className="[font-family:var(--font-mono)] text-[10px] tracking-[0.08em] text-[var(--ink-3)] uppercase">
+        {label}
+      </div>
+    </div>
   )
 }

@@ -4,96 +4,70 @@
    ============================================================ */
 
 .visa-design-app {
-  /* Paper / ink */
-  --paper:        oklch(98.2% 0.006 80);
-  --paper-2:      oklch(96.5% 0.008 80);
-  --paper-3:      oklch(94% 0.010 80);
-  --rule:         oklch(88% 0.012 80);
-  --rule-2:       oklch(82% 0.014 80);
+  --paper: oklch(98.2% 0.006 80);
+  --paper-2: oklch(96.5% 0.008 80);
+  --paper-3: oklch(94% 0.01 80);
+  --rule: oklch(88% 0.012 80);
+  --rule-2: oklch(82% 0.014 80);
 
-  --ink:          oklch(22% 0.018 60);
-  --ink-2:        oklch(38% 0.018 60);
-  --ink-3:        oklch(55% 0.014 60);
-  --ink-4:        oklch(70% 0.012 60);
+  --ink: oklch(22% 0.018 60);
+  --ink-2: oklch(38% 0.018 60);
+  --ink-3: oklch(55% 0.014 60);
+  --ink-4: oklch(70% 0.012 60);
 
-  --accent:       oklch(48% 0.13 255);
-  --accent-soft:  oklch(94% 0.025 255);
-  --accent-ink:   oklch(35% 0.13 255);
+  --accent: oklch(48% 0.13 255);
+  --accent-soft: oklch(94% 0.025 255);
+  --accent-ink: oklch(35% 0.13 255);
 
-  --ok:           oklch(48% 0.10 150);
-  --ok-soft:      oklch(94% 0.030 150);
-  --warn:         oklch(58% 0.12 70);
-  --warn-soft:    oklch(95% 0.035 70);
-  --info:         oklch(48% 0.10 230);
-  --info-soft:    oklch(94% 0.030 230);
-  --muted-bg:     oklch(92% 0.008 80);
+  --ok: oklch(48% 0.1 150);
+  --ok-soft: oklch(94% 0.03 150);
+  --warn: oklch(58% 0.12 70);
+  --warn-soft: oklch(95% 0.035 70);
+  --info: oklch(48% 0.1 230);
+  --info-soft: oklch(94% 0.03 230);
+  --muted-bg: oklch(92% 0.008 80);
 
-  --vd-radius:       6px;
-  --vd-radius-lg:    10px;
+  --vd-radius: 6px;
+  --vd-radius-lg: 10px;
 
-  --font-display: 'Newsreader', 'Iowan Old Style', Georgia, serif;
-  --font-ui:      'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-display: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
   --vd-shadow-sm: 0 1px 0 rgba(60, 40, 20, 0.04);
-  --vd-shadow:    0 1px 2px rgba(60, 40, 20, 0.05), 0 0 0 0.5px rgba(60, 40, 20, 0.06);
-
-  position: relative;
-  min-height: 100vh;
-  background: var(--paper);
-  color: var(--ink);
-  font-family: var(--font-ui);
-  font-size: 14px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  font-feature-settings: 'cv11', 'ss01';
+  --vd-shadow:
+    0 1px 2px rgba(60, 40, 20, 0.05), 0 0 0 0.5px rgba(60, 40, 20, 0.06);
 }
 
 .visa-design-app[data-theme="cool"] {
-  --paper:        oklch(98.5% 0.005 240);
-  --paper-2:      oklch(96.8% 0.007 240);
-  --paper-3:      oklch(94.5% 0.009 240);
-  --rule:         oklch(88% 0.012 240);
-  --rule-2:       oklch(82% 0.014 240);
-  --ink:          oklch(20% 0.020 250);
-  --ink-2:        oklch(36% 0.020 250);
-  --ink-3:        oklch(54% 0.014 250);
-  --ink-4:        oklch(70% 0.012 250);
+  --paper: oklch(98.5% 0.005 240);
+  --paper-2: oklch(96.8% 0.007 240);
+  --paper-3: oklch(94.5% 0.009 240);
+  --rule: oklch(88% 0.012 240);
+  --rule-2: oklch(82% 0.014 240);
+  --ink: oklch(20% 0.02 250);
+  --ink-2: oklch(36% 0.02 250);
+  --ink-3: oklch(54% 0.014 250);
+  --ink-4: oklch(70% 0.012 250);
 }
 
 .visa-design-app[data-theme="terminal"] {
-  --paper:        oklch(16% 0.012 80);
-  --paper-2:      oklch(20% 0.014 80);
-  --paper-3:      oklch(24% 0.014 80);
-  --rule:         oklch(30% 0.014 80);
-  --rule-2:       oklch(38% 0.014 80);
-  --ink:          oklch(94% 0.010 80);
-  --ink-2:        oklch(78% 0.012 80);
-  --ink-3:        oklch(60% 0.012 80);
-  --ink-4:        oklch(48% 0.012 80);
-  --accent:       oklch(78% 0.14 80);
-  --accent-soft:  oklch(28% 0.06 80);
-  --accent-ink:   oklch(85% 0.14 80);
-  --vd-shadow-sm: 0 1px 0 rgba(0,0,0,0.4);
-  --vd-shadow:    0 1px 2px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,255,255,0.05);
+  --paper: oklch(16% 0.012 80);
+  --paper-2: oklch(20% 0.014 80);
+  --paper-3: oklch(24% 0.014 80);
+  --rule: oklch(30% 0.014 80);
+  --rule-2: oklch(38% 0.014 80);
+  --ink: oklch(94% 0.01 80);
+  --ink-2: oklch(78% 0.012 80);
+  --ink-3: oklch(60% 0.012 80);
+  --ink-4: oklch(48% 0.012 80);
+  --accent: oklch(78% 0.14 80);
+  --accent-soft: oklch(28% 0.06 80);
+  --accent-ink: oklch(85% 0.14 80);
+  --vd-shadow-sm: 0 1px 0 rgba(0, 0, 0, 0.4);
+  --vd-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.5), 0 0 0 0.5px rgba(255, 255, 255, 0.05);
 }
-
-.visa-design-app[data-density="dense"] { font-size: 13px; }
-.visa-design-app[data-density="spacious"] { font-size: 15px; }
-
-.visa-design-app * { box-sizing: border-box; }
-
-.visa-design-app::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    radial-gradient(circle at 20% 10%, rgba(140, 90, 40, 0.025), transparent 50%),
-    radial-gradient(circle at 80% 90%, rgba(40, 60, 120, 0.020), transparent 50%);
-  z-index: 0;
-}
-.visa-design-app[data-theme="terminal"]::before { display: none; }
 
 /* ============================================================
    Header
@@ -136,7 +110,7 @@
   position: relative;
 }
 .visa-design-app .app-mark-glyph::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: -3px;
   border: 1px dashed var(--rule-2);
@@ -155,7 +129,9 @@
   color: var(--ink-2);
   font-weight: 400;
 }
-.visa-design-app .app-header-spacer { flex: 1; }
+.visa-design-app .app-header-spacer {
+  flex: 1;
+}
 
 .visa-design-app .submission-count {
   font-family: var(--font-mono);
@@ -166,7 +142,10 @@
   align-items: center;
   gap: 6px;
 }
-.visa-design-app .submission-count strong { color: var(--ink); font-weight: 500; }
+.visa-design-app .submission-count strong {
+  color: var(--ink);
+  font-weight: 500;
+}
 
 .visa-design-app .header-btn {
   font-family: var(--font-ui);
@@ -201,8 +180,12 @@
   position: relative;
   z-index: 1;
 }
-.visa-design-app[data-density="dense"] .app-main { padding: 16px 24px 60px; }
-.visa-design-app[data-density="spacious"] .app-main { padding: 36px 24px 100px; }
+.visa-design-app[data-density="dense"] .app-main {
+  padding: 16px 24px 60px;
+}
+.visa-design-app[data-density="spacious"] .app-main {
+  padding: 36px 24px 100px;
+}
 
 /* ============================================================
    Step rail
@@ -249,16 +232,20 @@
   border-color: var(--accent);
 }
 .visa-design-app .step-rail-item[data-state="done"] .step-rail-num::before {
-  content: '✓';
+  content: "✓";
   font-size: 11px;
 }
-.visa-design-app .step-rail-item[data-state="done"] .step-rail-num span { display: none; }
+.visa-design-app .step-rail-item[data-state="done"] .step-rail-num span {
+  display: none;
+}
 .visa-design-app .step-rail-label {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.visa-design-app .step-rail-item[data-state="active"] .step-rail-label { color: var(--ink); }
+.visa-design-app .step-rail-item[data-state="active"] .step-rail-label {
+  color: var(--ink);
+}
 .visa-design-app .step-rail-tick {
   flex: 1;
   height: 1px;
@@ -314,7 +301,9 @@
   box-shadow: var(--vd-shadow-sm);
   overflow: hidden;
 }
-.visa-design-app .panel + .panel { margin-top: 12px; }
+.visa-design-app .panel + .panel {
+  margin-top: 12px;
+}
 
 .visa-design-app .panel-head {
   padding: 12px 16px;
@@ -331,13 +320,20 @@
   text-transform: uppercase;
   color: var(--ink-2);
 }
-.visa-design-app .panel-body { padding: 16px; }
-.visa-design-app .panel-body.tight { padding: 0; }
+.visa-design-app .panel-body {
+  padding: 16px;
+}
+.visa-design-app .panel-body.tight {
+  padding: 0;
+}
 
 /* ============================================================
    Doc type list
    ============================================================ */
-.visa-design-app .doc-list { display: flex; flex-direction: column; }
+.visa-design-app .doc-list {
+  display: flex;
+  flex-direction: column;
+}
 .visa-design-app .doc-row {
   padding: 14px 16px;
   border-bottom: 1px solid var(--rule);
@@ -346,8 +342,12 @@
   gap: 12px;
   align-items: start;
 }
-.visa-design-app .doc-row:last-child { border-bottom: none; }
-.visa-design-app .doc-row[data-inactive="true"] { opacity: 0.5; }
+.visa-design-app .doc-row:last-child {
+  border-bottom: none;
+}
+.visa-design-app .doc-row[data-inactive="true"] {
+  opacity: 0.5;
+}
 
 .visa-design-app .doc-num {
   font-family: var(--font-mono);
@@ -355,7 +355,9 @@
   color: var(--ink-3);
   padding-top: 2px;
 }
-.visa-design-app .doc-main { min-width: 0; }
+.visa-design-app .doc-main {
+  min-width: 0;
+}
 .visa-design-app .doc-label {
   font-size: 14px;
   color: var(--ink);
@@ -376,12 +378,15 @@
   gap: 4px;
 }
 .visa-design-app .doc-meta-tag::before {
-  content: '';
-  width: 3px; height: 3px;
+  content: "";
+  width: 3px;
+  height: 3px;
   background: var(--ink-4);
   border-radius: 50%;
 }
-.visa-design-app .doc-meta-tag:first-child::before { display: none; }
+.visa-design-app .doc-meta-tag:first-child::before {
+  display: none;
+}
 
 .visa-design-app .doc-files {
   margin-top: 8px;
@@ -459,20 +464,44 @@
   white-space: nowrap;
 }
 .visa-design-app .badge::before {
-  content: '';
+  content: "";
   width: 5px;
   height: 5px;
   border-radius: 50%;
   background: currentColor;
 }
-.visa-design-app .badge[data-kind="detected"] { color: var(--info); background: var(--info-soft); }
-.visa-design-app .badge[data-kind="ready"]    { color: var(--ok); background: var(--ok-soft); }
-.visa-design-app .badge[data-kind="pending"]  { color: var(--warn); background: var(--warn-soft); }
-.visa-design-app .badge[data-kind="skipped"]  { color: var(--ink-3); background: var(--muted-bg); }
-.visa-design-app .badge[data-kind="sent"]     { color: var(--ok); background: var(--ok-soft); }
-.visa-design-app .badge[data-kind="draft"]    { color: var(--info); background: var(--info-soft); }
-.visa-design-app .badge[data-kind="active"]   { color: var(--accent-ink); background: var(--accent-soft); }
-.visa-design-app .badge[data-kind="inactive"] { color: var(--ink-3); background: var(--muted-bg); }
+.visa-design-app .badge[data-kind="detected"] {
+  color: var(--info);
+  background: var(--info-soft);
+}
+.visa-design-app .badge[data-kind="ready"] {
+  color: var(--ok);
+  background: var(--ok-soft);
+}
+.visa-design-app .badge[data-kind="pending"] {
+  color: var(--warn);
+  background: var(--warn-soft);
+}
+.visa-design-app .badge[data-kind="skipped"] {
+  color: var(--ink-3);
+  background: var(--muted-bg);
+}
+.visa-design-app .badge[data-kind="sent"] {
+  color: var(--ok);
+  background: var(--ok-soft);
+}
+.visa-design-app .badge[data-kind="draft"] {
+  color: var(--info);
+  background: var(--info-soft);
+}
+.visa-design-app .badge[data-kind="active"] {
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+.visa-design-app .badge[data-kind="inactive"] {
+  color: var(--ink-3);
+  background: var(--muted-bg);
+}
 
 /* ============================================================
    Buttons
@@ -493,15 +522,24 @@
   transition: all 0.12s;
   white-space: nowrap;
 }
-.visa-design-app .btn:hover { background: var(--paper-3); border-color: var(--ink-4); }
-.visa-design-app .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.visa-design-app .btn:hover {
+  background: var(--paper-3);
+  border-color: var(--ink-4);
+}
+.visa-design-app .btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
 .visa-design-app .btn-primary {
   background: var(--ink);
   color: var(--paper);
   border-color: var(--ink);
 }
-.visa-design-app .btn-primary:hover { background: var(--ink-2); border-color: var(--ink-2); }
+.visa-design-app .btn-primary:hover {
+  background: var(--ink-2);
+  border-color: var(--ink-2);
+}
 
 .visa-design-app .btn-accent {
   background: var(--accent);
@@ -519,9 +557,15 @@
   color: var(--ink-2);
   padding: 6px 8px;
 }
-.visa-design-app .btn-ghost:hover { background: var(--paper-3); color: var(--ink); }
+.visa-design-app .btn-ghost:hover {
+  background: var(--paper-3);
+  color: var(--ink);
+}
 
-.visa-design-app .btn-sm { font-size: 12px; padding: 5px 10px; }
+.visa-design-app .btn-sm {
+  font-size: 12px;
+  padding: 5px 10px;
+}
 
 .visa-design-app .btn-row {
   display: flex;
@@ -529,13 +573,21 @@
   gap: 8px;
   margin-top: 20px;
 }
-.visa-design-app .btn-row.right { justify-content: flex-end; }
-.visa-design-app .btn-row.between { justify-content: space-between; }
+.visa-design-app .btn-row.right {
+  justify-content: flex-end;
+}
+.visa-design-app .btn-row.between {
+  justify-content: space-between;
+}
 
 /* ============================================================
    Inputs / forms
    ============================================================ */
-.visa-design-app .field { display: flex; flex-direction: column; gap: 4px; }
+.visa-design-app .field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 .visa-design-app .field-label {
   font-family: var(--font-mono);
   font-size: 10px;
@@ -553,7 +605,9 @@
   padding: 8px 12px;
   color: var(--ink);
   outline: none;
-  transition: border-color 0.12s, box-shadow 0.12s;
+  transition:
+    border-color 0.12s,
+    box-shadow 0.12s;
   width: 100%;
 }
 .visa-design-app .input:focus,
@@ -605,8 +659,9 @@
   gap: 8px;
 }
 .visa-design-app .console-title::before {
-  content: '';
-  width: 7px; height: 7px;
+  content: "";
+  width: 7px;
+  height: 7px;
   background: var(--ok);
   border-radius: 50%;
   box-shadow: 0 0 6px currentColor;
@@ -628,16 +683,36 @@
   gap: 8px;
   padding: 1px 0;
 }
-.visa-design-app .console-time { color: oklch(48% 0.012 80); }
-.visa-design-app .console-mark { color: oklch(58% 0.012 80); }
-.visa-design-app .console-mark[data-kind="ok"]   { color: oklch(70% 0.10 150); }
-.visa-design-app .console-mark[data-kind="warn"] { color: oklch(75% 0.12 70); }
-.visa-design-app .console-mark[data-kind="err"]  { color: oklch(70% 0.14 30); }
-.visa-design-app .console-mark[data-kind="api"]  { color: oklch(70% 0.10 230); }
-.visa-design-app .console-text { color: oklch(86% 0.012 80); }
-.visa-design-app .console-text .dim { color: oklch(58% 0.012 80); }
-.visa-design-app .console-text .accent { color: oklch(80% 0.12 80); }
-.visa-design-app .console-text .mono-file { color: oklch(75% 0.10 230); }
+.visa-design-app .console-time {
+  color: oklch(48% 0.012 80);
+}
+.visa-design-app .console-mark {
+  color: oklch(58% 0.012 80);
+}
+.visa-design-app .console-mark[data-kind="ok"] {
+  color: oklch(70% 0.1 150);
+}
+.visa-design-app .console-mark[data-kind="warn"] {
+  color: oklch(75% 0.12 70);
+}
+.visa-design-app .console-mark[data-kind="err"] {
+  color: oklch(70% 0.14 30);
+}
+.visa-design-app .console-mark[data-kind="api"] {
+  color: oklch(70% 0.1 230);
+}
+.visa-design-app .console-text {
+  color: oklch(86% 0.012 80);
+}
+.visa-design-app .console-text .dim {
+  color: oklch(58% 0.012 80);
+}
+.visa-design-app .console-text .accent {
+  color: oklch(80% 0.12 80);
+}
+.visa-design-app .console-text .mono-file {
+  color: oklch(75% 0.1 230);
+}
 
 /* ============================================================
    Photo captioner (Step 2)
@@ -656,12 +731,11 @@
   overflow: hidden;
   display: grid;
   place-items: center;
-  background-image:
-    repeating-linear-gradient(
-      135deg,
-      transparent 0 18px,
-      color-mix(in oklab, var(--ink-4) 20%, transparent) 18px 19px
-    );
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 18px,
+    color-mix(in oklab, var(--ink-4) 20%, transparent) 18px 19px
+  );
 }
 .visa-design-app .photo-placeholder-label {
   position: absolute;
@@ -709,7 +783,7 @@
   position: relative;
 }
 .visa-design-app .caption-preview::before {
-  content: 'PREVIEW';
+  content: "PREVIEW";
   position: absolute;
   top: -8px;
   left: 12px;
@@ -768,8 +842,12 @@
   cursor: pointer;
   transition: background 0.12s;
 }
-.visa-design-app .history-session:hover { background: var(--paper-3); }
-.visa-design-app .history-session:last-child { border-bottom: none; }
+.visa-design-app .history-session:hover {
+  background: var(--paper-3);
+}
+.visa-design-app .history-session:last-child {
+  border-bottom: none;
+}
 .visa-design-app .history-session-head {
   display: grid;
   grid-template-columns: 100px 1fr auto auto;
@@ -812,8 +890,12 @@
   font-size: 12px;
   border-bottom: 1px dashed var(--rule);
 }
-.visa-design-app .history-doc-row:last-child { border-bottom: none; }
-.visa-design-app .history-doc-row .doc-num { padding-top: 0; }
+.visa-design-app .history-doc-row:last-child {
+  border-bottom: none;
+}
+.visa-design-app .history-doc-row .doc-num {
+  padding-top: 0;
+}
 .visa-design-app .history-doc-files {
   font-family: var(--font-mono);
   font-size: 11px;
@@ -853,7 +935,10 @@
   color: var(--ink-3);
   padding-top: 3px;
 }
-.visa-design-app .email-headers dd { margin: 0; color: var(--ink); }
+.visa-design-app .email-headers dd {
+  margin: 0;
+  color: var(--ink);
+}
 .visa-design-app .email-headers .subject {
   font-weight: 500;
   font-size: 14px;
@@ -901,7 +986,8 @@
   gap: 8px;
 }
 .visa-design-app .email-attachment-icon {
-  width: 16px; height: 18px;
+  width: 16px;
+  height: 18px;
   background: var(--paper-3);
   border: 1px solid var(--rule-2);
   border-radius: 2px;
@@ -909,10 +995,12 @@
   flex-shrink: 0;
 }
 .visa-design-app .email-attachment-icon::after {
-  content: '';
+  content: "";
   position: absolute;
-  top: 0; right: 0;
-  width: 5px; height: 5px;
+  top: 0;
+  right: 0;
+  width: 5px;
+  height: 5px;
   background: var(--paper);
   border-left: 1px solid var(--rule-2);
   border-bottom: 1px solid var(--rule-2);
@@ -959,7 +1047,10 @@
   color: var(--ink);
   margin: 0 0 6px;
 }
-.visa-design-app .summary-big em { font-style: italic; color: var(--accent-ink); }
+.visa-design-app .summary-big em {
+  font-style: italic;
+  color: var(--accent-ink);
+}
 .visa-design-app .summary-sub {
   color: var(--ink-2);
   font-size: 14px;
@@ -1011,7 +1102,10 @@
   border-color: color-mix(in oklab, var(--warn) 25%, transparent);
   color: oklch(40% 0.14 70);
 }
-.visa-design-app .notice-icon { flex-shrink: 0; padding-top: 2px; }
+.visa-design-app .notice-icon {
+  flex-shrink: 0;
+  padding-top: 2px;
+}
 
 /* ============================================================
    Settings modal
@@ -1023,7 +1117,9 @@
   padding: 12px 0;
   border-bottom: 1px solid var(--rule);
 }
-.visa-design-app .settings-row:last-child { border-bottom: none; }
+.visa-design-app .settings-row:last-child {
+  border-bottom: none;
+}
 .visa-design-app .settings-row-label {
   font-size: 13px;
   color: var(--ink);
@@ -1052,12 +1148,30 @@
   padding: 1px 5px;
   color: var(--ink-2);
 }
-.visa-design-app .cluster { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.visa-design-app .cluster-tight { display: flex; align-items: center; gap: 4px; }
-.visa-design-app .muted { color: var(--ink-3); }
-.visa-design-app .dim { color: var(--ink-4); }
-.visa-design-app .mono { font-family: var(--font-mono); font-size: 11.5px; }
-.visa-design-app .right { margin-left: auto; }
+.visa-design-app .cluster {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.visa-design-app .cluster-tight {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.visa-design-app .muted {
+  color: var(--ink-3);
+}
+.visa-design-app .dim {
+  color: var(--ink-4);
+}
+.visa-design-app .mono {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+}
+.visa-design-app .right {
+  margin-left: auto;
+}
 
 .visa-design-app .empty-state {
   border: 1px dashed var(--rule-2);
@@ -1073,7 +1187,10 @@
   color: var(--ink);
   margin: 0 0 6px;
 }
-.visa-design-app .empty-state p { margin: 0 0 16px; font-size: 13px; }
+.visa-design-app .empty-state p {
+  margin: 0 0 16px;
+  font-size: 13px;
+}
 
 .visa-design-app .mini-tabs {
   display: flex;
@@ -1111,7 +1228,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  box-shadow: 0 8px 24px rgba(60, 40, 20, 0.10);
+  box-shadow: 0 8px 24px rgba(60, 40, 20, 0.1);
   z-index: 60;
   font-family: var(--font-mono);
   font-size: 10px;
