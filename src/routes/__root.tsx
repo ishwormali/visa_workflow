@@ -2,6 +2,9 @@ import { TanStackDevtools } from "@tanstack/react-devtools";
 import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 
+import { AppWrapper } from "@/components/visa-design/app-wrapper";
+import { WorkflowHeader } from "@/components/visa-workflow/workflow-header";
+
 import appCss from "../styles.css?url";
 
 export const Route = createRootRoute({
@@ -59,7 +62,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        {children}
+        <AppWrapper>
+          <WorkflowHeader></WorkflowHeader>
+          {children}
+        </AppWrapper>
         <TanStackDevtools
           config={{
             position: "bottom-right",

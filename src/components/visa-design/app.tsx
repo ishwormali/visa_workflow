@@ -3,6 +3,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 import { AppHeader } from "./app-header";
+import { AppWrapper } from "./app-wrapper";
 import { EMAIL_CONFIG, LAST_DATES, PAST_SESSIONS, type DocDates, type EmailConfig } from "./data";
 import { ConfigSeed, HistoryPanel, SettingsPanel } from "./history-and-settings";
 import { VisaButton } from "./primitives";
@@ -72,20 +73,7 @@ export function VisaDesignApp() {
   }
 
   return (
-    <div
-      className="visa-design-app relative min-h-screen bg-(--paper) font-visa-ui text-[15px] leading-[1.5] text-(--ink) antialiased"
-      data-theme="warm"
-      data-density="spacious"
-    >
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-0 z-0"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle at 20% 10%, rgba(140, 90, 40, 0.025), transparent 50%), radial-gradient(circle at 80% 90%, rgba(40, 60, 120, 0.020), transparent 50%)",
-        }}
-      />
-
+    <AppWrapper>
       <AppHeader>
         <AppHeader.Brand>
           <AppHeader.Logo>V</AppHeader.Logo>
@@ -136,7 +124,7 @@ export function VisaDesignApp() {
         }}
         onSeedSelect={() => setShowSeed(true)}
       />
-    </div>
+    </AppWrapper>
   );
 }
 
