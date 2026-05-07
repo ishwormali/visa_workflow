@@ -86,26 +86,15 @@ export function VisaDesignApp() {
         }}
       />
 
-      <AppHeader
-        logo={
-          <div className="relative grid h-7 w-7 place-items-center rounded-lg border-[1.5px] border-(--ink) bg-(--paper) font-visa-display text-base font-medium tracking-[-0.02em] text-(--ink) italic">
-            V
-            <div className="pointer-events-none absolute inset-0.75 rounded-[6px] border border-dashed border-(--rule-2) opacity-50" />
-          </div>
-        }
-        title={
-          <div className="font-visa-display text-[18px] font-medium tracking-[-0.01em] text-(--ink) [&_em]:font-normal [&_em]:text-(--ink-2) [&_em]:italic">
-            visa <em>workflow</em>
-          </div>
-        }
-        content={
-          <div className="flex items-center gap-1.5 font-mono text-[11px] tracking-[0.02em] text-(--ink-3)">
-            <span>SUBMISSIONS</span>
-            <strong className="font-medium text-(--ink)">{PAST_SESSIONS.length}</strong>
-          </div>
-        }
-        menus={
-          <>
+      <AppHeader>
+        <AppHeader.Brand>
+          <AppHeader.Logo>V</AppHeader.Logo>
+          <AppHeader.Title accent="workflow">visa </AppHeader.Title>
+        </AppHeader.Brand>
+
+        <AppHeader.Trailing>
+          <AppHeader.Meta label="SUBMISSIONS" value={PAST_SESSIONS.length} />
+          <AppHeader.Actions>
             <VisaButton
               active={showHistory}
               size="md"
@@ -117,9 +106,9 @@ export function VisaDesignApp() {
             <VisaButton size="md" variant="ghost" onClick={() => setShowSettings(true)}>
               ⚙ Settings
             </VisaButton>
-          </>
-        }
-      />
+          </AppHeader.Actions>
+        </AppHeader.Trailing>
+      </AppHeader>
 
       <main
         className="relative z-10 mx-auto max-w-[680px] px-6 pt-9 pb-[100px]"
