@@ -2,8 +2,10 @@ import { useState } from "react";
 
 import { cn } from "@/lib/utils";
 
+import { AppHeader } from "./app-header";
 import { EMAIL_CONFIG, LAST_DATES, PAST_SESSIONS, type DocDates, type EmailConfig } from "./data";
 import { ConfigSeed, HistoryPanel, SettingsPanel } from "./history-and-settings";
+import { VisaButton } from "./primitives";
 import { Step0Setup } from "./step-0-setup";
 import { Step1Scan } from "./step-1-scan";
 import { Step2Photos } from "./step-2-photos";
@@ -85,9 +87,38 @@ export function VisaDesignApp() {
       />
 
       <AppHeader
-        showHistory={showHistory}
-        onShowHistory={() => setShowHistory(true)}
-        onShowSettings={() => setShowSettings(true)}
+        logo={
+          <div className="relative grid h-7 w-7 place-items-center rounded-lg border-[1.5px] border-(--ink) bg-(--paper) font-visa-display text-base font-medium tracking-[-0.02em] text-(--ink) italic">
+            V
+            <div className="pointer-events-none absolute inset-0.75 rounded-[6px] border border-dashed border-(--rule-2) opacity-50" />
+          </div>
+        }
+        title={
+          <div className="font-visa-display text-[18px] font-medium tracking-[-0.01em] text-(--ink) [&_em]:font-normal [&_em]:text-(--ink-2) [&_em]:italic">
+            visa <em>workflow</em>
+          </div>
+        }
+        content={
+          <div className="flex items-center gap-1.5 font-mono text-[11px] tracking-[0.02em] text-(--ink-3)">
+            <span>SUBMISSIONS</span>
+            <strong className="font-medium text-(--ink)">{PAST_SESSIONS.length}</strong>
+          </div>
+        }
+        menus={
+          <>
+            <VisaButton
+              active={showHistory}
+              size="md"
+              variant="ghost"
+              onClick={() => setShowHistory(true)}
+            >
+              ⏱ History
+            </VisaButton>
+            <VisaButton size="md" variant="ghost" onClick={() => setShowSettings(true)}>
+              ⚙ Settings
+            </VisaButton>
+          </>
+        }
       />
 
       <main
@@ -117,62 +148,6 @@ export function VisaDesignApp() {
         onSeedSelect={() => setShowSeed(true)}
       />
     </div>
-  );
-}
-
-function AppHeader({
-  showHistory,
-  onShowHistory,
-  onShowSettings,
-}: {
-  showHistory: boolean;
-  onShowHistory: () => void;
-  onShowSettings: () => void;
-}) {
-  return (
-    <header className="sticky top-0 z-50 border-b border-(--rule) bg-[color-mix(in_oklab,var(--paper)_88%,transparent)] backdrop-blur-[10px] backdrop-saturate-150">
-      <div className="mx-auto flex max-w-[680px] items-center gap-4 px-6 py-3.5">
-        <div className="flex items-center gap-2.5">
-          <div className="relative grid h-7 w-7 place-items-center rounded-[4px] border-[1.5px] border-(--ink) bg-(--paper) font-visa-display text-base font-medium tracking-[-0.02em] text-(--ink) italic">
-            V
-            <div className="pointer-events-none absolute inset-[-3px] rounded-[6px] border border-dashed border-(--rule-2) opacity-50" />
-          </div>
-          <div className="font-visa-display text-[18px] font-medium tracking-[-0.01em] text-(--ink) [&_em]:font-normal [&_em]:text-(--ink-2) [&_em]:italic">
-            visa <em>workflow</em>
-          </div>
-        </div>
-
-        <div className="flex-1" />
-
-        <div className="flex items-center gap-1.5 font-mono text-[11px] tracking-[0.02em] text-(--ink-3)">
-          <span>SUBMISSIONS</span>
-          <strong className="font-medium text-(--ink)">{PAST_SESSIONS.length}</strong>
-        </div>
-
-        <HeaderButton active={showHistory} onClick={onShowHistory}>
-          ⏱ History
-        </HeaderButton>
-        <HeaderButton onClick={onShowSettings}>⚙ Settings</HeaderButton>
-      </div>
-    </header>
-  );
-}
-
-function HeaderButton({
-  active = false,
-  className,
-  ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & { active?: boolean }) {
-  return (
-    <button
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-(--vd-radius) border border-transparent px-2.5 py-1.5 text-[13px] text-(--ink-2) transition-colors hover:bg-(--paper-3) hover:text-(--ink)",
-        active && "bg-(--ink) text-(--paper) hover:bg-(--ink) hover:text-(--paper)",
-        className,
-      )}
-      type="button"
-      {...props}
-    />
   );
 }
 

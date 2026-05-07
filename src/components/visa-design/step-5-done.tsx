@@ -103,9 +103,7 @@ function CompletionSummary({ sent }: { sent: boolean }) {
 function SummaryStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-(--vd-radius) border border-(--rule) bg-(--paper) p-2.5">
-      <div className="font-visa-display text-[22px] font-medium text-(--ink)">
-        {value}
-      </div>
+      <div className="font-visa-display text-[22px] font-medium text-(--ink)">{value}</div>
       <div className="font-mono text-[10px] tracking-[0.08em] text-(--ink-3) uppercase">
         {label}
       </div>

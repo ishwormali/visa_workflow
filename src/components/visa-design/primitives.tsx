@@ -21,16 +21,29 @@ export const visaButtonVariants = cva(
         accent:
           "border-(--accent) bg-(--accent) text-[13px] text-(--paper) hover:border-(--accent-ink) hover:bg-(--accent-ink)",
         ghost:
-          "border-transparent bg-transparent px-2 py-1.5 text-[13px] text-(--ink-2) hover:bg-(--paper-3) hover:text-(--ink)",
+          "border-transparent bg-transparent text-[13px] text-(--ink-2) hover:bg-(--paper-3) hover:text-(--ink)",
       },
       size: {
         default: "px-3.5 py-2",
+        md: "px-2.5 py-1.5",
         sm: "px-2.5 py-1.5 text-xs",
       },
+      active: {
+        true: "",
+        false: "",
+      },
     },
+    compoundVariants: [
+      {
+        variant: "ghost",
+        active: true,
+        className: "bg-(--ink) text-(--paper) hover:bg-(--ink) hover:text-(--paper)",
+      },
+    ],
     defaultVariants: {
       variant: "default",
       size: "default",
+      active: false,
     },
   },
 );
@@ -42,12 +55,13 @@ export function VisaButton({
   className,
   variant,
   size,
+  active,
   type = "button",
   ...props
 }: VisaButtonProps) {
   return (
     <button
-      className={cn(visaButtonVariants({ variant, size }), className)}
+      className={cn(visaButtonVariants({ variant, size, active }), className)}
       type={type}
       {...props}
     />
