@@ -1,7 +1,12 @@
+import { Home } from "lucide-react";
+import { useState } from "react";
+
 import { AppHeader } from "../visa-design/app-header";
 import { VisaButton } from "../visa-design/primitives";
+import { SettingsDialog } from "./settings-dialog";
 
 export const WorkflowHeader = () => {
+  const [openSettings, setOpenSettings] = useState(false);
   return (
     <AppHeader>
       <AppHeader.Brand>
@@ -14,19 +19,15 @@ export const WorkflowHeader = () => {
         <AppHeader.Actions>
           <VisaButton
             // active={showHistory}
-            size="md"
+            size="sm"
             variant="ghost"
             // onClick={() => setShowHistory(true)}
           >
-            ⏱ History
+            <Home size={14} />
+            Home
           </VisaButton>
-          <VisaButton
-            size="md"
-            variant="ghost"
-            //   onClick={() => setShowSettings(true)}
-          >
-            ⚙ Settings
-          </VisaButton>
+
+          <SettingsDialog open={openSettings} onOpenChange={setOpenSettings}></SettingsDialog>
         </AppHeader.Actions>
       </AppHeader.Trailing>
     </AppHeader>

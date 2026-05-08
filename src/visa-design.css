@@ -38,6 +38,33 @@
   --vd-shadow: 0 1px 2px rgba(60, 40, 20, 0.05), 0 0 0 0.5px rgba(60, 40, 20, 0.06);
 }
 
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-paper-3: var(--paper-3);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-ink-4: var(--ink-4);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
+
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-muted-bg: var(--muted-bg);
+  --radius-vd: var(--vd-radius);
+  --radius-vd-lg: var(--vd-radius-lg);
+  --shadow-vd-sm: var(--vd-shadow-sm);
+  --shadow-vd: var(--vd-shadow);
+
+  --color-rule: var(--rule);
+  --color-rule-2: var(--rule-2);
+}
+
 .visa-design-app[data-theme="cool"] {
   --paper: oklch(98.5% 0.005 240);
   --paper-2: oklch(96.8% 0.007 240);

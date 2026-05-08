@@ -1,7 +1,7 @@
 export const AppWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <div
-      className="visa-design-app relative min-h-screen bg-(--paper) font-visa-ui text-[15px] leading-[1.5] text-(--ink) antialiased"
+      className="visa-design-app relative min-h-screen bg-(--paper) font-visa-ui text-sm leading-[1.5] text-ink-2 antialiased"
       data-theme="warm"
       data-density="spacious"
     >

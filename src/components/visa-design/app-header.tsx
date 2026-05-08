@@ -36,7 +36,7 @@ function AppHeaderRoot({ children, className, innerClassName }: AppHeaderProps) 
         className,
       )}
     >
-      <div className={cn("mx-auto flex max-w-170 items-center gap-4 px-6 py-3.5", innerClassName)}>
+      <div className={cn("mx-auto flex max-w-6xl items-center gap-4 px-6 py-3.5", innerClassName)}>
         {children}
       </div>
     </header>

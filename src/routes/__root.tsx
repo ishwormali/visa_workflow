@@ -61,7 +61,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body className="visa-design-app">
         <AppWrapper>
           <WorkflowHeader></WorkflowHeader>
           {children}

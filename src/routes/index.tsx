@@ -10,7 +10,7 @@ function App() {
   return (
     <VisaWorkflowProvider>
       <VisaWorkflowHomePage />
-      <VisaDesignApp />
+      {/* <VisaDesignApp /> */}
     </VisaWorkflowProvider>
   );
 }

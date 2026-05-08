@@ -5,9 +5,16 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { type VisaSessionRecord } from "@/lib/visa-workflow";
 
+import {
+  WorkflowAside,
+  WorkflowSection,
+  WorkflowSectionContent,
+  WorkflowSectionHeader,
+} from "./components/workflow-section";
 import { LoadingScreen } from "./loading-screen";
 import { formatDisplayDate, useVisaWorkflow } from "./provider";
 import { SummaryTile } from "./steps/shared";
+import { WorkflowPanel } from "./workflow-panel";
 
 export function VisaWorkflowHomePage() {
   const { hydrated, pendingSessionsCount, sentSessionsCount, sessions, markSessionSent } =
@@ -21,8 +28,21 @@ export function VisaWorkflowHomePage() {
   const recentSessions = sessions.slice(0, 10);
 
   return (
-    <main className="mx-auto flex min-h-svh w-full max-w-6xl flex-col px-4 py-5 sm:px-6 lg:px-8">
-      <header className="rounded-[2rem] border border-border/70 bg-background/88 px-5 py-5 shadow-[0_20px_60px_var(--color-shadow)] backdrop-blur-xl">
+    <div className="mx-auto flex min-h-svh w-full max-w-6xl flex-col px-6 py-5">
+      <div>
+        <p className="text-xs tracking-[0.24em] text-muted-foreground uppercase">
+          Visa Document Workflow
+        </p>
+        <h1 className="mt-1 font-visa-display text-3xl font-semibold text-ink">
+          Workflow <em className="text-accent-ink">history</em>
+        </h1>
+        <p className="mt-2 text-ink-2">
+          List of submission history, including pending workflows that can be resumed and completed,
+          and sent workflows
+        </p>
+      </div>
+
+      {/* <header className="rounded-[2rem] border border-border/70 bg-background/88 px-5 py-5 shadow-[0_20px_60px_var(--color-shadow)] backdrop-blur-xl">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-xs tracking-[0.24em] text-muted-foreground uppercase">
@@ -46,8 +66,42 @@ export function VisaWorkflowHomePage() {
             </Button>
           </div>
         </div>
-      </header>
-
+      </header> */}
+      <div className="MT-4 mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
+        <WorkflowSection className="mt-4">
+          <WorkflowSectionHeader>
+            <h2 className="mt-2 text-2xl font-semibold">Your workflow activity</h2>
+          </WorkflowSectionHeader>
+          <WorkflowSectionContent>
+            <span className="text-sm text-muted-foreground">
+              {pendingSessionsCount} pending, {sentSessionsCount} sent
+            </span>
+          </WorkflowSectionContent>
+        </WorkflowSection>
+        <div className="flex flex-col gap-4">
+          <WorkflowAside className="mt-4">
+            <WorkflowSectionContent>
+              <p className="text-xs tracking-[0.24em] text-muted-foreground uppercase">Actions</p>
+              <h2 className="mt-2 font-heading text-xl font-semibold">What you can do here</h2>
+              <ul className="mt-4 space-y-3 text-sm leading-6 text-muted-foreground">
+                <li>Start a new workflow from a dedicated route.</li>
+                <li>Resume any pending workflow from its edit route.</li>
+                <li>Mark a pending workflow complete directly from the list.</li>
+              </ul>
+            </WorkflowSectionContent>
+          </WorkflowAside>
+          <WorkflowAside>
+            <WorkflowSectionContent>
+              <p className="text-xs tracking-[0.24em] text-muted-foreground uppercase">Statuses</p>
+              <h2 className="mt-2 font-heading text-xl font-semibold">Pending and sent</h2>
+              <p className="mt-4 text-sm leading-6 text-muted-foreground">
+                Pending items are saved drafts that can be reopened later. Sent items are closed
+                workflows that have been marked complete.
+              </p>
+            </WorkflowSectionContent>
+          </WorkflowAside>
+        </div>
+      </div>
       <section className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
         <section className="panel p-6 sm:p-8">
           <div className="flex items-center justify-between gap-3">
@@ -141,7 +195,7 @@ export function VisaWorkflowHomePage() {
           </section>
         </aside>
       </section>
-    </main>
+    </div>
   );
 }
 
