@@ -2,7 +2,7 @@ import { Home } from "lucide-react";
 import { useState } from "react";
 
 import { AppHeader } from "../visa-design/app-header";
-import { VisaButton, visaButtonVariants } from "../visa-design/primitives";
+import { visaButtonVariants } from "../visa-design/primitives";
 import { SettingsDialog } from "./settings-dialog";
 
 export const WorkflowHeader = () => {
@@ -19,7 +19,6 @@ export const WorkflowHeader = () => {
         <AppHeader.Actions>
           <a
             href="/"
-            target="_blank"
             rel="noopener noreferrer"
             className={visaButtonVariants({ variant: "ghost", size: "sm" })}
           >

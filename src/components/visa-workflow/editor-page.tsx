@@ -1,18 +1,22 @@
 import { useNavigate, useLocation } from "@tanstack/react-router";
-import { History, Settings2 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { EMAIL_CONFIG, LAST_DATES, type DocDates, type EmailConfig } from "../visa-design/data";
+import { WorkflowStepRail, type WorkflowStepIndex } from "./components/workflow-step-rail";
+import { DoneStep } from "./steps/done-step";
+import { EmailStep } from "./steps/email-step";
+import { GenerateStep } from "./steps/generate-step";
+import { PhotosStep } from "./steps/photos-step";
+import { ScanStep } from "./steps/scan-step";
+import { SetupStep } from "./steps/setup-step";
 
-import { FirstRunSetup } from "./first-run-setup";
-import { HistoryOverlay } from "./history-overlay";
-import { LoadingScreen } from "./loading-screen";
-import { useVisaWorkflow } from "./provider";
-import { SettingsOverlay } from "./settings-overlay";
-import { WorkflowPanel } from "./workflow-panel";
-import { WorkflowSidebar } from "./workflow-sidebar";
+const MAX_STEP: WorkflowStepIndex = 5;
 
-function readStepFromPathname(pathname: string) {
+function isWorkflowStepIndex(value: number): value is WorkflowStepIndex {
+  return Number.isInteger(value) && value >= 0 && value <= MAX_STEP;
+}
+
+function readStepFromPathname(pathname: string): WorkflowStepIndex | null {
   const match = pathname.match(/\/step\/(\d+)\/?$/);
 
   if (!match) {
@@ -21,10 +25,10 @@ function readStepFromPathname(pathname: string) {
 
   const parsed = Number(match[1]);
 
-  return Number.isNaN(parsed) ? null : parsed;
+  return isWorkflowStepIndex(parsed) ? parsed : null;
 }
 
-function createStepPath(pathname: string, step: number) {
+function createStepPath(pathname: string, step: WorkflowStepIndex) {
   if (pathname.startsWith("/workflow/new")) {
     return `/workflow/new/step/${step}`;
   }
@@ -39,78 +43,25 @@ function createStepPath(pathname: string, step: number) {
 }
 
 export function VisaWorkflowEditorPage() {
-  const {
-    activeDocTypes,
-    closeHistory,
-    closeSettings,
-    config,
-    continueAfterScan,
-    currentStep,
-    currentStepLabel,
-    draftDate,
-    expandedHistoryId,
-    hydrated,
-    logs,
-    latestSession,
-    missingSession,
-    openHistory,
-    openSettings,
-    pendingSessionsCount,
-    saveWorkflow,
-    saveSeedReview,
-    seedError,
-    seedLogs,
-    seedReview,
-    seedSource,
-    rootFolderError,
-    rootFolderInput,
-    sentSessionsCount,
-    selectedRootFolderId,
-    selectedRootFolderName,
-    sessions,
-    selectRootFolder,
-    setSeedSource,
-    setRootFolderInput,
-    showHistory,
-    showSettings,
-    workflowId,
-    toggleExpandedHistory,
-    toggleSeedReviewDocType,
-    updateConfigEmail,
-    runScan,
-    createVisaFolderFromSelectedDate,
-    createRawFolderInVisaFolder,
-    goToStep,
-    selectedFromDate,
-    selectedToDate,
-    setSelectedFromDate,
-    setSelectedToDate,
-    rawFolderFiles,
-    rawFolderId,
-    rawFolderMissing,
-    visaFolderId,
-    visaFolderMissing,
-    visaFolderName,
-    runSeedReview,
-  } = useVisaWorkflow();
   const navigate = useNavigate();
   const location = useLocation();
   const routeStep = readStepFromPathname(location.pathname);
 
+  const [currentStep, setCurrentStep] = useState<WorkflowStepIndex>(routeStep ?? 0);
+  const [docDates, setDocDates] = useState<DocDates>(LAST_DATES);
+  const [emailConfig] = useState<EmailConfig>(EMAIL_CONFIG);
+  const [sent, setSent] = useState(false);
+
   useEffect(() => {
-    if (!hydrated || routeStep === null || routeStep === currentStep) {
+    if (routeStep === null || routeStep === currentStep) {
       return;
     }
 
-    goToStep(routeStep as 1 | 2);
-  }, [currentStep, goToStep, hydrated, routeStep]);
+    setCurrentStep(routeStep);
+  }, [currentStep, routeStep]);
 
   useEffect(() => {
-    if (!hydrated) {
-      return;
-    }
-
-    if (routeStep !== null && routeStep !== currentStep) {
+    if (routeStep !== null && routeStep === currentStep) {
       return;
     }
 
@@ -119,158 +70,57 @@ export function VisaWorkflowEditorPage() {
     if (nextPath && nextPath !== location.pathname) {
       void navigate({ to: nextPath, replace: true });
     }
-  }, [currentStep, hydrated, location.pathname, navigate, routeStep]);
+  }, [currentStep, location.pathname, navigate, routeStep]);
 
-  function handleGoBack() {
-    if (currentStep > 1) {
-      goToStep((currentStep - 1) as 1 | 2);
-      return;
-    }
+  const goto = (n: WorkflowStepIndex) => {
+    if (n !== 5) setSent(false);
+    setCurrentStep(n);
+  };
 
-    void navigate({ to: "/" });
-  }
+  const reset = () => {
+    setSent(false);
+    setCurrentStep(0);
+  };
 
-  if (!hydrated) {
-    return <LoadingScreen />;
-  }
-
-  if (missingSession) {
-    return (
-      <main className="mx-auto flex min-h-svh max-w-3xl items-center justify-center px-6 py-12">
-        <div className="panel w-full p-8 text-center">
-          <p className="text-sm tracking-[0.24em] text-muted-foreground uppercase">
-            Workflow not found
-          </p>
-          <h1 className="mt-3 font-heading text-3xl font-semibold">
-            This saved workflow is missing
-          </h1>
-          <p className="mt-3 text-sm text-muted-foreground">
-            The requested workflow id was not found in local history. Return to the list and choose
-            another item.
-          </p>
-          <div className="mt-6 flex justify-center">
-            <Button onClick={() => navigate({ to: "/" })}>Back to history</Button>
-          </div>
-        </div>
-      </main>
+  let body: React.ReactNode = null;
+  if (currentStep === 0) {
+    body = (
+      <SetupStep
+        docDates={docDates}
+        setDocDates={setDocDates}
+        emailConfig={emailConfig}
+        onNext={() => goto(1)}
+        onEditEmail={() => {
+          /* settings dialog handled by WorkflowHeader */
+        }}
+      />
     );
+  } else if (currentStep === 1) {
+    body = <ScanStep docDates={docDates} onBack={() => goto(0)} onNext={() => goto(2)} />;
+  } else if (currentStep === 2) {
+    body = <PhotosStep onBack={() => goto(1)} onNext={() => goto(3)} />;
+  } else if (currentStep === 3) {
+    body = <GenerateStep docDates={docDates} onBack={() => goto(2)} onNext={() => goto(4)} />;
+  } else if (currentStep === 4) {
+    body = (
+      <EmailStep
+        docDates={docDates}
+        emailConfig={emailConfig}
+        onBack={() => goto(3)}
+        onNext={() => goto(5)}
+      />
+    );
+  } else {
+    body = <DoneStep sent={sent} onSent={() => setSent(true)} onReset={reset} />;
   }
 
   return (
-    <main className="mx-auto flex min-h-svh w-full max-w-5xl flex-col px-4 py-5 sm:px-6 lg:px-8">
-      <header className="sticky top-4 z-30 rounded-[2rem] border border-border/70 bg-background/88 px-4 py-4 shadow-[0_20px_60px_var(--color-shadow)] backdrop-blur-xl">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p className="text-xs tracking-[0.24em] text-muted-foreground uppercase">
-              Visa Document Workflow
-            </p>
-            <h1 className="mt-1 font-heading text-2xl font-semibold sm:text-3xl">
-              Monthly support pack automation
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Workflow id {workflowId} with local draft persistence and resumable step progress.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="rounded-full border border-border/70 bg-secondary px-4 py-2 text-sm text-secondary-foreground">
-              {pendingSessionsCount} pending
-            </div>
-            <div className="rounded-full border border-border/70 bg-secondary px-4 py-2 text-sm text-secondary-foreground">
-              {sentSessionsCount} sent
-            </div>
-            <Button variant="outline" size="sm" onClick={() => navigate({ to: "/" })}>
-              Back to list
-            </Button>
-            <Button variant="outline" size="sm" onClick={saveWorkflow}>
-              Save draft
-            </Button>
-            <Button variant="outline" size="sm" onClick={openHistory}>
-              <History />
-              History
-            </Button>
-            <Button variant="outline" size="sm" onClick={openSettings}>
-              <Settings2 />
-              Settings
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <section className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
-        <div className="space-y-6">
-          {config.docTypes.length === 0 ? (
-            <FirstRunSetup
-              seedError={seedError}
-              seedLogs={seedLogs}
-              seedReview={seedReview}
-              seedSource={seedSource}
-              onRunSeedReview={runSeedReview}
-              onSaveSeedReview={saveSeedReview}
-              onSeedSourceChange={setSeedSource}
-              onToggleSeedReviewDocType={toggleSeedReviewDocType}
-            />
-          ) : (
-            <WorkflowPanel
-              currentStep={currentStep}
-              currentStepLabel={currentStepLabel}
-              onGoBack={handleGoBack}
-              latestSession={latestSession}
-              logs={logs}
-              onContinueAfterScan={continueAfterScan}
-              onOpenSettings={openSettings}
-              onRunScan={runScan}
-              onCreateVisaFolder={createVisaFolderFromSelectedDate}
-              onCreateRawFolder={createRawFolderInVisaFolder}
-              selectedFromDate={selectedFromDate}
-              selectedToDate={selectedToDate}
-              setSelectedFromDate={setSelectedFromDate}
-              setSelectedToDate={setSelectedToDate}
-              rawFolderFiles={rawFolderFiles}
-              rawFolderId={rawFolderId}
-              rawFolderMissing={rawFolderMissing}
-              visaFolderId={visaFolderId}
-              visaFolderMissing={visaFolderMissing}
-              visaFolderName={visaFolderName}
-            />
-          )}
-        </div>
-
-        <WorkflowSidebar
-          activeDocTypesCount={activeDocTypes.length}
-          draftDate={draftDate}
-          latestSession={latestSession}
-        />
-      </section>
-
-      {showHistory ? (
-        <HistoryOverlay
-          expandedHistoryId={expandedHistoryId}
-          onClose={closeHistory}
-          onToggleExpandedHistory={toggleExpandedHistory}
-          sessions={sessions}
-        />
-      ) : null}
-
-      {showSettings ? (
-        <SettingsOverlay
-          config={config}
-          onClose={closeSettings}
-          onRunSeedReview={runSeedReview}
-          onSaveSeedReview={saveSeedReview}
-          onSeedSourceChange={setSeedSource}
-          onRootFolderInputChange={setRootFolderInput}
-          onSelectRootFolder={selectRootFolder}
-          onToggleSeedReviewDocType={toggleSeedReviewDocType}
-          onUpdateConfigEmail={updateConfigEmail}
-          rootFolderError={rootFolderError}
-          rootFolderInput={rootFolderInput}
-          seedLogs={seedLogs}
-          seedReview={seedReview}
-          seedSource={seedSource}
-          selectedRootFolderId={selectedRootFolderId}
-          selectedRootFolderName={selectedRootFolderName}
-        />
-      ) : null}
+    <main
+      className="relative z-10 mx-auto max-w-[680px] px-6 pt-9 pb-[100px]"
+      data-screen-label={`step-${currentStep}`}
+    >
+      {currentStep > 0 && <WorkflowStepRail current={currentStep} onNav={goto} />}
+      {body}
     </main>
   );
 }

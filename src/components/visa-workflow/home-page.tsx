@@ -20,7 +20,6 @@ import {
 } from "../visa-design/primitives";
 import { LoadingScreen } from "./loading-screen";
 import { formatDisplayDate, useVisaWorkflow } from "./provider";
-import { SummaryTile } from "./steps/shared";
 
 export function VisaWorkflowHomePage() {
   const { hydrated, sessions, markSessionSent } = useVisaWorkflow();

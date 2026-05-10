@@ -1,94 +1,131 @@
-import { ChevronRight, Sparkles } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
+import { ACTIVE_DOCS, GENERATE_LOG, type DocDates } from "../../visa-design/data";
 import {
-  formatDateLabel,
-  type DocTypeConfig,
-  type WorkflowDocumentState,
-} from "@/lib/visa-workflow";
+  DocumentFile,
+  DocumentFiles,
+  DocumentList,
+  DocumentMeta,
+  DocumentMetaTag,
+  DocumentRow,
+} from "../../visa-design/document-list";
+import {
+  VisaButton,
+  VisaButtonRow,
+  VisaCluster,
+  VisaDimText,
+  VisaMonoText,
+  VisaPanel,
+  VisaPanelBody,
+  VisaPanelHeader,
+  VisaPanelTitle,
+} from "../../visa-design/primitives";
+import {
+  Badge,
+  Console,
+  DocCategoryLabel,
+  StepHead,
+  formatDate,
+  formatRange,
+} from "../../visa-design/ui-bits";
 
-import { LogPanel, StatusBadge } from "./shared";
+type Props = {
+  docDates: DocDates;
+  onBack: () => void;
+  onNext: () => void;
+};
 
-export function GenerateStep({
-  activeDocTypes,
-  documents,
-  hasGenerated,
-  logs,
-  onContinue,
-  onGenerateDocuments,
-}: {
-  activeDocTypes: DocTypeConfig[];
-  documents: WorkflowDocumentState[];
-  hasGenerated: boolean;
-  logs: string[];
-  onContinue: () => void;
-  onGenerateDocuments: () => Promise<void>;
-}) {
+const GENERATED = [
+  { id: "doc_4_upload_savers", file: "4 - savers - Apr 2026.pdf" },
+  { id: "doc_4_upload_smart", file: "4 - smart account - Apr 2026.pdf" },
+  { id: "doc_7_gdoc", file: "7-whatsapp-history.gdoc" },
+  { id: "doc_8_gdoc_photos", file: "8-photographs.gdoc" },
+];
+
+export function GenerateStep({ docDates, onBack, onNext }: Props) {
+  const today = "2026-05-05";
+
   return (
-    <div className="mt-8 space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-          Generate the session folder, pass through upload files, build Google Docs for dynamic
-          content, and append the result back to the Document list.
-        </p>
-        <Button onClick={onGenerateDocuments}>
-          <Sparkles />
-          Generate documents
-        </Button>
-      </div>
-      <div className="grid gap-3">
-        {activeDocTypes.map((docType) => {
-          const document = documents.find(
-            (currentDocument) => currentDocument.docTypeId === docType.id,
-          );
-
-          if (!document) {
-            return null;
-          }
-
-          return (
-            <div
-              key={docType.id}
-              className="rounded-[1.5rem] border border-border/70 bg-card/80 px-4 py-4"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="font-medium">{docType.label}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {formatDateLabel(document.dates)}
-                  </p>
-                </div>
-                <StatusBadge status={document.status} />
-              </div>
-              {document.generatedFiles.length ? (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {document.generatedFiles.map((fileName) => (
-                    <span
-                      key={fileName}
-                      className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs text-muted-foreground"
-                    >
-                      {fileName}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          );
-        })}
-      </div>
-      <LogPanel
-        title="Generation log"
-        entries={logs}
-        emptyMessage="Generation output will stream here."
+    <>
+      <StepHead
+        eyebrow="Step 3 · Generate"
+        title={
+          <>
+            Building <em>Visa-May-2026</em>
+          </>
+        }
+        desc={
+          <>
+            Created session subfolder. Generating gdocs, renaming uploads, appending to the{" "}
+            <VisaMonoText>Document list</VisaMonoText>.
+          </>
+        }
       />
-      {hasGenerated ? (
-        <div className="flex justify-end">
-          <Button onClick={onContinue}>
-            Continue to email draft
-            <ChevronRight />
-          </Button>
-        </div>
-      ) : null}
-    </div>
+
+      <div className="space-y-3">
+        <VisaPanel>
+          <VisaPanelHeader>
+            <VisaPanelTitle>Session folder</VisaPanelTitle>
+            <VisaMonoText className="text-(--ink-3)">draft date: {formatDate(today)}</VisaMonoText>
+          </VisaPanelHeader>
+          <VisaPanelBody>
+            <VisaCluster>
+              <VisaDimText>📁</VisaDimText>
+              <VisaMonoText>Documents requested / Visa-May-2026 /</VisaMonoText>
+            </VisaCluster>
+          </VisaPanelBody>
+        </VisaPanel>
+
+        <VisaPanel>
+          <VisaPanelHeader>
+            <VisaPanelTitle>Generated · {GENERATED.length}</VisaPanelTitle>
+          </VisaPanelHeader>
+          <VisaPanelBody tight>
+            <DocumentList>
+              {GENERATED.map((g) => {
+                const d = ACTIVE_DOCS.find((x) => x.id === g.id);
+                if (!d) return null;
+                const v = docDates[g.id] || {};
+                return (
+                  <DocumentRow
+                    key={g.id}
+                    number={d.number}
+                    label={d.label}
+                    badge={<Badge kind="ready">ready</Badge>}
+                    meta={
+                      <DocumentMeta>
+                        <DocumentMetaTag>
+                          <DocCategoryLabel cat={d.category} />
+                        </DocumentMetaTag>
+                        {d.dateFormat === "range" && v.from && (
+                          <DocumentMetaTag>{formatRange(v.from, v.to)}</DocumentMetaTag>
+                        )}
+                        {d.category === "gdoc_photos" && (
+                          <DocumentMetaTag>4 photos · per-photo dates</DocumentMetaTag>
+                        )}
+                      </DocumentMeta>
+                    }
+                    files={
+                      <DocumentFiles>
+                        <DocumentFile>{g.file}</DocumentFile>
+                      </DocumentFiles>
+                    }
+                  />
+                );
+              })}
+            </DocumentList>
+          </VisaPanelBody>
+        </VisaPanel>
+      </div>
+
+      <Console title="drive.generate" lines={GENERATE_LOG} meta="completed in 10.2s" />
+
+      <VisaButtonRow align="between">
+        <VisaButton onClick={onBack} size="sm" variant="ghost">
+          ← Back
+        </VisaButton>
+        <VisaButton onClick={onNext} variant="primary">
+          Build email draft →
+        </VisaButton>
+      </VisaButtonRow>
+    </>
   );
 }
