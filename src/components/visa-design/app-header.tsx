@@ -32,7 +32,7 @@ function AppHeaderRoot({ children, className, innerClassName }: AppHeaderProps) 
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 border-b border-(--rule) bg-[color-mix(in_oklab,var(--paper)_88%,transparent)] backdrop-blur-[10px] backdrop-saturate-150",
+        "sticky top-0 z-50 border-b border-rule bg-[color-mix(in_oklab,var(--paper)_88%,transparent)] backdrop-blur-[10px] backdrop-saturate-150",
         className,
       )}
     >
@@ -51,14 +51,14 @@ function AppHeaderLogo({ children, className }: AppHeaderSlotProps) {
   return (
     <div
       className={cn(
-        "relative grid h-7 w-7 shrink-0 place-items-center rounded-lg border-[1.5px] border-(--ink) bg-(--paper) font-visa-display text-base font-medium tracking-[-0.02em] text-(--ink) italic",
+        "relative grid h-7 w-7 shrink-0 place-items-center rounded-lg border-[1.5px] border-ink bg-paper font-visa-display text-base font-medium tracking-[-0.02em] text-ink italic",
         className,
       )}
     >
       {children}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0.75 rounded-[6px] border border-dashed border-(--rule-2) opacity-50"
+        className="pointer-events-none absolute inset-0.75 rounded-[6px] border border-dashed border-rule-2 opacity-50"
       />
     </div>
   );
@@ -68,13 +68,13 @@ function AppHeaderTitle({ children, accent, className, accentClassName }: AppHea
   return (
     <div
       className={cn(
-        "font-visa-display text-[18px] font-medium tracking-[-0.01em] text-(--ink)",
+        "font-visa-display text-[18px] font-medium tracking-[-0.01em] text-ink",
         className,
       )}
     >
       {children}
       {accent ? (
-        <em className={cn("font-normal text-(--ink-2) italic", accentClassName)}>{accent}</em>
+        <em className={cn("font-normal text-ink-2 italic", accentClassName)}>{accent}</em>
       ) : null}
     </div>
   );
@@ -94,12 +94,12 @@ function AppHeaderMeta({
   return (
     <div
       className={cn(
-        "flex items-center gap-1.5 font-mono text-[11px] tracking-[0.02em] text-(--ink-3)",
+        "flex items-center gap-1.5 font-mono text-[11px] tracking-[0.02em] text-ink-3",
         className,
       )}
     >
       <span className={labelClassName}>{label}</span>
-      <strong className={cn("font-medium text-(--ink)", valueClassName)}>{value}</strong>
+      <strong className={cn("font-medium text-ink", valueClassName)}>{value}</strong>
     </div>
   );
 }

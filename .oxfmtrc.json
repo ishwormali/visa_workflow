@@ -17,7 +17,8 @@
     ".wrangler",
     "pnpm-lock.yaml",
     "public",
-    "src/routeTree.gen.ts"
+    "src/routeTree.gen.ts",
+    "dummy"
   ],
   "printWidth": 100,
   "quoteProps": "as-needed",

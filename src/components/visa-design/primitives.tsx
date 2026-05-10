@@ -14,18 +14,14 @@ export const visaButtonVariants = cva(
   {
     variants: {
       variant: {
-        default:
-          "border-(--rule-2) bg-(--paper) text-[13px] text-(--ink) hover:border-(--ink-4) hover:bg-(--paper-3)",
-        primary:
-          "border-(--ink) bg-(--ink) text-[13px] text-(--paper) hover:border-(--ink-2) hover:bg-(--ink-2)",
-        accent:
-          "border-(--accent) bg-(--accent) text-[13px] text-(--paper) hover:border-(--accent-ink) hover:bg-(--accent-ink)",
-        ghost:
-          "border-transparent bg-transparent text-[13px] text-(--ink-2) hover:bg-(--paper-3) hover:text-(--ink)",
+        default: "border-rule-2 bg-paper  text-ink hover:border-ink-4 hover:bg-paper-3",
+        primary: "border-ink bg-ink  text-paper hover:border-ink-2 hover:bg-ink-2",
+        accent: "border-accent bg-accent  text-paper hover:border-accent-ink hover:bg-accent-ink",
+        ghost: "border-transparent bg-transparent  text-ink-2 hover:bg-paper-3 hover:text-ink",
       },
       size: {
-        default: "px-3.5 py-2",
-        md: "px-2.5 py-1.5",
+        default: "px-3.5 py-2  text-sm",
+        md: "px-2.5 py-1.5 text-sm",
         sm: "px-2.5 py-1.5 text-xs",
       },
       active: {

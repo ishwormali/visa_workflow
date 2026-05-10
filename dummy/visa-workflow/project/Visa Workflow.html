@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Visa Workflow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <script type="text/babel" src="data.jsx"></script>
+  <script type="text/babel" src="ui-bits.jsx"></script>
+  <script type="text/babel" src="step-0-setup.jsx"></script>
+  <script type="text/babel" src="step-1-scan.jsx"></script>
+  <script type="text/babel" src="step-2-photos.jsx"></script>
+  <script type="text/babel" src="step-3-generate.jsx"></script>
+  <script type="text/babel" src="step-4-email.jsx"></script>
+  <script type="text/babel" src="step-5-done.jsx"></script>
+  <script type="text/babel" src="history-and-settings.jsx"></script>
+
+  <script type="text/babel" data-presets="env,react">
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "theme": "warm",
+      "density": "spacious",
+      "demoNav": true,
+      "showSeed": false
+    }/*EDITMODE-END*/;
+
+    function App() {
+      const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+      const [step, setStep] = React.useState(0);
+      const [showHistory, setShowHistory] = React.useState(false);
+      const [showSettings, setShowSettings] = React.useState(false);
+      const [showSeed, setShowSeed] = React.useState(tweaks.showSeed);
+      const [sent, setSent] = React.useState(false);
+      const [emailConfig, setEmailConfig] = React.useState(EMAIL_CONFIG);
+      const [docDates, setDocDates] = React.useState(LAST_DATES);
+
+      React.useEffect(() => {
+        document.body.dataset.theme = tweaks.theme;
+        document.body.dataset.density = tweaks.density;
+      }, [tweaks.theme, tweaks.density]);
+
+      React.useEffect(() => {
+        setShowSeed(tweaks.showSeed);
+      }, [tweaks.showSeed]);
+
+      const goto = (n) => {
+        if (n === 5) {/* keep sent state */}
+        else setSent(false);
+        setStep(n);
+      };
+
+      const reset = () => {
+        setSent(false);
+        setStep(0);
+      };
+
+      let body;
+      if (showSeed) {
+        body = <ConfigSeed onComplete={() => { setTweak('showSeed', false); setShowSeed(false); }} />;
+      } else if (step === 0) {
+        body = <Step0Setup
+          docDates={docDates} setDocDates={setDocDates}
+          emailConfig={emailConfig}
+          onNext={() => goto(1)}
+          onEditEmail={() => setShowSettings(true)}
+        />;
+      } else if (step === 1) {
+        body = <Step1Scan docDates={docDates} onBack={() => goto(0)} onNext={() => goto(2)} />;
+      } else if (step === 2) {
+        body = <Step2Photos onBack={() => goto(1)} onNext={() => goto(3)} />;
+      } else if (step === 3) {
+        body = <Step3Generate docDates={docDates} onBack={() => goto(2)} onNext={() => goto(4)} />;
+      } else if (step === 4) {
+        body = <Step4Email docDates={docDates} emailConfig={emailConfig} onBack={() => goto(3)} onNext={() => goto(5)} />;
+      } else if (step === 5) {
+        body = <Step5Done emailConfig={emailConfig} sent={sent} onSent={() => setSent(true)} onReset={reset} />;
+      }
+
+      return (
+        <>
+          <header className="app-header">
+            <div className="app-header-inner">
+              <div className="app-mark">
+                <div className="app-mark-glyph">V</div>
+                <div className="app-mark-name">visa <em>workflow</em></div>
+              </div>
+              <div className="app-header-spacer"></div>
+              <div className="submission-count">
+                <span>SUBMISSIONS</span>
+                <strong>{PAST_SESSIONS.length}</strong>
+              </div>
+              <button className="header-btn" data-active={showHistory} onClick={() => setShowHistory(true)}>
+                ⏱ History
+              </button>
+              <button className="header-btn" onClick={() => setShowSettings(true)}>
+                ⚙ Settings
+              </button>
+            </div>
+          </header>
+
+          <main className="app-main" data-screen-label={`step-${step}`}>
+            {!showSeed && step > 0 && <StepRail current={step} onNav={goto} />}
+            {body}
+          </main>
+
+          {showHistory && <HistoryPanel onClose={() => setShowHistory(false)} />}
+          {showSettings && <SettingsPanel emailConfig={emailConfig} setEmailConfig={setEmailConfig} onClose={() => setShowSettings(false)} />}
+
+          {tweaks.demoNav && (
+            <div className="demo-nav">
+              <span className="demo-nav-label">demo</span>
+              {['Setup','Scan','Photos','Gen','Email','Done'].map((label, i) => (
+                <button
+                  key={i}
+                  className="demo-nav-btn"
+                  data-active={!showSeed && step === i}
+                  onClick={() => { setShowSeed(false); goto(i); }}
+                >
+                  {i}·{label}
+                </button>
+              ))}
+              <button
+                className="demo-nav-btn"
+                data-active={showSeed}
+                onClick={() => setShowSeed(true)}
+              >
+                seed
+              </button>
+            </div>
+          )}
+
+          <TweaksPanel title="Tweaks">
+            <TweakSection title="Theme">
+              <TweakRadio
+                label="Palette"
+                value={tweaks.theme}
+                onChange={v => setTweak('theme', v)}
+                options={[
+                  {value:'warm', label:'Warm'},
+                  {value:'cool', label:'Cool'},
+                  {value:'terminal', label:'Terminal'},
+                ]}
+              />
+              <TweakRadio
+                label="Density"
+                value={tweaks.density}
+                onChange={v => setTweak('density', v)}
+                options={[
+                  {value:'spacious', label:'Spacious'},
+                  {value:'medium', label:'Medium'},
+                  {value:'dense', label:'Dense'},
+                ]}
+              />
+            </TweakSection>
+            <TweakSection title="Demo">
+              <TweakToggle
+                label="Show step nav"
+                checked={tweaks.demoNav}
+                onChange={v => setTweak('demoNav', v)}
+              />
+              <TweakToggle
+                label="Show first-run seed"
+                checked={tweaks.showSeed}
+                onChange={v => setTweak('showSeed', v)}
+              />
+              <TweakButton onClick={() => { setShowHistory(true); }}>
+                Open History
+              </TweakButton>
+            </TweakSection>
+          </TweaksPanel>
+        </>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

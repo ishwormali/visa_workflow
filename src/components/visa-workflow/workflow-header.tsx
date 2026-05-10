@@ -2,7 +2,7 @@ import { Home } from "lucide-react";
 import { useState } from "react";
 
 import { AppHeader } from "../visa-design/app-header";
-import { VisaButton } from "../visa-design/primitives";
+import { VisaButton, visaButtonVariants } from "../visa-design/primitives";
 import { SettingsDialog } from "./settings-dialog";
 
 export const WorkflowHeader = () => {
@@ -17,7 +17,16 @@ export const WorkflowHeader = () => {
       <AppHeader.Trailing>
         {/* <AppHeader.Meta label="SUBMISSIONS" value={PAST_SESSIONS.length} /> */}
         <AppHeader.Actions>
-          <VisaButton
+          <a
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={visaButtonVariants({ variant: "ghost", size: "sm" })}
+          >
+            <Home size={14} />
+            Home
+          </a>
+          {/* <VisaButton
             // active={showHistory}
             size="sm"
             variant="ghost"
@@ -25,7 +34,7 @@ export const WorkflowHeader = () => {
           >
             <Home size={14} />
             Home
-          </VisaButton>
+          </VisaButton> */}
 
           <SettingsDialog open={openSettings} onOpenChange={setOpenSettings}></SettingsDialog>
         </AppHeader.Actions>

@@ -16,7 +16,8 @@
     ".vinxi",
     ".output",
     ".wrangler",
-    "src/routeTree.gen.ts"
+    "src/routeTree.gen.ts",
+    "dummy"
   ],
   "plugins": ["oxc", "unicorn", "typescript", "react", "import", "promise", "jsx-a11y"],
   "rules": {

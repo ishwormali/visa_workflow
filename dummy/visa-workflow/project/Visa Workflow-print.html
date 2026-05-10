@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Visa Workflow — Print</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+
+  <style>
+    /* ---- Print-specific ---- */
+    @page { size: A4 portrait; margin: 14mm; }
+
+    html, body {
+      background: var(--paper) !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    body::before { display: none !important; }
+
+    /* Each screen as its own page section */
+    .print-page {
+      max-width: 680px;
+      margin: 0 auto 28mm;
+      padding: 0;
+      break-after: page;
+      page-break-after: always;
+    }
+    .print-page:last-child {
+      break-after: auto;
+      page-break-after: auto;
+      margin-bottom: 0;
+    }
+
+    .print-pageheader {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 8px;
+      margin-bottom: 20px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+    }
+    .print-pageheader .doc {
+      font-family: var(--font-display);
+      font-size: 13px;
+      letter-spacing: -0.01em;
+      text-transform: none;
+      color: var(--ink);
+      font-style: italic;
+    }
+
+    .print-cover {
+      padding: 40mm 0 24mm;
+      text-align: left;
+    }
+    .print-cover-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      margin-bottom: 16px;
+    }
+    .print-cover-title {
+      font-family: var(--font-display);
+      font-size: 56px;
+      line-height: 1.05;
+      font-weight: 500;
+      letter-spacing: -0.025em;
+      color: var(--ink);
+      margin: 0 0 16px;
+    }
+    .print-cover-title em {
+      font-style: italic;
+      color: var(--accent-ink);
+    }
+    .print-cover-sub {
+      font-size: 16px;
+      color: var(--ink-2);
+      max-width: 50ch;
+      margin: 0 0 28mm;
+    }
+    .print-cover-toc {
+      border-top: 1px solid var(--rule);
+      padding-top: 16px;
+    }
+    .print-cover-toc dl {
+      display: grid;
+      grid-template-columns: 60px 1fr auto;
+      gap: 6px 16px;
+      margin: 0;
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+    .print-cover-toc dt {
+      color: var(--ink-3);
+      letter-spacing: 0.06em;
+    }
+    .print-cover-toc dd {
+      margin: 0;
+      color: var(--ink);
+    }
+    .print-cover-toc .pg {
+      color: var(--ink-3);
+      text-align: right;
+    }
+
+    /* Disable interactive bits in print */
+    .demo-nav, .tweaks-panel, .app-header { display: none !important; }
+    .console-body { max-height: none !important; overflow: visible !important; }
+    .history-overlay {
+      position: static !important;
+      background: transparent !important;
+      backdrop-filter: none !important;
+      padding: 0 !important;
+    }
+    .history-card {
+      box-shadow: none !important;
+      max-width: 680px !important;
+    }
+    /* expand all history details */
+    .history-detail { display: flex !important; }
+
+    button { pointer-events: none; }
+    details { }
+    details > summary { list-style: none; }
+
+    /* Avoid awkward breaks inside cards/consoles */
+    .panel, .console, .summary-card, .email-paper, .photo-stage, .caption-preview, .notice {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .step-head, .doc-row, .history-session, .console-line {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+  </style>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body data-theme="warm" data-density="medium">
+  <div id="root"></div>
+
+  <script type="text/babel" src="data.jsx"></script>
+  <script type="text/babel" src="ui-bits.jsx"></script>
+  <script type="text/babel" src="step-0-setup.jsx"></script>
+  <script type="text/babel" src="step-1-scan.jsx"></script>
+  <script type="text/babel" src="step-2-photos.jsx"></script>
+  <script type="text/babel" src="step-3-generate.jsx"></script>
+  <script type="text/babel" src="step-4-email.jsx"></script>
+  <script type="text/babel" src="step-5-done.jsx"></script>
+  <script type="text/babel" src="history-and-settings.jsx"></script>
+
+  <script type="text/babel" data-presets="env,react">
+    const noop = () => {};
+
+    function PrintHeader({ pageNum, totalPages, label }) {
+      return (
+        <div className="print-pageheader">
+          <span>Visa Workflow · Design review</span>
+          <span className="doc">{label}</span>
+          <span>{pageNum} / {totalPages}</span>
+        </div>
+      );
+    }
+
+    function PrintAll() {
+      const total = 9;
+      const pages = [
+        { label: 'Cover', node: (
+          <div className="print-cover">
+            <div className="print-cover-eyebrow">Design review · 06 May 2026</div>
+            <h1 className="print-cover-title">visa <em>workflow</em></h1>
+            <p className="print-cover-sub">A single-user, six-step internal tool for assembling and emailing monthly visa-application documents from Google Drive.</p>
+            <div className="print-cover-toc">
+              <dl>
+                <dt>00</dt><dd>Cover</dd><dd className="pg">p.1</dd>
+                <dt>01</dt><dd>First-run seed</dd><dd className="pg">p.2</dd>
+                <dt>02</dt><dd>Step 0 · Monthly setup</dd><dd className="pg">p.3</dd>
+                <dt>03</dt><dd>Step 1 · Scan Drive</dd><dd className="pg">p.4</dd>
+                <dt>04</dt><dd>Step 2 · Caption photos</dd><dd className="pg">p.5</dd>
+                <dt>05</dt><dd>Step 3 · Generate documents</dd><dd className="pg">p.6</dd>
+                <dt>06</dt><dd>Step 4 · Email draft</dd><dd className="pg">p.7</dd>
+                <dt>07</dt><dd>Step 5 · Session done</dd><dd className="pg">p.8</dd>
+                <dt>08</dt><dd>History panel</dd><dd className="pg">p.9</dd>
+              </dl>
+            </div>
+          </div>
+        )},
+        { label: 'First-run seed', node: <ConfigSeed onComplete={noop} /> },
+        { label: 'Step 0 · Setup', node: <Step0Setup docDates={LAST_DATES} setDocDates={noop} emailConfig={EMAIL_CONFIG} onNext={noop} onEditEmail={noop} /> },
+        { label: 'Step 1 · Scan', node: <Step1Scan docDates={LAST_DATES} onBack={noop} onNext={noop} /> },
+        { label: 'Step 2 · Photos', node: <Step2Photos onBack={noop} onNext={noop} /> },
+        { label: 'Step 3 · Generate', node: <Step3Generate docDates={LAST_DATES} onBack={noop} onNext={noop} /> },
+        { label: 'Step 4 · Email', node: <Step4Email docDates={LAST_DATES} emailConfig={EMAIL_CONFIG} onBack={noop} onNext={noop} /> },
+        { label: 'Step 5 · Done', node: <Step5Done emailConfig={EMAIL_CONFIG} sent={true} onSent={noop} onReset={noop} /> },
+        { label: 'History', node: (
+          <div style={{padding: 0}}>
+            <div className="history-overlay">
+              <HistoryPanel onClose={noop} />
+            </div>
+          </div>
+        )},
+      ];
+
+      return (
+        <>
+          {pages.map((p, i) => (
+            <section className="print-page" key={i}>
+              <PrintHeader pageNum={i+1} totalPages={total} label={p.label} />
+              {p.node}
+            </section>
+          ))}
+        </>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<PrintAll />);
+
+    // Auto-print after fonts + JSX + Babel parse settle
+    (function autoPrint(){
+      const ready = async () => {
+        try { if (document.fonts && document.fonts.ready) { await document.fonts.ready; } } catch(_){}
+        await new Promise(r => setTimeout(r, 800));
+        window.print();
+      };
+      if (document.readyState === 'complete') ready();
+      else window.addEventListener('load', ready);
+    })();
+  </script>
+</body>
+</html>

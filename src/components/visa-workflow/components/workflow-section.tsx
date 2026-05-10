@@ -54,3 +54,19 @@ export const WorkflowSectionContent: React.FC<{
 }> = ({ children, className }) => {
   return <div className={cn(`p-4`, className)}>{children}</div>;
 };
+
+export const WorkflowGridRow: React.FC<{ children?: React.ReactNode; className?: string }> = ({
+  children,
+  className,
+}) => {
+  return (
+    <div
+      className={cn(
+        "grid grid-cols-[28px_minmax(0,1fr)_auto] items-start gap-3 border-b border-rule px-4 py-3.5 last:border-b-0",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+};
