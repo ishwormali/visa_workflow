@@ -1,4 +1,5 @@
-import { ACTIVE_DOCS, GENERATE_LOG, type DocDates } from "../../visa-design/data";
+import { createSessionFolderName } from "@/lib/visa-workflow";
+
 import {
   DocumentFile,
   DocumentFiles,
@@ -18,30 +19,23 @@ import {
   VisaPanelHeader,
   VisaPanelTitle,
 } from "../../visa-design/primitives";
-import {
-  Badge,
-  Console,
-  DocCategoryLabel,
-  StepHead,
-  formatDate,
-  formatRange,
-} from "../../visa-design/ui-bits";
+import { Badge, Console, DocCategoryLabel, StepHead, formatRange } from "../../visa-design/ui-bits";
+import { useVisaWorkflow } from "../provider";
 
 type Props = {
-  docDates: DocDates;
   onBack: () => void;
-  onNext: () => void;
 };
 
-const GENERATED = [
-  { id: "doc_4_upload_savers", file: "4 - savers - Apr 2026.pdf" },
-  { id: "doc_4_upload_smart", file: "4 - smart account - Apr 2026.pdf" },
-  { id: "doc_7_gdoc", file: "7-whatsapp-history.gdoc" },
-  { id: "doc_8_gdoc_photos", file: "8-photographs.gdoc" },
-];
-
-export function GenerateStep({ docDates, onBack, onNext }: Props) {
-  const today = "2026-05-05";
+export function GenerateStep({ onBack }: Props) {
+  const {
+    activeDocTypes,
+    documents,
+    draftDate,
+    generateDocuments,
+    getPlannedDocumentFileName,
+    logs,
+  } = useVisaWorkflow();
+  const folderName = createSessionFolderName(draftDate);
 
   return (
     <>
@@ -49,13 +43,13 @@ export function GenerateStep({ docDates, onBack, onNext }: Props) {
         eyebrow="Step 3 · Generate"
         title={
           <>
-            Building <em>Visa-May-2026</em>
+            Build the <em>session bundle</em>
           </>
         }
         desc={
           <>
-            Created session subfolder. Generating gdocs, renaming uploads, appending to the{" "}
-            <VisaMonoText>Document list</VisaMonoText>.
+            The workflow will create a session folder, copy or generate files using the planned
+            names below, then move you to the email draft preview.
           </>
         }
       />
@@ -64,48 +58,61 @@ export function GenerateStep({ docDates, onBack, onNext }: Props) {
         <VisaPanel>
           <VisaPanelHeader>
             <VisaPanelTitle>Session folder</VisaPanelTitle>
-            <VisaMonoText className="text-(--ink-3)">draft date: {formatDate(today)}</VisaMonoText>
+            <VisaMonoText className="text-ink-3">draft date: {draftDate}</VisaMonoText>
           </VisaPanelHeader>
           <VisaPanelBody>
             <VisaCluster>
               <VisaDimText>📁</VisaDimText>
-              <VisaMonoText>Documents requested / Visa-May-2026 /</VisaMonoText>
+              <VisaMonoText>Documents requested / {folderName} /</VisaMonoText>
             </VisaCluster>
           </VisaPanelBody>
         </VisaPanel>
 
         <VisaPanel>
           <VisaPanelHeader>
-            <VisaPanelTitle>Generated · {GENERATED.length}</VisaPanelTitle>
+            <VisaPanelTitle>Planned outputs · {activeDocTypes.length}</VisaPanelTitle>
           </VisaPanelHeader>
           <VisaPanelBody tight>
             <DocumentList>
-              {GENERATED.map((g) => {
-                const d = ACTIVE_DOCS.find((x) => x.id === g.id);
-                if (!d) return null;
-                const v = docDates[g.id] || {};
+              {activeDocTypes.map((docType) => {
+                const document = documents.find((item) => item.docTypeId === docType.id);
+                if (!document) return null;
                 return (
                   <DocumentRow
-                    key={g.id}
-                    number={d.number}
-                    label={d.label}
-                    badge={<Badge kind="ready">ready</Badge>}
+                    key={docType.id}
+                    number={docType.number}
+                    label={docType.label}
+                    badge={
+                      <Badge kind={document.generatedFiles.length ? "ready" : "pending"}>
+                        {document.generatedFiles.length ? "generated" : "planned"}
+                      </Badge>
+                    }
                     meta={
                       <DocumentMeta>
                         <DocumentMetaTag>
-                          <DocCategoryLabel cat={d.category} />
+                          <DocCategoryLabel cat={docType.category} />
                         </DocumentMetaTag>
-                        {d.dateFormat === "range" && v.from && (
-                          <DocumentMetaTag>{formatRange(v.from, v.to)}</DocumentMetaTag>
+                        {document.dates.mode === "range" && (
+                          <DocumentMetaTag>
+                            {formatRange(document.dates.from, document.dates.to)}
+                          </DocumentMetaTag>
                         )}
-                        {d.category === "gdoc_photos" && (
-                          <DocumentMetaTag>4 photos · per-photo dates</DocumentMetaTag>
+                        {docType.category === "gdoc_photos" && (
+                          <DocumentMetaTag>
+                            {document.captions.filter((caption) => !caption.skipped).length}{" "}
+                            captions
+                          </DocumentMetaTag>
                         )}
                       </DocumentMeta>
                     }
                     files={
                       <DocumentFiles>
-                        <DocumentFile>{g.file}</DocumentFile>
+                        {(document.generatedFiles.length
+                          ? document.generatedFiles
+                          : [getPlannedDocumentFileName(docType.id, document.matchedFiles[0])]
+                        ).map((fileName) => (
+                          <DocumentFile key={fileName}>{fileName}</DocumentFile>
+                        ))}
                       </DocumentFiles>
                     }
                   />
@@ -116,14 +123,19 @@ export function GenerateStep({ docDates, onBack, onNext }: Props) {
         </VisaPanel>
       </div>
 
-      <Console title="drive.generate" lines={GENERATE_LOG} meta="completed in 10.2s" />
+      <Console
+        title="drive.generate"
+        lines={logs[3]}
+        meta={`${logs[3].length} events`}
+        emptyMessage="No generation events yet."
+      />
 
       <VisaButtonRow align="between">
         <VisaButton onClick={onBack} size="sm" variant="ghost">
           ← Back
         </VisaButton>
-        <VisaButton onClick={onNext} variant="primary">
-          Build email draft →
+        <VisaButton onClick={() => void generateDocuments()} variant="primary">
+          Generate files →
         </VisaButton>
       </VisaButtonRow>
     </>

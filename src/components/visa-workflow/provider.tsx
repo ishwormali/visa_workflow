@@ -24,11 +24,11 @@ import {
   type GoogleDriveFile,
 } from "@/lib/google-drive";
 import {
-  DEFAULT_EMAIL_CONFIG,
-  SAMPLE_DOCUMENT_LIST,
   VISA_CONFIG_KEY,
   VISA_SESSIONS_KEY,
+  buildPlannedFileName,
   buildEmailBody,
+  createEmptyConfig,
   createDefaultDateValue,
   createEmailSubject,
   createSeededConfig,
@@ -53,26 +53,25 @@ type LogState = Record<StepWithLogs, string[]>;
 type DriveFileIndex = Map<string, GoogleDriveFile[]>;
 
 const STEP_ITEMS = [
-  { id: 1, label: "Select Date Range" },
-  { id: 2, label: "Visa Folder & Raw Docs" },
+  { id: 0, label: "Setup" },
+  { id: 1, label: "Review Docs" },
+  { id: 2, label: "Photos" },
+  { id: 3, label: "Generate" },
+  { id: 4, label: "Email" },
+  { id: 5, label: "Done" },
 ] as const;
 
-const EMPTY_CONFIG: VisaConfig = {
-  email: DEFAULT_EMAIL_CONFIG,
-  docTypes: [],
-  googleDriveRootFolderId: undefined,
-  googleDriveRootFolderName: undefined,
-};
+const EMPTY_CONFIG: VisaConfig = createEmptyConfig();
 
 const GOOGLE_DRIVE_FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
 
 function normalizeWorkflowStep(step?: WorkflowStep) {
-  if (!step || step < 1) {
-    return 1;
+  if (step === undefined || step < 0) {
+    return 0;
   }
 
-  if (step > 2) {
-    return 2;
+  if (step > 5) {
+    return 5;
   }
 
   return step;
@@ -214,6 +213,123 @@ function buildWorkflowDocumentsFromSession(
     });
 }
 
+function syncWorkflowDocuments(
+  docTypes: DocTypeConfig[],
+  currentDocuments: WorkflowDocumentState[],
+) {
+  const documentsById = new Map(currentDocuments.map((document) => [document.docTypeId, document]));
+
+  return docTypes
+    .filter((docType) => docType.active)
+    .map((docType) => createWorkflowDocumentState(docType, documentsById.get(docType.id)));
+}
+
+function isNumberedDocumentFile(fileName: string, number?: number) {
+  if (number === undefined) {
+    return /^\d+[\s-]/.test(fileName);
+  }
+
+  return new RegExp(`^${number}[\\s\\-]`, "i").test(fileName);
+}
+
+function isImageFile(fileName: string) {
+  return /\.(jpg|jpeg|heic|png)$/i.test(fileName);
+}
+
+function isPdfFile(fileName: string) {
+  return /\.pdf$/i.test(fileName);
+}
+
+function matchesRawFile(docType: DocTypeConfig, file: GoogleDriveFile) {
+  const fileName = file.name;
+
+  switch (docType.id) {
+    case "doc_4_savers":
+      return (
+        isPdfFile(fileName) &&
+        /statement|cba|commbank|commonwealth/i.test(fileName) &&
+        /saver|netbank saver/i.test(fileName) &&
+        !isNumberedDocumentFile(fileName)
+      );
+    case "doc_4_smart":
+      return (
+        isPdfFile(fileName) &&
+        /statement|cba|commbank|commonwealth/i.test(fileName) &&
+        /smart|smart access/i.test(fileName) &&
+        !isNumberedDocumentFile(fileName)
+      );
+    case "doc_7_whatsapp":
+      return /^screenshot[\s_]/i.test(fileName) && /\.png$/i.test(fileName);
+    case "doc_8_photos":
+      return (
+        isImageFile(fileName) &&
+        !/^screenshot[\s_]/i.test(fileName) &&
+        !isNumberedDocumentFile(fileName)
+      );
+    case "doc_43_phonebill":
+      return (
+        isPdfFile(fileName) &&
+        /uroj/i.test(fileName) &&
+        /phone|bill|optus/i.test(fileName) &&
+        !isNumberedDocumentFile(fileName, 43)
+      );
+    default:
+      if (!docType.matchPattern) {
+        return false;
+      }
+
+      try {
+        return new RegExp(docType.matchPattern, "i").test(fileName);
+      } catch {
+        return false;
+      }
+  }
+}
+
+function buildMatchedDocuments(
+  docTypes: DocTypeConfig[],
+  currentDocuments: WorkflowDocumentState[],
+  rawFiles: GoogleDriveFile[],
+): WorkflowDocumentState[] {
+  const currentById = new Map(currentDocuments.map((document) => [document.docTypeId, document]));
+
+  return docTypes
+    .filter((docType) => docType.active)
+    .map((docType) => {
+      const currentDocument = currentById.get(docType.id) ?? createWorkflowDocumentState(docType);
+      const matchedFiles = rawFiles
+        .filter((file) => matchesRawFile(docType, file))
+        .map((file) => file.name)
+        .toSorted((left, right) => left.localeCompare(right));
+      const status = matchedFiles.length ? ("detected" as const) : ("pending" as const);
+
+      return {
+        ...currentDocument,
+        matchedFiles,
+        status,
+        validationMessage: matchedFiles.length ? "" : currentDocument.validationMessage,
+      };
+    });
+}
+
+function inferSetupDates(documents: WorkflowDocumentState[]) {
+  const rangeDocument = documents.find((document) => document.dates.mode === "range");
+
+  if (rangeDocument?.dates.mode === "range") {
+    return {
+      from: rangeDocument.dates.from,
+      to: rangeDocument.dates.to,
+    };
+  }
+
+  const singleDocument = documents.find((document) => document.dates.mode === "single");
+
+  return {
+    from: startOfMonthIso(),
+    to: singleDocument?.dates.mode === "single" ? singleDocument.dates.date : todayIso(),
+  };
+}
+
 function upsertSession(previousSessions: VisaSessionRecord[], nextSession: VisaSessionRecord) {
   const remainingSessions = previousSessions.filter((session) => session.id !== nextSession.id);
 
@@ -333,7 +449,7 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
   const [currentStep, setCurrentStep] = useState<WorkflowStep>(0);
   const [showHistory, setShowHistory] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [seedSource, setSeedSource] = useState(SAMPLE_DOCUMENT_LIST);
+  const [seedSource, setSeedSource] = useState("");
   const [seedReview, setSeedReview] = useState<DocTypeConfig[]>([]);
   const [seedError, setSeedError] = useState("");
   const [seedLogs, setSeedLogs] = useState<string[]>([]);
@@ -394,31 +510,43 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
   useEffect(() => {
     const storedConfig = readStoredJson<VisaConfig>(VISA_CONFIG_KEY, EMPTY_CONFIG);
     const storedSessions = readStoredJson<VisaSessionRecord[]>(VISA_SESSIONS_KEY, []);
+    const normalizedConfig: VisaConfig = {
+      ...EMPTY_CONFIG,
+      ...storedConfig,
+      email: {
+        ...EMPTY_CONFIG.email,
+        ...storedConfig.email,
+      },
+      docTypes: storedConfig.docTypes?.length
+        ? storedConfig.docTypes
+        : EMPTY_CONFIG.docTypes.map((docType) => ({ ...docType })),
+    };
     const targetSession = options.sessionId
       ? storedSessions.find((session) => session.id === options.sessionId)
       : undefined;
 
     const nextDocuments = targetSession
-      ? buildWorkflowDocumentsFromSession(storedConfig, targetSession)
-      : buildWorkflowDocuments(storedConfig, storedSessions);
+      ? buildWorkflowDocumentsFromSession(normalizedConfig, targetSession)
+      : buildWorkflowDocuments(normalizedConfig, storedSessions);
+    const setupDates = inferSetupDates(nextDocuments);
 
     const nextHasScanned = nextDocuments.some((document) => document.matchedFiles.length > 0);
     const nextHasGenerated = nextDocuments.some((document) => document.generatedFiles.length > 0);
 
-    setConfig(storedConfig);
+    setConfig(normalizedConfig);
     setSessions(storedSessions);
     setDocuments(nextDocuments);
     setWorkflowId(targetSession?.id ?? options.sessionId ?? createWorkflowId());
     setMissingSession(Boolean(options.sessionId && !targetSession));
     setCurrentStep(normalizeWorkflowStep(targetSession?.currentStep));
     setDraftDate(targetSession?.draftDate ?? todayIso());
-    setSelectedFromDate(startOfMonthIso());
-    setSelectedToDate(todayIso());
+    setSelectedFromDate(setupDates.from);
+    setSelectedToDate(setupDates.to);
     setDraftSessionId(targetSession?.id ?? null);
     setEmailPreview(
       targetSession
         ? buildEmailBody({
-            config: storedConfig,
+            config: normalizedConfig,
             documents: targetSession.documents,
           })
         : "",
@@ -428,7 +556,7 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
     setDraftReady(Boolean(targetSession?.status === "draft"));
     setPhotoIndex(0);
     setRootFolderInput(
-      storedConfig.googleDriveRootFolderId ?? readGoogleDriveDefaultRootFolderId() ?? "",
+      normalizedConfig.googleDriveRootFolderId ?? readGoogleDriveDefaultRootFolderId() ?? "",
     );
     setRootFolderError("");
     setVisaFolderName("");
@@ -491,7 +619,7 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
   function resetWorkflow(nextConfig = config, nextSessions = sessions) {
     startTransition(() => {
       setDocuments(buildWorkflowDocuments(nextConfig, nextSessions));
-      setCurrentStep(1);
+      setCurrentStep(0);
       setLogs(createInitialLogs());
       setDraftDate(todayIso());
       setSelectedFromDate(startOfMonthIso());
@@ -548,6 +676,89 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
     }));
   }
 
+  function toggleDocTypeActive(docTypeId: string, active: boolean) {
+    setConfig((currentConfig) => {
+      const nextDocTypes = currentConfig.docTypes.map((docType) =>
+        docType.id === docTypeId ? { ...docType, active } : docType,
+      );
+
+      setDocuments((currentDocuments) => syncWorkflowDocuments(nextDocTypes, currentDocuments));
+
+      return {
+        ...currentConfig,
+        docTypes: nextDocTypes,
+      };
+    });
+
+    setPhotoIndex(0);
+  }
+
+  function handleSetupDateRange(field: "from" | "to", value: string) {
+    const nextFrom = field === "from" ? value : selectedFromDate;
+    const nextTo = field === "to" ? value : selectedToDate;
+
+    if (field === "from") {
+      setSelectedFromDate(value);
+    } else {
+      setSelectedToDate(value);
+    }
+
+    setDocuments((currentDocuments) =>
+      currentDocuments.map((document) => {
+        const docType = docTypesById.get(document.docTypeId);
+
+        if (!docType) {
+          return document;
+        }
+
+        if (document.dates.mode === "range") {
+          return {
+            ...document,
+            dates: {
+              mode: "range",
+              from: nextFrom,
+              to: nextTo,
+            },
+          };
+        }
+
+        return {
+          ...document,
+          dates: {
+            mode: "single",
+            date: nextTo,
+          },
+        };
+      }),
+    );
+  }
+
+  function toggleMatchedFile(docTypeId: string, fileName: string) {
+    updateDocument(docTypeId, (document) => {
+      const hasFile = document.matchedFiles.includes(fileName);
+      const matchedFiles = hasFile
+        ? document.matchedFiles.filter((currentFileName) => currentFileName !== fileName)
+        : [...document.matchedFiles, fileName].toSorted((left, right) => left.localeCompare(right));
+
+      return {
+        ...document,
+        matchedFiles,
+        status: matchedFiles.length ? "detected" : "pending",
+      };
+    });
+  }
+
+  function getPlannedDocumentFileName(docTypeId: string, sourceFileName?: string) {
+    const docType = docTypesById.get(docTypeId);
+    const document = documents.find((currentDocument) => currentDocument.docTypeId === docTypeId);
+
+    if (!docType || !document) {
+      return "";
+    }
+
+    return buildPlannedFileName(docType, document.dates, sourceFileName);
+  }
+
   async function selectRootFolder(folderIdOrUrl = rootFolderInput) {
     const nextRootFolderId = normalizeGoogleDriveFolderId(folderIdOrUrl);
 
@@ -590,12 +801,15 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
   async function runSeedReview() {
     setSeedLogs([]);
     setSeedError("");
+    setSeedReview([]);
     appendSeedLog("Authorizing Google Drive access.");
 
-    let driveDocumentList = seedSource;
+    let driveDocumentList = "";
 
     try {
-      driveDocumentList = await readGoogleDriveDocumentList();
+      const rootFolderId = resolveRootFolderId();
+      appendSeedLog("Looking for Document list under the configured Google Drive root folder.");
+      driveDocumentList = await readGoogleDriveDocumentList(rootFolderId);
       setSeedSource(driveDocumentList);
       appendSeedLog("Read the latest Document list from Google Drive.");
     } catch (error) {
@@ -635,6 +849,12 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
 
   function saveSeedReview() {
     const nextDocTypes = seedReview.length ? seedReview : createSeededConfig(seedSource).docTypes;
+
+    if (!nextDocTypes.length) {
+      setSeedError("Read the live Document list before applying document types.");
+      return;
+    }
+
     const nextConfig: VisaConfig = {
       ...config,
       docTypes: nextDocTypes,
@@ -693,6 +913,13 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
     setRawFolderId("");
     setVisaFolderId("");
     setVisaFolderName("");
+    setDocuments((currentDocuments) =>
+      currentDocuments.map((document) => ({
+        ...document,
+        matchedFiles: [],
+        status: "pending",
+      })),
+    );
 
     appendLog(2, "Authorizing Google Drive access.");
 
@@ -742,6 +969,9 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
       const rawFiles = await listGoogleDriveFilesRecursively(rawFolder.id);
       setRawFolderFiles(rawFiles);
       scannedDriveFilesRef.current = createDriveFileIndex(rawFiles);
+      setDocuments((currentDocuments) =>
+        buildMatchedDocuments(config.docTypes, currentDocuments, rawFiles),
+      );
 
       appendLog(
         2,
@@ -937,11 +1167,7 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
           const copiedFiles: GoogleDriveFile[] = [];
 
           for (const sourceFile of sourceFiles) {
-            const nextFileName =
-              sourceFile.name.startsWith(`${docType.number} `) ||
-              sourceFile.name.startsWith(`${docType.number} -`)
-                ? sourceFile.name
-                : `${docType.number} - ${sourceFile.name}`;
+            const nextFileName = buildPlannedFileName(docType, document.dates, sourceFile.name);
             const copiedFile = await copyGoogleDriveFile({
               fileId: sourceFile.id,
               name: nextFileName,
@@ -980,7 +1206,7 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
           }
 
           const googleDoc = await createGoogleDocInDrive({
-            name: `${docType.number} - ${docType.label}`,
+            name: buildPlannedFileName(docType, document.dates),
             parentId: sessionFolder.id,
             content: buildGeneratedDocumentContent(docType, document),
           });
@@ -1000,7 +1226,7 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
         }
 
         const googleDoc = await createGoogleDocInDrive({
-          name: `${docType.number} - ${docType.label}`,
+          name: buildPlannedFileName(docType, document.dates),
           parentId: sessionFolder.id,
           content: buildGeneratedDocumentContent(docType, document),
         });
@@ -1227,7 +1453,9 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
     goToStep,
     goToDraftStep: () => setCurrentStep(4),
     goToDoneStep: () => setCurrentStep(5),
+    getPlannedDocumentFileName,
     handleDateChange,
+    handleSetupDateRange,
     hasGenerated,
     hasScanned,
     hydrated,
@@ -1245,6 +1473,7 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
     pendingSessionsCount,
     photoFiles,
     photoIndex,
+    selectPhotoIndex: setPhotoIndex,
     saveWorkflow,
     saveCaptionAndContinue,
     saveSeedReview,
@@ -1272,6 +1501,8 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
     skipPhotoStep: () => setCurrentStep(3),
     startNextSession,
     selectRootFolder,
+    toggleDocTypeActive,
+    toggleMatchedFile,
     toggleExpandedHistory,
     toggleSeedReviewDocType,
     updateConfigEmail,

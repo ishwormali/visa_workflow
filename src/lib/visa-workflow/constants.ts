@@ -1,4 +1,4 @@
-import type { EmailConfig } from "./types";
+import type { DocTypeConfig, EmailConfig } from "./types";
 
 export const VISA_CONFIG_KEY = "visa_config";
 export const VISA_SESSIONS_KEY = "visa_sessions";
@@ -10,20 +10,65 @@ export const DEFAULT_EMAIL_CONFIG: EmailConfig = {
   signOff: "Applicant",
 };
 
-export const SAMPLE_DOCUMENT_LIST = `| No | Document | Status | Attachment |
-| 1 | Sponsor letter | | 1 - sponsor letter.pdf |
-| 2 | Passport copies | | 2 - passport.pdf |
-| 3 | Employment letters | | 3 - employment.pdf |
-| 4 | Joint statements from January to current | | 4 - savers account.pdf\n4 - smart account.pdf |
-| 5 | Travel itinerary | | 5 - itinerary.pdf |
-| 6 | Proof of address | | 6 - address.pdf |
-| 7 | WhatsApp chat history from January to current | | 7 - Whatsapp export.zip |
-| 8 | Photographs of relationship | | 8 - Photograph collage.jpg |`;
-
-export const SAMPLE_DRIVE_FILES = [
-  "4 - savers account - Apr 2026.pdf",
-  "4 - smart account - Apr 2026.pdf",
-  "7 - Whatsapp export - Apr 2026.zip",
-  "8 - Photograph - picnic.jpg",
-  "8 - Photograph - wedding.jpg",
+export const DEFAULT_DOC_TYPES: DocTypeConfig[] = [
+  {
+    id: "doc_4_savers",
+    number: 4,
+    label: "Joint statements - savers account",
+    category: "upload",
+    dateFormat: "range",
+    detection: "pdf_content",
+    active: true,
+    fileNamePrefix: "4 - joint statements savers account",
+    matchPattern: "^4[\\s\\-].*savers",
+  },
+  {
+    id: "doc_4_smart",
+    number: 4,
+    label: "Joint statements - smart account",
+    category: "upload",
+    dateFormat: "range",
+    detection: "pdf_content",
+    active: true,
+    fileNamePrefix: "4 - joint statements smart account",
+    matchPattern: "^4[\\s\\-].*smart",
+  },
+  {
+    id: "doc_7_whatsapp",
+    number: 7,
+    label: "WhatsApp chat history",
+    category: "gdoc",
+    active: true,
+    dateFormat: "range",
+    detection: "filename",
+    fileNamePrefix: "7 - WhatsApp chat history",
+    docHeader: "WHATSAPP CHAT HISTORY",
+    generateDoc: true,
+    matchPattern: "^7[\\s\\-].*[Ww]hatsapp",
+  },
+  {
+    id: "doc_8_photos",
+    number: 8,
+    label: "Photographs of relationship",
+    category: "gdoc_photos",
+    dateFormat: "single",
+    detection: "filename",
+    active: true,
+    fileNamePrefix: "8 - Photographs of relationship",
+    docHeader: "PHOTOGRAPHS OF RELATIONSHIP",
+    generateDoc: true,
+    requiresCaptions: true,
+    matchPattern: "^8[\\s\\-].*[Pp]hotograph",
+  },
+  {
+    id: "doc_43_phonebill",
+    number: 43,
+    label: "Applicant phone bill",
+    category: "upload",
+    dateFormat: "single",
+    detection: "pdf_content",
+    active: true,
+    fileNamePrefix: "43 - Applicant phone bill",
+    matchPattern: "^43[\\s\\-]",
+  },
 ];

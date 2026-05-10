@@ -1,4 +1,4 @@
-import { DEFAULT_EMAIL_CONFIG, SAMPLE_DOCUMENT_LIST } from "./constants";
+import { DEFAULT_DOC_TYPES, DEFAULT_EMAIL_CONFIG } from "./constants";
 import { createEmailSubject, createSessionFolderName, formatDateLabel } from "./formatters";
 import { parseDocumentList } from "./parsers";
 import type {
@@ -34,14 +34,21 @@ export function createDefaultDateValue(dateFormat: DateFormat): DocumentDateValu
   };
 }
 
-export function createSeededConfig(rawDocumentList = SAMPLE_DOCUMENT_LIST): VisaConfig {
+export function createEmptyConfig(): VisaConfig {
+  return {
+    email: { ...DEFAULT_EMAIL_CONFIG },
+    docTypes: DEFAULT_DOC_TYPES.map((docType) => ({ ...docType })),
+  };
+}
+
+export function createSeededConfig(rawDocumentList: string): VisaConfig {
   const docTypes = parseDocumentList(rawDocumentList).map((docType) => ({
     ...docType,
     active: docType.number === 4 || docType.number === 7 || docType.number === 8,
   }));
 
   return {
-    email: DEFAULT_EMAIL_CONFIG,
+    ...createEmptyConfig(),
     docTypes,
     seededAt: new Date().toISOString(),
   };

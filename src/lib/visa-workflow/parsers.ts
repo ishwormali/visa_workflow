@@ -1,4 +1,3 @@
-import { SAMPLE_DOCUMENT_LIST } from "./constants";
 import type { DateFormat, DocCategory, DocTypeConfig } from "./types";
 
 const RANGE_DESCRIPTION_PATTERN = /from .+ to|till today|to current/i;
@@ -12,7 +11,11 @@ function slugify(input: string) {
     .replace(/^_+|_+$/g, "");
 }
 
-export function parseDocumentList(plainText = SAMPLE_DOCUMENT_LIST): DocTypeConfig[] {
+export function parseDocumentList(plainText = ""): DocTypeConfig[] {
+  if (!plainText.trim()) {
+    return [];
+  }
+
   const rows = plainText.split("\n");
   const docTypes: DocTypeConfig[] = [];
 
@@ -56,7 +59,9 @@ export function parseDocumentList(plainText = SAMPLE_DOCUMENT_LIST): DocTypeConf
           label: `${description} - ${subType} account`,
           category,
           dateFormat,
+          detection: category === "upload" ? "pdf_content" : "filename",
           matchPattern: `^${number}[\\s\\-].*${subType}`,
+          fileNamePrefix: `${number} - ${description.toLowerCase()} ${subType} account`,
           active: true,
         });
       }
@@ -80,7 +85,13 @@ export function parseDocumentList(plainText = SAMPLE_DOCUMENT_LIST): DocTypeConf
       label: description,
       category,
       dateFormat,
+      detection: category === "upload" ? "filename" : "filename",
       matchPattern,
+      fileNamePrefix: `${number} - ${description}`,
+      docHeader:
+        category === "gdoc" || category === "gdoc_photos" ? description.toUpperCase() : undefined,
+      generateDoc: category === "gdoc" || category === "gdoc_photos",
+      requiresCaptions: category === "gdoc_photos",
       active: true,
     });
   }
@@ -89,6 +100,10 @@ export function parseDocumentList(plainText = SAMPLE_DOCUMENT_LIST): DocTypeConf
 }
 
 export function matchesDocType(fileName: string, docType: DocTypeConfig) {
+  if (!docType.matchPattern) {
+    return false;
+  }
+
   try {
     return new RegExp(docType.matchPattern, "i").test(fileName);
   } catch {

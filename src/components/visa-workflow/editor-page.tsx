@@ -1,14 +1,17 @@
 import { useNavigate, useLocation } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 
-import { EMAIL_CONFIG, LAST_DATES, type DocDates, type EmailConfig } from "../visa-design/data";
+import { VisaButton, VisaButtonRow } from "../visa-design/primitives";
 import { WorkflowStepRail, type WorkflowStepIndex } from "./components/workflow-step-rail";
+import { LoadingScreen } from "./loading-screen";
+import { useVisaWorkflow } from "./provider";
 import { DoneStep } from "./steps/done-step";
 import { EmailStep } from "./steps/email-step";
 import { GenerateStep } from "./steps/generate-step";
 import { PhotosStep } from "./steps/photos-step";
 import { ScanStep } from "./steps/scan-step";
 import { SetupStep } from "./steps/setup-step";
+import { WorkflowHeader } from "./workflow-header";
 
 const MAX_STEP: WorkflowStepIndex = 5;
 
@@ -46,21 +49,26 @@ export function VisaWorkflowEditorPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const routeStep = readStepFromPathname(location.pathname);
-
-  const [currentStep, setCurrentStep] = useState<WorkflowStepIndex>(routeStep ?? 0);
-  const [docDates, setDocDates] = useState<DocDates>(LAST_DATES);
-  const [emailConfig] = useState<EmailConfig>(EMAIL_CONFIG);
-  const [sent, setSent] = useState(false);
+  const { activeDocTypes, currentStep, goToStep, hydrated, saveWorkflow } = useVisaWorkflow();
+  const hasPhotoStep = activeDocTypes.some((docType) => docType.requiresCaptions);
+  const lastRouteStepRef = useRef<WorkflowStepIndex | null>(routeStep);
 
   useEffect(() => {
     if (routeStep === null || routeStep === currentStep) {
       return;
     }
 
-    setCurrentStep(routeStep);
-  }, [currentStep, routeStep]);
+    goToStep(routeStep);
+  }, [currentStep, goToStep, routeStep]);
 
   useEffect(() => {
+    const routeChanged = lastRouteStepRef.current !== routeStep;
+    lastRouteStepRef.current = routeStep;
+
+    if (routeChanged) {
+      return;
+    }
+
     if (routeStep !== null && routeStep === currentStep) {
       return;
     }
@@ -73,54 +81,53 @@ export function VisaWorkflowEditorPage() {
   }, [currentStep, location.pathname, navigate, routeStep]);
 
   const goto = (n: WorkflowStepIndex) => {
-    if (n !== 5) setSent(false);
-    setCurrentStep(n);
+    if (n === 2 && !hasPhotoStep) {
+      goToStep(3);
+      return;
+    }
+
+    goToStep(n);
   };
 
-  const reset = () => {
-    setSent(false);
-    setCurrentStep(0);
-  };
+  if (!hydrated) {
+    return (
+      <>
+        <WorkflowHeader />
+        <LoadingScreen />
+      </>
+    );
+  }
 
   let body: React.ReactNode = null;
   if (currentStep === 0) {
-    body = (
-      <SetupStep
-        docDates={docDates}
-        setDocDates={setDocDates}
-        emailConfig={emailConfig}
-        onNext={() => goto(1)}
-        onEditEmail={() => {
-          /* settings dialog handled by WorkflowHeader */
-        }}
-      />
-    );
+    body = <SetupStep onNext={() => goto(1)} />;
   } else if (currentStep === 1) {
-    body = <ScanStep docDates={docDates} onBack={() => goto(0)} onNext={() => goto(2)} />;
+    body = <ScanStep onBack={() => goto(0)} onNext={() => goto(hasPhotoStep ? 2 : 3)} />;
   } else if (currentStep === 2) {
-    body = <PhotosStep onBack={() => goto(1)} onNext={() => goto(3)} />;
+    body = <PhotosStep onBack={() => goto(1)} />;
   } else if (currentStep === 3) {
-    body = <GenerateStep docDates={docDates} onBack={() => goto(2)} onNext={() => goto(4)} />;
+    body = <GenerateStep onBack={() => goto(hasPhotoStep ? 2 : 1)} />;
   } else if (currentStep === 4) {
-    body = (
-      <EmailStep
-        docDates={docDates}
-        emailConfig={emailConfig}
-        onBack={() => goto(3)}
-        onNext={() => goto(5)}
-      />
-    );
+    body = <EmailStep onBack={() => goto(3)} />;
   } else {
-    body = <DoneStep sent={sent} onSent={() => setSent(true)} onReset={reset} />;
+    body = <DoneStep />;
   }
 
   return (
-    <main
-      className="relative z-10 mx-auto max-w-[680px] px-6 pt-9 pb-[100px]"
-      data-screen-label={`step-${currentStep}`}
-    >
-      {currentStep > 0 && <WorkflowStepRail current={currentStep} onNav={goto} />}
-      {body}
-    </main>
+    <>
+      <WorkflowHeader />
+      <main
+        className="relative z-10 mx-auto max-w-170 px-6 pt-9 pb-25"
+        data-screen-label={`step-${currentStep}`}
+      >
+        <VisaButtonRow align="right" className="mt-0 mb-4">
+          <VisaButton size="sm" variant="ghost" onClick={saveWorkflow}>
+            Save draft
+          </VisaButton>
+        </VisaButtonRow>
+        <WorkflowStepRail current={currentStep} onNav={goto} includePhotos={hasPhotoStep} />
+        {body}
+      </main>
+    </>
   );
 }

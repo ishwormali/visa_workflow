@@ -1,10 +1,4 @@
 import {
-  ACTIVE_DOCS,
-  PAST_SESSIONS,
-  type DocDates,
-  type EmailConfig,
-} from "../../visa-design/data";
-import {
   DocumentList,
   DocumentMeta,
   DocumentMetaTag,
@@ -14,155 +8,169 @@ import {
   VisaButton,
   VisaButtonRow,
   VisaCluster,
-  VisaDimText,
   VisaInput,
   VisaMonoText,
-  VisaMutedText,
   VisaNotice,
   VisaPanel,
   VisaPanelBody,
   VisaPanelHeader,
   VisaPanelTitle,
 } from "../../visa-design/primitives";
-import { Badge, DocCategoryLabel, StepHead, formatDate, formatRange } from "../../visa-design/ui-bits";
+import { Badge, DocCategoryLabel, StepHead, formatRange } from "../../visa-design/ui-bits";
+import { useVisaWorkflow } from "../provider";
 
 type Props = {
-  docDates: DocDates;
-  setDocDates: React.Dispatch<React.SetStateAction<DocDates>>;
-  emailConfig: EmailConfig;
   onNext: () => void;
-  onEditEmail: () => void;
 };
 
-export function SetupStep({ docDates, setDocDates, emailConfig, onNext, onEditEmail }: Props) {
-  const lastSession = PAST_SESSIONS[0];
+function formatDetectionLabel(mode: string) {
+  return mode === "pdf_content" ? "PDF content" : "Filename";
+}
 
-  const updateDate = (id: string, key: "from" | "to" | "single", val: string) => {
-    setDocDates((prev) => ({
-      ...prev,
-      [id]: { ...prev[id], [key]: val },
-    }));
-  };
+export function SetupStep({ onNext }: Props) {
+  const {
+    activeDocTypes,
+    config,
+    handleSetupDateRange,
+    latestSession,
+    openSettings,
+    selectedFromDate,
+    selectedToDate,
+    toggleDocTypeActive,
+  } = useVisaWorkflow();
 
-  const allValid = ACTIVE_DOCS.every((d) => {
-    const v = docDates[d.id] || {};
-    if (d.category === "gdoc_photos") return true;
-    if (d.dateFormat === "range") return v.from && v.to;
-    return v.single;
-  });
+  const allValid =
+    activeDocTypes.length > 0 &&
+    Boolean(selectedFromDate) &&
+    Boolean(selectedToDate) &&
+    new Date(selectedFromDate).getTime() <= new Date(selectedToDate).getTime();
 
   return (
     <>
       <StepHead
-        eyebrow="Step 0 · Monthly setup"
+        eyebrow="Step 0 · Setup"
         title={
           <>
-            This month's <em>submission</em>
+            Select the <em>submission window</em>
           </>
         }
-        desc="Confirm the date ranges for each document. Defaults are pulled from your last submission."
+        desc="Pick the date range for this run and the document types you want to include. The next step will let you review raw files and preview final names for each selected document."
       />
 
-      <VisaNotice icon="↩">
-        <div>
-          Last submitted on <strong>{lastSession.submittedAtPretty}</strong> with{" "}
-          <strong>{lastSession.docs.length} documents</strong>. That's <strong>9 days ago</strong>.
-        </div>
-      </VisaNotice>
+      {latestSession ? (
+        <VisaNotice icon="↩">
+          <div>
+            Last saved session <strong>{latestSession.folderName}</strong> on{" "}
+            <strong>{latestSession.submittedAt ?? latestSession.draftDate}</strong> with{" "}
+            <strong>{latestSession.documents.length} documents</strong>.
+          </div>
+        </VisaNotice>
+      ) : null}
 
       <div className="space-y-3">
         <VisaPanel>
           <VisaPanelHeader>
-            <VisaPanelTitle>Email config</VisaPanelTitle>
-            <VisaButton onClick={onEditEmail} size="sm" variant="ghost">
-              Edit ↗
-            </VisaButton>
+            <VisaPanelTitle>Submission window</VisaPanelTitle>
+            <VisaMonoText className="text-ink-3">{activeDocTypes.length} selected</VisaMonoText>
           </VisaPanelHeader>
           <VisaPanelBody>
-            <VisaCluster className="gap-y-1.5">
-              <VisaMutedText>
-                <VisaMonoText>to:</VisaMonoText>
-              </VisaMutedText>
-              <span>{emailConfig.to}</span>
-              <VisaDimText>·</VisaDimText>
-              <VisaMutedText>
-                <VisaMonoText>cc:</VisaMonoText>
-              </VisaMutedText>
-              <span>{emailConfig.cc}</span>
-              <VisaDimText>·</VisaDimText>
-              <VisaMutedText>
-                <VisaMonoText>sign-off:</VisaMonoText>
-              </VisaMutedText>
-              <span>{emailConfig.signoff}</span>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="flex flex-col gap-1" htmlFor="setup-from-date">
+                <span className="font-mono text-[10px] tracking-[0.08em] text-ink-3 uppercase">
+                  From
+                </span>
+                <VisaInput
+                  id="setup-from-date"
+                  type="date"
+                  value={selectedFromDate}
+                  onChange={(event) => handleSetupDateRange("from", event.target.value)}
+                />
+              </label>
+              <label className="flex flex-col gap-1" htmlFor="setup-to-date">
+                <span className="font-mono text-[10px] tracking-[0.08em] text-ink-3 uppercase">
+                  To
+                </span>
+                <VisaInput
+                  id="setup-to-date"
+                  type="date"
+                  value={selectedToDate}
+                  onChange={(event) => handleSetupDateRange("to", event.target.value)}
+                />
+              </label>
+            </div>
+            <VisaCluster className="mt-3 text-ink-3">
+              <VisaMonoText>{formatRange(selectedFromDate, selectedToDate)}</VisaMonoText>
+              <span>will be applied as the default range for selected document types.</span>
             </VisaCluster>
           </VisaPanelBody>
         </VisaPanel>
 
         <VisaPanel>
           <VisaPanelHeader>
-            <VisaPanelTitle>Active doc types · {ACTIVE_DOCS.length}</VisaPanelTitle>
-            <VisaMonoText className="text-(--ink-3)">edit dates inline</VisaMonoText>
+            <VisaPanelTitle>Document types</VisaPanelTitle>
+            <VisaMonoText className="text-ink-3">toggle what this run should generate</VisaMonoText>
           </VisaPanelHeader>
           <VisaPanelBody tight>
+            {!config.docTypes.length ? (
+              <VisaNotice icon="i">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <span>Load document types from Google Drive before starting this workflow.</span>
+                  <VisaButton size="sm" variant="primary" onClick={openSettings}>
+                    Open settings
+                  </VisaButton>
+                </div>
+              </VisaNotice>
+            ) : null}
             <DocumentList>
-              {ACTIVE_DOCS.map((d) => {
-                const v = docDates[d.id] || {};
-                return (
-                  <DocumentRow
-                    key={d.id}
-                    number={d.number}
-                    label={d.label}
-                    badge={
-                      <Badge kind={d.category === "gdoc_photos" ? "active" : "pending"}>
-                        {d.category === "gdoc_photos" ? "auto" : "needs dates"}
-                      </Badge>
-                    }
-                    meta={
-                      <DocumentMeta>
-                        <DocumentMetaTag>
-                          <DocCategoryLabel cat={d.category} />
-                        </DocumentMetaTag>
-                        {d.matchPattern && <DocumentMetaTag>{d.matchPattern}</DocumentMetaTag>}
-                        {d.dateFormat === "range" && v.from && v.to && (
-                          <DocumentMetaTag>{formatRange(v.from, v.to)}</DocumentMetaTag>
-                        )}
-                        {d.dateFormat === "single" && v.single && (
-                          <DocumentMetaTag>{formatDate(v.single)}</DocumentMetaTag>
-                        )}
-                      </DocumentMeta>
-                    }
-                  >
-                    {d.category !== "gdoc_photos" && (
+              {config.docTypes
+                .toSorted(
+                  (left, right) =>
+                    left.number - right.number || left.label.localeCompare(right.label),
+                )
+                .map((docType) => {
+                  return (
+                    <DocumentRow
+                      key={docType.id}
+                      number={docType.number}
+                      label={docType.label}
+                      inactive={!docType.active}
+                      badge={
+                        <Badge kind={docType.active ? "active" : "inactive"}>
+                          {docType.active ? "selected" : "inactive"}
+                        </Badge>
+                      }
+                      meta={
+                        <DocumentMeta>
+                          <DocumentMetaTag>
+                            <DocCategoryLabel cat={docType.category} />
+                          </DocumentMetaTag>
+                          <DocumentMetaTag>{docType.dateFormat}</DocumentMetaTag>
+                          <DocumentMetaTag>
+                            {formatDetectionLabel(docType.detection)}
+                          </DocumentMetaTag>
+                          {docType.requiresCaptions ? (
+                            <DocumentMetaTag>captions required</DocumentMetaTag>
+                          ) : null}
+                        </DocumentMeta>
+                      }
+                    >
                       <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                        {d.dateFormat === "range" ? (
-                          <>
-                            <VisaInput
-                              type="date"
-                              className="max-w-44"
-                              value={v.from || ""}
-                              onChange={(e) => updateDate(d.id, "from", e.target.value)}
-                            />
-                            <VisaDimText>→</VisaDimText>
-                            <VisaInput
-                              type="date"
-                              className="max-w-44"
-                              value={v.to || ""}
-                              onChange={(e) => updateDate(d.id, "to", e.target.value)}
-                            />
-                          </>
-                        ) : (
-                          <VisaInput
-                            type="date"
-                            className="max-w-44"
-                            value={v.single || ""}
-                            onChange={(e) => updateDate(d.id, "single", e.target.value)}
-                          />
-                        )}
+                        <VisaButton
+                          size="sm"
+                          variant={docType.active ? "primary" : "ghost"}
+                          onClick={() => toggleDocTypeActive(docType.id, !docType.active)}
+                        >
+                          {docType.active ? "Remove from run" : "Use in this run"}
+                        </VisaButton>
+                        {docType.fileNamePrefix ? (
+                          <VisaMonoText className="text-ink-3">
+                            {docType.fileNamePrefix}
+                          </VisaMonoText>
+                        ) : null}
                       </div>
-                    )}
-                  </DocumentRow>
-                );
-              })}
+                    </DocumentRow>
+                  );
+                })}
             </DocumentList>
           </VisaPanelBody>
         </VisaPanel>
@@ -170,7 +178,7 @@ export function SetupStep({ docDates, setDocDates, emailConfig, onNext, onEditEm
 
       <VisaButtonRow align="right">
         <VisaButton onClick={onNext} variant="primary" disabled={!allValid}>
-          Scan Drive →
+          Review selected docs →
         </VisaButton>
       </VisaButtonRow>
     </>

@@ -1,5 +1,6 @@
 export type DocCategory = "upload" | "gdoc" | "gdoc_photos";
 export type DateFormat = "single" | "range";
+export type DocDetection = "filename" | "pdf_content";
 export type SessionStatus = "draft" | "sent";
 export type DocProgressStatus = "detected" | "pending" | "ready" | "skipped" | "sent" | "draft";
 
@@ -16,8 +17,13 @@ export type DocTypeConfig = {
   label: string;
   category: DocCategory;
   dateFormat: DateFormat;
-  matchPattern: string;
+  detection: DocDetection;
   active: boolean;
+  matchPattern?: string;
+  fileNamePrefix?: string;
+  docHeader?: string;
+  generateDoc?: boolean;
+  requiresCaptions?: boolean;
 };
 
 export type DocumentDateValue =

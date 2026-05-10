@@ -3,7 +3,6 @@ import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 
 import { AppWrapper } from "@/components/visa-design/app-wrapper";
-import { WorkflowHeader } from "@/components/visa-workflow/workflow-header";
 
 import appCss from "../styles.css?url";
 
@@ -62,10 +61,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body className="visa-design-app">
-        <AppWrapper>
-          <WorkflowHeader></WorkflowHeader>
-          {children}
-        </AppWrapper>
+        <AppWrapper>{children}</AppWrapper>
         <TanStackDevtools
           config={{
             position: "bottom-right",

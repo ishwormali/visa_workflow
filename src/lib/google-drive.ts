@@ -283,8 +283,24 @@ async function driveFetch(
   return response.json();
 }
 
-export async function readGoogleDriveDocumentList() {
-  const fileId = readDriveEnv("VITE_GOOGLE_DRIVE_DOCUMENT_LIST_FILE_ID");
+export async function readGoogleDriveDocumentList(rootFolderId?: string) {
+  const fileId = rootFolderId
+    ? (
+        await findGoogleDriveFileRecursively({
+          folderId: rootFolderId,
+          fileName: "Document list",
+        })
+      )?.id
+    : readOptionalDriveEnv("VITE_GOOGLE_DRIVE_DOCUMENT_LIST_FILE_ID");
+
+  if (!fileId) {
+    throw new Error(
+      rootFolderId
+        ? 'Could not find a "Document list" file under the selected Google Drive root folder.'
+        : "Missing required environment variable: VITE_GOOGLE_DRIVE_DOCUMENT_LIST_FILE_ID",
+    );
+  }
+
   const file = (await driveFetch(
     `${DRIVE_API_BASE_URL}/files/${fileId}?fields=id,name,mimeType`,
   )) as Pick<GoogleDriveFile, "id" | "name" | "mimeType">;
@@ -324,6 +340,47 @@ async function listDriveFolderPage(folderId: string, pageToken?: string) {
   return driveFetch(
     `${DRIVE_API_BASE_URL}/files?${params.toString()}`,
   ) as Promise<DriveListResponse>;
+}
+
+function normalizeDriveFileName(name: string) {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/\.[^.]+$/, "");
+}
+
+async function findGoogleDriveFileRecursively(args: { folderId: string; fileName: string }) {
+  const normalizedTargetName = normalizeDriveFileName(args.fileName);
+  const queue = [args.folderId];
+
+  while (queue.length) {
+    const currentFolderId = queue.shift();
+
+    if (!currentFolderId) {
+      continue;
+    }
+
+    let pageToken: string | undefined;
+
+    do {
+      const response = await listDriveFolderPage(currentFolderId, pageToken);
+
+      for (const file of response.files) {
+        if (file.mimeType === GOOGLE_DRIVE_FOLDER_MIME_TYPE) {
+          queue.push(file.id);
+          continue;
+        }
+
+        if (normalizeDriveFileName(file.name) === normalizedTargetName) {
+          return file;
+        }
+      }
+
+      pageToken = response.nextPageToken;
+    } while (pageToken);
+  }
+
+  return null;
 }
 
 export async function listGoogleDriveFolders(parentId = "root") {
