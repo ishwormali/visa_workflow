@@ -60,6 +60,7 @@ declare global {
 
 let googleIdentityScriptPromise: Promise<void> | null = null;
 let tokenRequestPromise: Promise<string> | null = null;
+let pdfJsPromise: Promise<typeof import("pdfjs-dist/legacy/build/pdf.mjs")> | null = null;
 
 function assertBrowser() {
   if (typeof window === "undefined") {
@@ -281,6 +282,21 @@ async function driveFetch(
   }
 
   return response.json();
+}
+
+async function loadPdfJs() {
+  if (!pdfJsPromise) {
+    pdfJsPromise = Promise.all([
+      import("pdfjs-dist/legacy/build/pdf.mjs"),
+      import("pdfjs-dist/build/pdf.worker.min.mjs?url"),
+    ]).then(([pdfJs, workerModule]) => {
+      pdfJs.GlobalWorkerOptions.workerSrc = workerModule.default;
+
+      return pdfJs;
+    });
+  }
+
+  return pdfJsPromise;
 }
 
 export async function readGoogleDriveDocumentList(rootFolderId?: string) {
@@ -531,16 +547,7 @@ export async function createGoogleDocInDrive(args: {
 export async function downloadGoogleDriveFileAsBase64(
   file: Pick<GoogleDriveFile, "id" | "mimeType">,
 ) {
-  const bytes = new Uint8Array(
-    await (file.mimeType === GOOGLE_DOC_MIME_TYPE
-      ? driveFetch(
-          `${DRIVE_API_BASE_URL}/files/${file.id}/export?mimeType=${encodeURIComponent("text/plain")}`,
-          { responseType: "arrayBuffer" },
-        )
-      : driveFetch(`${DRIVE_API_BASE_URL}/files/${file.id}?alt=media`, {
-          responseType: "arrayBuffer",
-        })),
-  );
+  const bytes = new Uint8Array(await downloadGoogleDriveFileAsArrayBuffer(file));
 
   let binary = "";
 
@@ -549,6 +556,48 @@ export async function downloadGoogleDriveFileAsBase64(
   }
 
   return btoa(binary);
+}
+
+export async function downloadGoogleDriveFileAsArrayBuffer(
+  file: Pick<GoogleDriveFile, "id" | "mimeType">,
+) {
+  return file.mimeType === GOOGLE_DOC_MIME_TYPE
+    ? driveFetch(
+        `${DRIVE_API_BASE_URL}/files/${file.id}/export?mimeType=${encodeURIComponent("text/plain")}`,
+        { responseType: "arrayBuffer" },
+      )
+    : driveFetch(`${DRIVE_API_BASE_URL}/files/${file.id}?alt=media`, {
+        responseType: "arrayBuffer",
+      });
+}
+
+export async function readGoogleDrivePdfText(file: Pick<GoogleDriveFile, "id" | "mimeType">) {
+  const pdfJs = await loadPdfJs();
+  const pdfBytes = new Uint8Array(await downloadGoogleDriveFileAsArrayBuffer(file));
+  const pdfDocument = await pdfJs.getDocument({ data: pdfBytes }).promise;
+  const pages: string[] = [];
+
+  try {
+    for (let pageNumber = 1; pageNumber <= pdfDocument.numPages; pageNumber += 1) {
+      const page = await pdfDocument.getPage(pageNumber);
+
+      try {
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map((item) => ("str" in item ? item.str : ""))
+          .filter(Boolean)
+          .join(" ");
+
+        pages.push(pageText);
+      } finally {
+        page.cleanup();
+      }
+    }
+  } finally {
+    await pdfDocument.destroy();
+  }
+
+  return pages.join("\n");
 }
 
 export async function moveGoogleDriveFile(args: {

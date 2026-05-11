@@ -31,6 +31,7 @@ export function PhotosStep({ onBack }: Props) {
     currentCaption,
     currentPhotoFile,
     formatCaptionWithAi,
+    getMatchedFileDisplayName,
     photoFiles,
     photoIndex,
     saveCaptionAndContinue,
@@ -112,7 +113,7 @@ export function PhotosStep({ onBack }: Props) {
                 >
                   <div className="grid aspect-square place-items-center rounded-(--vd-radius) border border-dashed border-rule-2 bg-paper-2">
                     <span className="px-2 text-center font-mono text-[10px] text-ink-3">
-                      {fileName}
+                      {getMatchedFileDisplayName(fileName)}
                     </span>
                   </div>
                 </button>
@@ -124,7 +125,9 @@ export function PhotosStep({ onBack }: Props) {
         <VisaPanel>
           <VisaPanelHeader>
             <VisaPanelTitle>Photo details</VisaPanelTitle>
-            <VisaMonoText className="text-ink-3">{currentPhotoFile}</VisaMonoText>
+            <VisaMonoText className="text-ink-3">
+              {currentPhotoFile ? getMatchedFileDisplayName(currentPhotoFile) : ""}
+            </VisaMonoText>
           </VisaPanelHeader>
           <VisaPanelBody>
             <div className="grid gap-4">
@@ -137,7 +140,7 @@ export function PhotosStep({ onBack }: Props) {
                 }}
               >
                 <span className="absolute bottom-3 left-3 rounded-[3px] bg-[color-mix(in_oklab,var(--paper)_90%,transparent)] px-2 py-1 font-mono text-[10px] tracking-[0.06em] text-ink-3">
-                  [ photo · {currentPhotoFile} ]
+                  [ photo · {currentPhotoFile ? getMatchedFileDisplayName(currentPhotoFile) : ""} ]
                 </span>
               </div>
               <VisaField>

@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 
+import type { GoogleDriveFile } from "@/lib/google-drive";
+import { createMatchedFileRef } from "@/lib/visa-workflow";
+
 import {
   DocumentFile,
   DocumentFiles,
@@ -34,21 +37,24 @@ type Props = {
   onNext: () => void;
 };
 
-function readCandidateFiles(docTypeId: string, rawFileNames: string[]) {
+function isPdfCandidate(file: GoogleDriveFile) {
+  return file.mimeType === "application/pdf";
+}
+
+function readCandidateFiles(docTypeId: string, rawFiles: GoogleDriveFile[]) {
   switch (docTypeId) {
     case "doc_4_savers":
     case "doc_4_smart":
     case "doc_43_phonebill":
-      return rawFileNames.filter((fileName) => /\.pdf$/i.test(fileName));
+      return rawFiles.filter(isPdfCandidate);
     case "doc_7_whatsapp":
-      return rawFileNames.filter((fileName) => /^screenshot[\s_]/i.test(fileName));
+      return rawFiles.filter((file) => /^screenshot[\s_]/i.test(file.name));
     case "doc_8_photos":
-      return rawFileNames.filter(
-        (fileName) =>
-          /\.(jpg|jpeg|heic|png)$/i.test(fileName) && !/^screenshot[\s_]/i.test(fileName),
+      return rawFiles.filter(
+        (file) => /\.(jpg|jpeg|heic|png)$/i.test(file.name) && !/^screenshot[\s_]/i.test(file.name),
       );
     default:
-      return rawFileNames;
+      return rawFiles;
   }
 }
 
@@ -58,6 +64,7 @@ export function ScanStep({ onBack, onNext }: Props) {
     createRawFolderInVisaFolder,
     createVisaFolderFromSelectedDate,
     documents,
+    getMatchedFileDisplayName,
     getPlannedDocumentFileName,
     handleDateChange,
     logs,
@@ -91,10 +98,10 @@ export function ScanStep({ onBack, onNext }: Props) {
 
   const selectedDocType = activeDocTypes.find((docType) => docType.id === selectedDocId);
   const selectedDocument = documents.find((document) => document.docTypeId === selectedDocId);
-  const rawFileNames = rawFolderFiles.map((file) => file.name);
   const candidateFiles = useMemo(
-    () => (selectedDocType ? readCandidateFiles(selectedDocType.id, rawFileNames) : rawFileNames),
-    [rawFileNames, selectedDocType],
+    () =>
+      selectedDocType ? readCandidateFiles(selectedDocType.id, rawFolderFiles) : rawFolderFiles,
+    [rawFolderFiles, selectedDocType],
   );
   const canContinue = activeDocTypes.length > 0;
 
@@ -192,7 +199,7 @@ export function ScanStep({ onBack, onNext }: Props) {
             </div>
 
             {selectedDocType && selectedDocument ? (
-              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
+              <div className="grid gap-4">
                 <div className="space-y-4">
                   <div className="rounded-(--vd-radius) border border-rule bg-paper p-4">
                     <div className="mb-2 flex items-center justify-between gap-3">
@@ -283,12 +290,19 @@ export function ScanStep({ onBack, onNext }: Props) {
                           ? formatRange(selectedDocument.dates.from, selectedDocument.dates.to)
                           : formatDate(selectedDocument.dates.date)}
                       </div>
+                      {selectedDocument.validationMessage ? (
+                        <div className="mt-2 text-xs text-amber-700">
+                          {selectedDocument.validationMessage}
+                        </div>
+                      ) : null}
                     </div>
 
                     {selectedDocument.matchedFiles.length ? (
                       <DocumentFiles>
                         {selectedDocument.matchedFiles.map((fileName) => (
-                          <DocumentFile key={fileName}>{fileName}</DocumentFile>
+                          <DocumentFile key={fileName}>
+                            {getMatchedFileDisplayName(fileName)}
+                          </DocumentFile>
                         ))}
                       </DocumentFiles>
                     ) : null}
@@ -304,14 +318,14 @@ export function ScanStep({ onBack, onNext }: Props) {
 
                     {candidateFiles.length ? (
                       <DocumentList>
-                        {candidateFiles.map((fileName) => {
-                          const file = rawFolderFiles.find((item) => item.name === fileName);
-                          const selected = selectedDocument.matchedFiles.includes(fileName);
+                        {candidateFiles.map((file) => {
+                          const fileRef = createMatchedFileRef(file);
+                          const selected = selectedDocument.matchedFiles.includes(fileRef);
                           return (
                             <DocumentRow
-                              key={fileName}
+                              key={file.id}
                               number={selectedDocType.number}
-                              label={fileName}
+                              label={file.name}
                               badge={
                                 <Badge kind={selected ? "active" : "inactive"}>
                                   {selected ? "selected" : "raw"}
@@ -319,7 +333,8 @@ export function ScanStep({ onBack, onNext }: Props) {
                               }
                               meta={
                                 <DocumentMeta>
-                                  <DocumentMetaTag>{file?.mimeType ?? "file"}</DocumentMetaTag>
+                                  <DocumentMetaTag>{file.mimeType ?? "file"}</DocumentMetaTag>
+                                  <DocumentMetaTag>id: {file.id.slice(-6)}</DocumentMetaTag>
                                   <DocumentMetaTag>
                                     {selected ? "included in this doc" : "click to include"}
                                   </DocumentMetaTag>
@@ -330,7 +345,7 @@ export function ScanStep({ onBack, onNext }: Props) {
                                 <VisaButton
                                   size="sm"
                                   variant={selected ? "primary" : "ghost"}
-                                  onClick={() => toggleMatchedFile(selectedDocType.id, fileName)}
+                                  onClick={() => toggleMatchedFile(selectedDocType.id, file)}
                                 >
                                   {selected ? "Remove" : "Use this file"}
                                 </VisaButton>
@@ -348,7 +363,7 @@ export function ScanStep({ onBack, onNext }: Props) {
                   </div>
                 </div>
 
-                <div className="rounded-(--vd-radius) border border-rule bg-paper p-4">
+                {/* <div className="rounded-(--vd-radius) border border-rule bg-paper p-4">
                   <div className="text-sm font-medium text-ink">Run summary</div>
                   <div className="mt-3 space-y-3 font-mono text-[11px] text-ink-2">
                     <div>
@@ -368,7 +383,7 @@ export function ScanStep({ onBack, onNext }: Props) {
                       <div>{selectedDocument.matchedFiles.length}</div>
                     </div>
                   </div>
-                </div>
+                </div> */}
               </div>
             ) : (
               <div className="text-sm text-ink-3">

@@ -9,7 +9,8 @@ type Props = {
 };
 
 export function EmailStep({ onBack }: Props) {
-  const { activeDocTypes, config, createDraft, documents, draftDate, logs } = useVisaWorkflow();
+  const { activeDocTypes, config, createDraft, documents, draftDate, getMatchedFileDisplayName, logs } =
+    useVisaWorkflow();
   const subject = `Visa Application Documents - ${formatDate(draftDate).replace(/-/g, "-")}`;
   const attachmentItems = activeDocTypes.flatMap((docType) => {
     const document = documents.find((item) => item.docTypeId === docType.id);
@@ -91,7 +92,7 @@ Please find the attachments below:
               key={item.id}
             >
               <span className="relative h-4.5 w-4 shrink-0 rounded-xs border border-rule-2 bg-paper-3 after:absolute after:top-0 after:right-0 after:h-1.25 after:w-1.25 after:border-b after:border-l after:border-rule-2 after:bg-paper after:content-['']" />
-              <span>{item.fileName}</span>
+              <span>{item.document.generatedFiles.length ? item.fileName : getMatchedFileDisplayName(item.fileName)}</span>
               <span className="ml-auto text-ink-3">{item.docType.category}</span>
             </div>
           ))}

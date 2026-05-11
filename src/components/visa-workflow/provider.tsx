@@ -21,13 +21,17 @@ import {
   readGoogleDriveDefaultRootFolderId,
   readGoogleDriveDocumentList,
   readGoogleDriveFileMetadata,
+  readGoogleDrivePdfText,
   type GoogleDriveFile,
 } from "@/lib/google-drive";
 import {
   VISA_CONFIG_KEY,
   VISA_SESSIONS_KEY,
+  analyzePdfText,
   buildPlannedFileName,
   buildEmailBody,
+  compareMatchedFiles,
+  createMatchedFileRef,
   createEmptyConfig,
   createDefaultDateValue,
   createEmailSubject,
@@ -36,10 +40,15 @@ import {
   createSessionRecord,
   createWorkflowDocumentState,
   formatDateLabel,
+  inferPdfDates,
   parseDocumentList,
+  readMatchedFileDisplayName,
+  readMatchedFileId,
+  matchesPdfAnalysis,
   type DocTypeConfig,
   type DocumentDateValue,
   type PhotoCaption,
+  type PdfAnalysis,
   type VisaConfig,
   type VisaSessionRecord,
   type WorkflowDocumentState,
@@ -50,7 +59,11 @@ export type WorkflowStep = WorkflowStepValue;
 type StepWithLogs = 1 | 2 | 3 | 4 | 5;
 
 type LogState = Record<StepWithLogs, string[]>;
-type DriveFileIndex = Map<string, GoogleDriveFile[]>;
+type DriveFileIndex = {
+  byId: Map<string, GoogleDriveFile>;
+  byName: Map<string, GoogleDriveFile[]>;
+};
+type PdfAnalysisIndex = Map<string, PdfAnalysis>;
 
 const STEP_ITEMS = [
   { id: 0, label: "Setup" },
@@ -64,6 +77,13 @@ const STEP_ITEMS = [
 const EMPTY_CONFIG: VisaConfig = createEmptyConfig();
 
 const GOOGLE_DRIVE_FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
+
+function createEmptyDriveFileIndex(): DriveFileIndex {
+  return {
+    byId: new Map(),
+    byName: new Map(),
+  };
+}
 
 function normalizeWorkflowStep(step?: WorkflowStep) {
   if (step === undefined || step < 0) {
@@ -236,24 +256,24 @@ function isImageFile(fileName: string) {
   return /\.(jpg|jpeg|heic|png)$/i.test(fileName);
 }
 
-function isPdfFile(fileName: string) {
-  return /\.pdf$/i.test(fileName);
+function isPdfFile(file: Pick<GoogleDriveFile, "mimeType">) {
+  return file.mimeType === "application/pdf";
 }
 
-function matchesRawFile(docType: DocTypeConfig, file: GoogleDriveFile) {
+function matchesFileNameHeuristic(docType: DocTypeConfig, file: GoogleDriveFile) {
   const fileName = file.name;
 
   switch (docType.id) {
     case "doc_4_savers":
       return (
-        isPdfFile(fileName) &&
+        isPdfFile(file) &&
         /statement|cba|commbank|commonwealth/i.test(fileName) &&
         /saver|netbank saver/i.test(fileName) &&
         !isNumberedDocumentFile(fileName)
       );
     case "doc_4_smart":
       return (
-        isPdfFile(fileName) &&
+        isPdfFile(file) &&
         /statement|cba|commbank|commonwealth/i.test(fileName) &&
         /smart|smart access/i.test(fileName) &&
         !isNumberedDocumentFile(fileName)
@@ -268,9 +288,8 @@ function matchesRawFile(docType: DocTypeConfig, file: GoogleDriveFile) {
       );
     case "doc_43_phonebill":
       return (
-        isPdfFile(fileName) &&
-        /uroj/i.test(fileName) &&
-        /phone|bill|optus/i.test(fileName) &&
+        isPdfFile(file) &&
+        /^uroj[\s_-]*phone[\s_-]*bill\b/i.test(fileName) &&
         !isNumberedDocumentFile(fileName, 43)
       );
     default:
@@ -286,10 +305,19 @@ function matchesRawFile(docType: DocTypeConfig, file: GoogleDriveFile) {
   }
 }
 
+function matchesRawFile(docType: DocTypeConfig, file: GoogleDriveFile, pdfAnalysis?: PdfAnalysis) {
+  if (docType.detection === "pdf_content" && isPdfFile(file) && pdfAnalysis) {
+    return matchesPdfAnalysis(docType, pdfAnalysis) || matchesFileNameHeuristic(docType, file);
+  }
+
+  return matchesFileNameHeuristic(docType, file);
+}
+
 function buildMatchedDocuments(
   docTypes: DocTypeConfig[],
   currentDocuments: WorkflowDocumentState[],
   rawFiles: GoogleDriveFile[],
+  pdfAnalyses: PdfAnalysisIndex,
 ): WorkflowDocumentState[] {
   const currentById = new Map(currentDocuments.map((document) => [document.docTypeId, document]));
 
@@ -297,19 +325,81 @@ function buildMatchedDocuments(
     .filter((docType) => docType.active)
     .map((docType) => {
       const currentDocument = currentById.get(docType.id) ?? createWorkflowDocumentState(docType);
-      const matchedFiles = rawFiles
-        .filter((file) => matchesRawFile(docType, file))
-        .map((file) => file.name)
-        .toSorted((left, right) => left.localeCompare(right));
+      const matchedRawFiles = rawFiles.filter((file) =>
+        matchesRawFile(docType, file, pdfAnalyses.get(file.id)),
+      );
+      const matchedFiles = matchedRawFiles
+        .map((file) => createMatchedFileRef(file))
+        .toSorted(compareMatchedFiles);
       const status = matchedFiles.length ? ("detected" as const) : ("pending" as const);
+      let dates = currentDocument.dates;
+      let validationMessage = "";
+
+      if (matchedRawFiles.length && docType.detection === "pdf_content") {
+        const matchedAnalyses = matchedRawFiles
+          .map((file) => pdfAnalyses.get(file.id))
+          .filter((analysis): analysis is PdfAnalysis => Boolean(analysis));
+
+        if (!matchedAnalyses.length) {
+          validationMessage =
+            "Matched PDFs could not be read for date extraction. Review the dates manually.";
+        } else {
+          const inferred = inferPdfDates(docType, matchedAnalyses, currentDocument.dates);
+          const unreadablePdfMessage =
+            matchedAnalyses.length < matchedRawFiles.length
+              ? "Some matched PDFs could not be read for date extraction. Review the dates manually."
+              : "";
+
+          dates = inferred.dates;
+          validationMessage = inferred.validationMessage || unreadablePdfMessage;
+        }
+      }
 
       return {
         ...currentDocument,
+        dates,
         matchedFiles,
         status,
-        validationMessage: matchedFiles.length ? "" : currentDocument.validationMessage,
+        validationMessage,
       };
     });
+}
+
+function reconcileStoredDocTypes(storedDocTypes: DocTypeConfig[] | undefined) {
+  if (!storedDocTypes?.length) {
+    return EMPTY_CONFIG.docTypes.map((docType) => ({ ...docType }));
+  }
+
+  const defaultDocTypesById = new Map(
+    EMPTY_CONFIG.docTypes.map((docType) => [docType.id, docType]),
+  );
+
+  return storedDocTypes.map((storedDocType) => {
+    const defaultDocType = defaultDocTypesById.get(storedDocType.id);
+
+    if (!defaultDocType) {
+      return storedDocType;
+    }
+
+    return {
+      ...defaultDocType,
+      active: storedDocType.active,
+    };
+  });
+}
+
+function docTypesNeedRefresh(docTypes: DocTypeConfig[]) {
+  const reconciledDocTypes = reconcileStoredDocTypes(docTypes);
+
+  if (reconciledDocTypes.length !== docTypes.length) {
+    return true;
+  }
+
+  return reconciledDocTypes.some((docType, index) => {
+    const currentDocType = docTypes[index];
+
+    return JSON.stringify(docType) !== JSON.stringify(currentDocType);
+  });
 }
 
 function inferSetupDates(documents: WorkflowDocumentState[]) {
@@ -376,12 +466,13 @@ function normalizeGoogleDriveFolderId(rawValue: string) {
 }
 
 function createDriveFileIndex(files: GoogleDriveFile[]) {
-  const index: DriveFileIndex = new Map();
+  const index = createEmptyDriveFileIndex();
 
   for (const file of files) {
-    const existingFiles = index.get(file.name) ?? [];
+    const existingFiles = index.byName.get(file.name) ?? [];
     existingFiles.push(file);
-    index.set(file.name, existingFiles);
+    index.byId.set(file.id, file);
+    index.byName.set(file.name, existingFiles);
   }
 
   return index;
@@ -435,7 +526,7 @@ function buildGeneratedDocumentContent(docType: DocTypeConfig, document: Workflo
   }
 
   for (const fileName of document.matchedFiles) {
-    lines.push(`- ${fileName}`);
+    lines.push(`- ${readMatchedFileDisplayName(fileName)}`);
   }
 
   return lines.join("\n");
@@ -460,6 +551,7 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
   const [selectedFromDate, setSelectedFromDate] = useState(startOfMonthIso());
   const [selectedToDate, setSelectedToDate] = useState(todayIso());
   const [draftSessionId, setDraftSessionId] = useState<string | null>(null);
+  const [pendingDraftSync, setPendingDraftSync] = useState(false);
   const [emailPreview, setEmailPreview] = useState("");
   const [hasScanned, setHasScanned] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(false);
@@ -474,8 +566,9 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
   const [rawFolderId, setRawFolderId] = useState("");
   const [rawFolderMissing, setRawFolderMissing] = useState(false);
   const [rawFolderFiles, setRawFolderFiles] = useState<GoogleDriveFile[]>([]);
-  const scannedDriveFilesRef = useRef<DriveFileIndex>(new Map());
+  const scannedDriveFilesRef = useRef<DriveFileIndex>(createEmptyDriveFileIndex());
   const generatedDriveFilesRef = useRef<Map<string, GoogleDriveFile[]>>(new Map());
+  const pdfAnalysesRef = useRef<PdfAnalysisIndex>(new Map());
   const sessionFolderRef = useRef<GoogleDriveFile | null>(null);
 
   const activeDocTypes = useMemo(
@@ -517,9 +610,7 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
         ...EMPTY_CONFIG.email,
         ...storedConfig.email,
       },
-      docTypes: storedConfig.docTypes?.length
-        ? storedConfig.docTypes
-        : EMPTY_CONFIG.docTypes.map((docType) => ({ ...docType })),
+      docTypes: reconcileStoredDocTypes(storedConfig.docTypes),
     };
     const targetSession = options.sessionId
       ? storedSessions.find((session) => session.id === options.sessionId)
@@ -543,6 +634,7 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
     setSelectedFromDate(setupDates.from);
     setSelectedToDate(setupDates.to);
     setDraftSessionId(targetSession?.id ?? null);
+    setPendingDraftSync(false);
     setEmailPreview(
       targetSession
         ? buildEmailBody({
@@ -565,11 +657,27 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
     setRawFolderId("");
     setRawFolderMissing(false);
     setRawFolderFiles([]);
-    scannedDriveFilesRef.current = new Map();
+    scannedDriveFilesRef.current = createEmptyDriveFileIndex();
     generatedDriveFilesRef.current = new Map();
+    pdfAnalysesRef.current = new Map();
     sessionFolderRef.current = null;
     setHydrated(true);
   }, [options.sessionId]);
+
+  useEffect(() => {
+    if (!hydrated) {
+      return;
+    }
+
+    if (!docTypesNeedRefresh(config.docTypes)) {
+      return;
+    }
+
+    setConfig((currentConfig) => ({
+      ...currentConfig,
+      docTypes: reconcileStoredDocTypes(currentConfig.docTypes),
+    }));
+  }, [config.docTypes, hydrated]);
 
   useEffect(() => {
     if (!hydrated) {
@@ -586,6 +694,52 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
 
     writeStoredJson(VISA_SESSIONS_KEY, sessions);
   }, [hydrated, sessions]);
+
+  useEffect(() => {
+    if (!hydrated || !pendingDraftSync) {
+      return;
+    }
+
+    const sessionId = draftSessionId ?? workflowId;
+    const existingSession = sessions.find((session) => session.id === sessionId);
+    const nextSession = createSessionRecord({
+      id: sessionId,
+      config,
+      documents,
+      draftDate,
+      status: existingSession?.status === "sent" ? "sent" : "draft",
+      filesMoved: existingSession?.filesMoved ?? false,
+      currentStep,
+      createdAt: existingSession?.createdAt,
+      submittedAt: existingSession?.submittedAt,
+    });
+
+    setWorkflowId(nextSession.id);
+    setDraftSessionId(nextSession.id);
+    setSessions((currentSessions) => upsertSession(currentSessions, nextSession));
+    setDraftReady(true);
+
+    if (currentStep >= 4) {
+      setEmailPreview(
+        buildEmailBody({
+          config,
+          documents: nextSession.documents,
+        }),
+      );
+    }
+
+    setPendingDraftSync(false);
+  }, [
+    config,
+    currentStep,
+    documents,
+    draftDate,
+    draftSessionId,
+    hydrated,
+    pendingDraftSync,
+    sessions,
+    workflowId,
+  ]);
 
   function appendSeedLog(message: string) {
     setSeedLogs((currentLogs) => [...currentLogs, `${new Date().toLocaleTimeString()} ${message}`]);
@@ -625,6 +779,7 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
       setSelectedFromDate(startOfMonthIso());
       setSelectedToDate(todayIso());
       setDraftSessionId(null);
+      setPendingDraftSync(false);
       setEmailPreview("");
       setHasScanned(false);
       setHasGenerated(false);
@@ -638,14 +793,21 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
       setRawFolderId("");
       setRawFolderMissing(false);
       setRawFolderFiles([]);
-      scannedDriveFilesRef.current = new Map();
+      scannedDriveFilesRef.current = createEmptyDriveFileIndex();
       generatedDriveFilesRef.current = new Map();
+      pdfAnalysesRef.current = new Map();
       sessionFolderRef.current = null;
     });
   }
 
-  function getScannedDriveFile(fileName: string) {
-    return scannedDriveFilesRef.current.get(fileName)?.[0];
+  function getScannedDriveFile(fileRef: string) {
+    const fileId = readMatchedFileId(fileRef);
+
+    if (fileId) {
+      return scannedDriveFilesRef.current.byId.get(fileId);
+    }
+
+    return scannedDriveFilesRef.current.byName.get(readMatchedFileDisplayName(fileRef))?.[0];
   }
 
   function getGeneratedDriveFile(docTypeId: string, fileName: string) {
@@ -731,19 +893,51 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
         };
       }),
     );
+
+    setPendingDraftSync(true);
   }
 
-  function toggleMatchedFile(docTypeId: string, fileName: string) {
+  function toggleMatchedFile(docTypeId: string, file: Pick<GoogleDriveFile, "id" | "name">) {
     updateDocument(docTypeId, (document) => {
-      const hasFile = document.matchedFiles.includes(fileName);
+      const fileRef = createMatchedFileRef(file);
+      const hasFile = document.matchedFiles.includes(fileRef);
       const matchedFiles = hasFile
-        ? document.matchedFiles.filter((currentFileName) => currentFileName !== fileName)
-        : [...document.matchedFiles, fileName].toSorted((left, right) => left.localeCompare(right));
+        ? document.matchedFiles.filter((currentFileName) => currentFileName !== fileRef)
+        : [...document.matchedFiles, fileRef].toSorted(compareMatchedFiles);
+      const docType = docTypesById.get(docTypeId);
+      let dates = document.dates;
+      let validationMessage = "";
+
+      if (docType?.detection === "pdf_content" && matchedFiles.length) {
+        const matchedAnalyses = matchedFiles
+          .map((currentFileRef) => {
+            const currentFileId = readMatchedFileId(currentFileRef);
+
+            return currentFileId ? pdfAnalysesRef.current.get(currentFileId) : undefined;
+          })
+          .filter((analysis): analysis is PdfAnalysis => Boolean(analysis));
+
+        if (!matchedAnalyses.length) {
+          validationMessage =
+            "Matched PDFs could not be read for date extraction. Review the dates manually.";
+        } else {
+          const inferred = inferPdfDates(docType, matchedAnalyses, document.dates);
+          const unreadablePdfMessage =
+            matchedAnalyses.length < matchedFiles.length
+              ? "Some matched PDFs could not be read for date extraction. Review the dates manually."
+              : "";
+
+          dates = inferred.dates;
+          validationMessage = inferred.validationMessage || unreadablePdfMessage;
+        }
+      }
 
       return {
         ...document,
+        dates,
         matchedFiles,
         status: matchedFiles.length ? "detected" : "pending",
+        validationMessage,
       };
     });
   }
@@ -756,7 +950,11 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
       return "";
     }
 
-    return buildPlannedFileName(docType, document.dates, sourceFileName);
+    return buildPlannedFileName(
+      docType,
+      document.dates,
+      sourceFileName ? readMatchedFileDisplayName(sourceFileName) : undefined,
+    );
   }
 
   async function selectRootFolder(folderIdOrUrl = rootFolderInput) {
@@ -889,6 +1087,8 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
         validationMessage: "",
       };
     });
+
+    setPendingDraftSync(true);
   }
 
   async function runScan() {
@@ -913,6 +1113,7 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
     setRawFolderId("");
     setVisaFolderId("");
     setVisaFolderName("");
+    pdfAnalysesRef.current = new Map();
     setDocuments((currentDocuments) =>
       currentDocuments.map((document) => ({
         ...document,
@@ -967,10 +1168,35 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
       appendLog(2, "Raw folder found. Reading files recursively.");
 
       const rawFiles = await listGoogleDriveFilesRecursively(rawFolder.id);
+      const pdfAnalyses: PdfAnalysisIndex = new Map();
+
+      if (
+        config.docTypes.some((docType) => docType.active && docType.detection === "pdf_content")
+      ) {
+        const pdfFiles = rawFiles.filter((file) => isPdfFile(file));
+
+        if (pdfFiles.length) {
+          appendLog(
+            2,
+            `Reading ${pdfFiles.length} PDF file(s) to classify statements and extract dates.`,
+          );
+
+          for (const file of pdfFiles) {
+            try {
+              const pdfText = await readGoogleDrivePdfText(file);
+              pdfAnalyses.set(file.id, analyzePdfText(pdfText));
+            } catch (error) {
+              appendLog(2, `Could not inspect ${file.name}: ${formatActionError(error)}`);
+            }
+          }
+        }
+      }
+
       setRawFolderFiles(rawFiles);
       scannedDriveFilesRef.current = createDriveFileIndex(rawFiles);
+      pdfAnalysesRef.current = pdfAnalyses;
       setDocuments((currentDocuments) =>
-        buildMatchedDocuments(config.docTypes, currentDocuments, rawFiles),
+        buildMatchedDocuments(config.docTypes, currentDocuments, rawFiles, pdfAnalyses),
       );
 
       appendLog(
@@ -1084,6 +1310,10 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
           : caption,
       ),
     }));
+
+    if (field === "date") {
+      setPendingDraftSync(true);
+    }
   }
 
   function formatCaptionWithAi() {
@@ -1254,6 +1484,7 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
   }
 
   async function createDraft() {
+    setPendingDraftSync(false);
     setLogs((currentLogs) => ({
       ...currentLogs,
       4: [],
@@ -1312,6 +1543,7 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
   }
 
   async function markEmailSent() {
+    setPendingDraftSync(false);
     setLogs((currentLogs) => ({
       ...currentLogs,
       5: [],
@@ -1373,6 +1605,7 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
   }
 
   function saveWorkflow() {
+    setPendingDraftSync(false);
     const existingSession = sessions.find((session) => session.id === workflowId);
     const nextSession = createSessionRecord({
       id: workflowId,
@@ -1450,6 +1683,7 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
     expandedHistoryId,
     formatCaptionWithAi,
     generateDocuments,
+    getMatchedFileDisplayName: readMatchedFileDisplayName,
     goToStep,
     goToDraftStep: () => setCurrentStep(4),
     goToDoneStep: () => setCurrentStep(5),

@@ -23,7 +23,7 @@ The app now uses Google Identity Services in the browser to authorize Drive acce
 
 Notes:
 
-- Folder browsing in the workflow requires a metadata-reading Drive scope in addition to `drive.file`.
+- The workflow scans existing files and also creates or moves Drive files, so `VITE_GOOGLE_SCOPES` should include `https://www.googleapis.com/auth/drive`.
 - The current browser token flow does not use `VITE_GOOGLE_REDIRECT_URI`.
 
 Current limitation:

@@ -3,6 +3,9 @@ export type GoogleOAuthConfig = {
   scopes: string[];
 };
 
+const DRIVE_FILE_SCOPE = "https://www.googleapis.com/auth/drive.file";
+const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive";
+
 function splitScopes(rawScopes: string) {
   return rawScopes
     .split(/[\s,]+/)
@@ -25,8 +28,7 @@ export function readGoogleOAuthConfig(): GoogleOAuthConfig {
     "openid",
     "email",
     "profile",
-    "https://www.googleapis.com/auth/drive.file",
-    "https://www.googleapis.com/auth/drive.metadata.readonly",
+    DRIVE_SCOPE,
     "https://www.googleapis.com/auth/gmail.compose",
   ];
 
@@ -34,8 +36,12 @@ export function readGoogleOAuthConfig(): GoogleOAuthConfig {
     ? splitScopes(import.meta.env.VITE_GOOGLE_SCOPES)
     : defaultScopes;
 
+  const normalizedScopes = configuredScopes.includes(DRIVE_FILE_SCOPE)
+    ? configuredScopes.map((scope) => (scope === DRIVE_FILE_SCOPE ? DRIVE_SCOPE : scope))
+    : configuredScopes;
+
   return {
     clientId: readClientEnv("VITE_GOOGLE_CLIENT_ID"),
-    scopes: configuredScopes,
+    scopes: [...new Set(normalizedScopes)],
   };
 }

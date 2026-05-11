@@ -1,5 +1,6 @@
 import { DEFAULT_DOC_TYPES, DEFAULT_EMAIL_CONFIG } from "./constants";
 import { createEmailSubject, createSessionFolderName, formatDateLabel } from "./formatters";
+import { readMatchedFileDisplayName } from "./matched-files";
 import { parseDocumentList } from "./parsers";
 import type {
   DateFormat,
@@ -101,7 +102,7 @@ export function createSessionRecord(args: {
       dateLabel: formatDateLabel(documentState.dates),
       filenames: documentState.generatedFiles.length
         ? documentState.generatedFiles
-        : documentState.matchedFiles,
+        : documentState.matchedFiles.map((fileRef) => readMatchedFileDisplayName(fileRef)),
       matchedFiles: documentState.matchedFiles,
       generatedFiles: documentState.generatedFiles,
       generatedDocId: documentState.generatedDocId,

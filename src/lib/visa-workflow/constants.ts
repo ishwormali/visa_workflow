@@ -63,12 +63,12 @@ export const DEFAULT_DOC_TYPES: DocTypeConfig[] = [
   {
     id: "doc_43_phonebill",
     number: 43,
-    label: "Applicant phone bill",
+    label: "Uroj phone bill",
     category: "upload",
     dateFormat: "single",
     detection: "pdf_content",
     active: true,
-    fileNamePrefix: "43 - Applicant phone bill",
-    matchPattern: "^43[\\s\\-]",
+    fileNamePrefix: "43 - Uroj phone bill",
+    matchPattern: "^uroj[\\s_-]*phone[\\s_-]*bill\\b",
   },
 ];
