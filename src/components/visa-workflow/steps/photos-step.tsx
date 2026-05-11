@@ -30,10 +30,12 @@ export function PhotosStep({ onBack }: Props) {
   const {
     currentCaption,
     currentPhotoFile,
+    currentPhotoPreviewSrc,
     formatCaptionWithAi,
     getMatchedFileDisplayName,
     photoFiles,
     photoIndex,
+    photoPreviewSources,
     saveCaptionAndContinue,
     selectPhotoIndex,
     skipCurrentPhoto,
@@ -112,9 +114,17 @@ export function PhotosStep({ onBack }: Props) {
                   onClick={() => selectPhotoIndex(index)}
                 >
                   <div className="grid aspect-square place-items-center rounded-(--vd-radius) border border-dashed border-rule-2 bg-paper-2">
-                    <span className="px-2 text-center font-mono text-[10px] text-ink-3">
-                      {getMatchedFileDisplayName(fileName)}
-                    </span>
+                    {photoPreviewSources[fileName] ? (
+                      <img
+                        alt={getMatchedFileDisplayName(fileName)}
+                        className="h-full w-full object-cover"
+                        src={photoPreviewSources[fileName]}
+                      />
+                    ) : (
+                      <span className="px-2 text-center font-mono text-[10px] text-ink-3">
+                        {getMatchedFileDisplayName(fileName)}
+                      </span>
+                    )}
                   </div>
                 </button>
               ))}
@@ -139,9 +149,21 @@ export function PhotosStep({ onBack }: Props) {
                     "repeating-linear-gradient(135deg, transparent 0 18px, color-mix(in oklab, var(--ink-4) 20%, transparent) 18px 19px)",
                 }}
               >
+                {currentPhotoPreviewSrc ? (
+                  <img
+                    alt={currentPhotoFile ? getMatchedFileDisplayName(currentPhotoFile) : ""}
+                    className="h-full w-full object-contain"
+                    src={currentPhotoPreviewSrc}
+                  />
+                ) : null}
                 <span className="absolute bottom-3 left-3 rounded-[3px] bg-[color-mix(in_oklab,var(--paper)_90%,transparent)] px-2 py-1 font-mono text-[10px] tracking-[0.06em] text-ink-3">
                   [ photo · {currentPhotoFile ? getMatchedFileDisplayName(currentPhotoFile) : ""} ]
                 </span>
+                {!currentPhotoPreviewSrc ? (
+                  <span className="px-4 text-center font-mono text-[11px] text-ink-3">
+                    Loading photo preview…
+                  </span>
+                ) : null}
               </div>
               <VisaField>
                 <VisaFieldLabel>Date taken</VisaFieldLabel>

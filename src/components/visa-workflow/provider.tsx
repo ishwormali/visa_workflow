@@ -75,6 +75,7 @@ const STEP_ITEMS = [
 ] as const;
 
 const EMPTY_CONFIG: VisaConfig = createEmptyConfig();
+const EMPTY_MATCHED_FILES: string[] = [];
 
 const GOOGLE_DRIVE_FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
 
@@ -224,6 +225,8 @@ function buildWorkflowDocumentsFromSession(
         docTypeId: savedDocument.docTypeId,
         dates: cloneDates(savedDocument.dates),
         matchedFiles: savedDocument.matchedFiles ?? [],
+        sourceFolderId: savedDocument.sourceFolderId,
+        sourceFolderName: savedDocument.sourceFolderName,
         generatedFiles: savedDocument.generatedFiles ?? [],
         generatedDocId: savedDocument.generatedDocId,
         status: savedDocument.status,
@@ -318,6 +321,7 @@ function buildMatchedDocuments(
   currentDocuments: WorkflowDocumentState[],
   rawFiles: GoogleDriveFile[],
   pdfAnalyses: PdfAnalysisIndex,
+  sourceFolder?: Pick<GoogleDriveFile, "id" | "name">,
 ): WorkflowDocumentState[] {
   const currentById = new Map(currentDocuments.map((document) => [document.docTypeId, document]));
 
@@ -328,8 +332,11 @@ function buildMatchedDocuments(
       const matchedRawFiles = rawFiles.filter((file) =>
         matchesRawFile(docType, file, pdfAnalyses.get(file.id)),
       );
-      const matchedFiles = matchedRawFiles
-        .map((file) => createMatchedFileRef(file))
+      const matchedFiles = [
+        ...currentDocument.matchedFiles,
+        ...matchedRawFiles.map((file) => createMatchedFileRef(file)),
+      ]
+        .filter((fileRef, index, fileRefs) => fileRefs.indexOf(fileRef) === index)
         .toSorted(compareMatchedFiles);
       const status = matchedFiles.length ? ("detected" as const) : ("pending" as const);
       let dates = currentDocument.dates;
@@ -359,6 +366,8 @@ function buildMatchedDocuments(
         ...currentDocument,
         dates,
         matchedFiles,
+        sourceFolderId: sourceFolder?.id ?? currentDocument.sourceFolderId,
+        sourceFolderName: sourceFolder?.name ?? currentDocument.sourceFolderName,
         status,
         validationMessage,
       };
@@ -557,6 +566,7 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
   const [hasGenerated, setHasGenerated] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
+  const [photoPreviewSources, setPhotoPreviewSources] = useState<Record<string, string>>({});
   const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
   const [workflowId, setWorkflowId] = useState(() => options.sessionId ?? createWorkflowId());
   const [missingSession, setMissingSession] = useState(false);
@@ -568,6 +578,7 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
   const [rawFolderFiles, setRawFolderFiles] = useState<GoogleDriveFile[]>([]);
   const scannedDriveFilesRef = useRef<DriveFileIndex>(createEmptyDriveFileIndex());
   const generatedDriveFilesRef = useRef<Map<string, GoogleDriveFile[]>>(new Map());
+  const photoPreviewLoadsRef = useRef<Set<string>>(new Set());
   const pdfAnalysesRef = useRef<PdfAnalysisIndex>(new Map());
   const sessionFolderRef = useRef<GoogleDriveFile | null>(null);
 
@@ -584,8 +595,11 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
   const photoState = photoDocument
     ? documents.find((document) => document.docTypeId === photoDocument.id)
     : undefined;
-  const photoFiles = photoState?.matchedFiles ?? [];
+  const photoFiles = photoState?.matchedFiles ?? EMPTY_MATCHED_FILES;
   const currentPhotoFile = photoFiles[photoIndex];
+  const currentPhotoPreviewSrc = currentPhotoFile
+    ? photoPreviewSources[currentPhotoFile]
+    : undefined;
   const currentCaption = currentPhotoFile
     ? photoState?.captions.find((caption) => caption.fileName === currentPhotoFile)
     : undefined;
@@ -657,8 +671,10 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
     setRawFolderId("");
     setRawFolderMissing(false);
     setRawFolderFiles([]);
+    setPhotoPreviewSources({});
     scannedDriveFilesRef.current = createEmptyDriveFileIndex();
     generatedDriveFilesRef.current = new Map();
+    photoPreviewLoadsRef.current = new Set();
     pdfAnalysesRef.current = new Map();
     sessionFolderRef.current = null;
     setHydrated(true);
@@ -793,8 +809,10 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
       setRawFolderId("");
       setRawFolderMissing(false);
       setRawFolderFiles([]);
+      setPhotoPreviewSources({});
       scannedDriveFilesRef.current = createEmptyDriveFileIndex();
       generatedDriveFilesRef.current = new Map();
+      photoPreviewLoadsRef.current = new Set();
       pdfAnalysesRef.current = new Map();
       sessionFolderRef.current = null;
     });
@@ -940,6 +958,8 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
         validationMessage,
       };
     });
+
+    setPendingDraftSync(true);
   }
 
   function getPlannedDocumentFileName(docTypeId: string, sourceFileName?: string) {
@@ -1196,8 +1216,9 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
       scannedDriveFilesRef.current = createDriveFileIndex(rawFiles);
       pdfAnalysesRef.current = pdfAnalyses;
       setDocuments((currentDocuments) =>
-        buildMatchedDocuments(config.docTypes, currentDocuments, rawFiles, pdfAnalyses),
+        buildMatchedDocuments(config.docTypes, currentDocuments, rawFiles, pdfAnalyses, rawFolder),
       );
+      setPendingDraftSync(true);
 
       appendLog(
         2,
@@ -1290,6 +1311,61 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
       captions: [...document.captions, nextCaption],
     }));
   }, [currentPhotoFile, photoDocument, photoState]);
+
+  useEffect(() => {
+    if (!photoFiles.length) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadPreviews = async () => {
+      await Promise.all(
+        photoFiles.map(async (fileRef) => {
+          if (photoPreviewSources[fileRef] || photoPreviewLoadsRef.current.has(fileRef)) {
+            return;
+          }
+
+          const driveFile = getScannedDriveFile(fileRef);
+
+          if (!driveFile || !driveFile.mimeType.startsWith("image/")) {
+            return;
+          }
+
+          photoPreviewLoadsRef.current.add(fileRef);
+
+          try {
+            const base64 = await downloadGoogleDriveFileAsBase64(driveFile);
+
+            if (cancelled) {
+              return;
+            }
+
+            setPhotoPreviewSources((currentSources) => {
+              if (currentSources[fileRef]) {
+                return currentSources;
+              }
+
+              return {
+                ...currentSources,
+                [fileRef]: `data:${driveFile.mimeType};base64,${base64}`,
+              };
+            });
+          } catch {
+            // Leave the placeholder visible if Drive preview download fails.
+          } finally {
+            photoPreviewLoadsRef.current.delete(fileRef);
+          }
+        }),
+      );
+    };
+
+    void loadPreviews();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [photoFiles, photoPreviewSources]);
 
   function updateCurrentCaption(
     field: keyof Omit<PhotoCaption, "id" | "fileName">,
@@ -1707,6 +1783,7 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
     pendingSessionsCount,
     photoFiles,
     photoIndex,
+    photoPreviewSources,
     selectPhotoIndex: setPhotoIndex,
     saveWorkflow,
     saveCaptionAndContinue,
@@ -1727,6 +1804,7 @@ function useVisaWorkflowState(options: { sessionId?: string } = {}) {
     selectedRootFolderId,
     selectedRootFolderName,
     sessions,
+    currentPhotoPreviewSrc,
     setSeedSource,
     setRootFolderInput,
     showHistory,

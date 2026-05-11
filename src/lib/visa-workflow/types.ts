@@ -53,6 +53,8 @@ export type WorkflowDocumentState = {
   docTypeId: string;
   dates: DocumentDateValue;
   matchedFiles: string[];
+  sourceFolderId?: string;
+  sourceFolderName?: string;
   generatedFiles: string[];
   generatedDocId?: string;
   status: DocProgressStatus;
@@ -70,6 +72,8 @@ export type SessionDocumentRecord = {
   dateLabel: string;
   filenames: string[];
   matchedFiles: string[];
+  sourceFolderId?: string;
+  sourceFolderName?: string;
   generatedFiles: string[];
   generatedDocId?: string;
   status: DocProgressStatus;

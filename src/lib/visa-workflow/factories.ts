@@ -63,6 +63,8 @@ export function createWorkflowDocumentState(
     docTypeId: docType.id,
     dates: previous?.dates ?? createDefaultDateValue(docType.dateFormat),
     matchedFiles: previous?.matchedFiles ?? [],
+    sourceFolderId: previous?.sourceFolderId,
+    sourceFolderName: previous?.sourceFolderName,
     generatedFiles: previous?.generatedFiles ?? [],
     generatedDocId: previous?.generatedDocId,
     status: previous?.status ?? "pending",
@@ -104,6 +106,8 @@ export function createSessionRecord(args: {
         ? documentState.generatedFiles
         : documentState.matchedFiles.map((fileRef) => readMatchedFileDisplayName(fileRef)),
       matchedFiles: documentState.matchedFiles,
+      sourceFolderId: documentState.sourceFolderId,
+      sourceFolderName: documentState.sourceFolderName,
       generatedFiles: documentState.generatedFiles,
       generatedDocId: documentState.generatedDocId,
       status: documentState.status,

@@ -74,6 +74,7 @@ export function ScanStep({ onBack, onNext }: Props) {
     rootFolderError,
     rootFolderInput,
     runScan,
+    saveWorkflow,
     selectRootFolder,
     selectedRootFolderId,
     selectedRootFolderName,
@@ -298,13 +299,30 @@ export function ScanStep({ onBack, onNext }: Props) {
                     </div>
 
                     {selectedDocument.matchedFiles.length ? (
-                      <DocumentFiles>
-                        {selectedDocument.matchedFiles.map((fileName) => (
-                          <DocumentFile key={fileName}>
-                            {getMatchedFileDisplayName(fileName)}
-                          </DocumentFile>
-                        ))}
-                      </DocumentFiles>
+                      <div className="space-y-3">
+                        {selectedDocument.sourceFolderName || selectedDocument.sourceFolderId ? (
+                          <div className="rounded-(--vd-radius) border border-dashed border-rule-2 bg-paper-2 p-3">
+                            <div className="font-mono text-[10px] tracking-[0.08em] text-ink-3 uppercase">
+                              Saved source folder
+                            </div>
+                            <div className="mt-1 text-sm text-ink">
+                              {selectedDocument.sourceFolderName || "Unnamed folder"}
+                            </div>
+                            {selectedDocument.sourceFolderId ? (
+                              <div className="mt-1 font-mono text-[11px] text-ink-3">
+                                id: {selectedDocument.sourceFolderId}
+                              </div>
+                            ) : null}
+                          </div>
+                        ) : null}
+                        <DocumentFiles>
+                          {selectedDocument.matchedFiles.map((fileName) => (
+                            <DocumentFile key={fileName}>
+                              {getMatchedFileDisplayName(fileName)}
+                            </DocumentFile>
+                          ))}
+                        </DocumentFiles>
+                      </div>
                     ) : null}
                   </div>
 
@@ -405,7 +423,14 @@ export function ScanStep({ onBack, onNext }: Props) {
         <VisaButton onClick={onBack} size="sm" variant="ghost">
           ← Back
         </VisaButton>
-        <VisaButton onClick={onNext} variant="primary" disabled={!canContinue}>
+        <VisaButton
+          onClick={() => {
+            saveWorkflow();
+            onNext();
+          }}
+          variant="primary"
+          disabled={!canContinue}
+        >
           Continue →
         </VisaButton>
       </VisaButtonRow>
