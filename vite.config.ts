@@ -7,6 +7,11 @@ import { defineConfig } from "vite";
 import viteTsConfigPaths from "vite-tsconfig-paths";
 
 const config = defineConfig({
+  preview: {
+    host: "0.0.0.0",
+    port: 3000,
+    allowedHosts: [".cyberbudsonline.com"],
+  },
   plugins: [
     devtools(),
     nitro(),
