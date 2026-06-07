@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as HealthRouteImport } from './routes/health'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RedesignIndexRouteImport } from './routes/redesign/index'
 import { Route as WorkflowNewRouteImport } from './routes/workflow/new'
@@ -18,6 +19,11 @@ import { Route as WorkflowWorkflowIdEditIndexRouteImport } from './routes/workfl
 import { Route as WorkflowNewStepStepRouteImport } from './routes/workflow/new.step.$step'
 import { Route as WorkflowWorkflowIdEditStepStepRouteImport } from './routes/workflow/$workflowId/edit.step.$step'
 
+const HealthRoute = HealthRouteImport.update({
+  id: '/health',
+  path: '/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -63,6 +69,7 @@ const WorkflowWorkflowIdEditStepStepRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/health': typeof HealthRoute
   '/workflow/new': typeof WorkflowNewRouteWithChildren
   '/redesign/': typeof RedesignIndexRoute
   '/workflow/$workflowId/edit': typeof WorkflowWorkflowIdEditRouteWithChildren
@@ -73,6 +80,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/health': typeof HealthRoute
   '/redesign': typeof RedesignIndexRoute
   '/workflow/new': typeof WorkflowNewIndexRoute
   '/workflow/new/step/$step': typeof WorkflowNewStepStepRoute
@@ -82,6 +90,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/health': typeof HealthRoute
   '/workflow/new': typeof WorkflowNewRouteWithChildren
   '/redesign/': typeof RedesignIndexRoute
   '/workflow/$workflowId/edit': typeof WorkflowWorkflowIdEditRouteWithChildren
@@ -94,6 +103,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/health'
     | '/workflow/new'
     | '/redesign/'
     | '/workflow/$workflowId/edit'
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/health'
     | '/redesign'
     | '/workflow/new'
     | '/workflow/new/step/$step'
@@ -112,6 +123,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/health'
     | '/workflow/new'
     | '/redesign/'
     | '/workflow/$workflowId/edit'
@@ -123,6 +135,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  HealthRoute: typeof HealthRoute
   WorkflowNewRoute: typeof WorkflowNewRouteWithChildren
   RedesignIndexRoute: typeof RedesignIndexRoute
   WorkflowWorkflowIdEditRoute: typeof WorkflowWorkflowIdEditRouteWithChildren
@@ -130,6 +143,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/health': {
+      id: '/health'
+      path: '/health'
+      fullPath: '/health'
+      preLoaderRoute: typeof HealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -221,6 +241,7 @@ const WorkflowWorkflowIdEditRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  HealthRoute: HealthRoute,
   WorkflowNewRoute: WorkflowNewRouteWithChildren,
   RedesignIndexRoute: RedesignIndexRoute,
   WorkflowWorkflowIdEditRoute: WorkflowWorkflowIdEditRouteWithChildren,
