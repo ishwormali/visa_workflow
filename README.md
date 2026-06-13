@@ -7,7 +7,7 @@ This is a template for a new TanStack Start project with React, TypeScript, and 
 1. Create a Google Cloud project.
 2. Enable Google Drive API and Gmail API.
 3. Configure OAuth consent screen and add test users.
-   - Current test user: ishanbuddy@gmail.com
+   - Example test user: applicant@example.com
 4. Create OAuth client credentials (Web application).
 5. Copy `.env.example` to `.env.local` and set values.
 6. Set `VITE_GOOGLE_DRIVE_ROOT_FOLDER_ID` to the Drive folder the workflow should scan.

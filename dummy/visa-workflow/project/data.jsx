@@ -39,9 +39,9 @@ const PHOTOS = [
     file: '8 - photograph - dinner.jpg',
     label: 'Anniversary dinner',
     date: '2026-02-14',
-    people: 'Aman, Priya',
-    description: 'Anniversary dinner at Dishoom, Covent Garden',
-    formatted: '14-February-2026: Aman & Priya at our 2nd anniversary dinner at Dishoom Covent Garden',
+    people: 'Applicant A, Applicant B',
+    description: 'Anniversary dinner downtown',
+    formatted: '14-February-2026: Applicant A and Applicant B at their anniversary dinner',
     bg: 'oklch(72% 0.06 30)',
   },
   {
@@ -49,9 +49,9 @@ const PHOTOS = [
     file: '8 - photograph - hike.jpg',
     label: 'Lake District hike',
     date: '2026-03-08',
-    people: 'Aman, Priya, Rohan',
-    description: 'Hiking Helvellyn with our friend Rohan',
-    formatted: '08-March-2026: Aman, Priya, and Rohan hiking Helvellyn in the Lake District',
+    people: 'Applicant A, Applicant B, Friend',
+    description: 'Weekend hike with a friend',
+    formatted: '08-March-2026: Applicant A, Applicant B, and a friend on a weekend hike',
     bg: 'oklch(72% 0.06 150)',
   },
   {
@@ -59,19 +59,19 @@ const PHOTOS = [
     file: '8 - photograph - diwali.jpg',
     label: 'Diwali at home',
     date: '2026-04-10',
-    people: 'Aman, Priya, Mum, Dad, Neha',
-    description: 'Diwali dinner at our flat with my parents and sister',
-    formatted: '10-April-2026: Aman, Priya, Mum, Dad and Neha celebrating Diwali at our flat in London',
+    people: 'Applicant A, Applicant B, Family',
+    description: 'Holiday dinner with family',
+    formatted: '10-April-2026: Applicant A and Applicant B celebrating a holiday dinner with family',
     bg: 'oklch(72% 0.07 60)',
   },
   {
     id: 'p4',
     file: '8 - photograph - parents.jpg',
-    label: "Priya's parents visit",
+    label: 'Family visit',
     date: '2026-04-22',
-    people: "Priya, Aman, Priya's parents",
-    description: "Priya's parents visiting us from Pune",
-    formatted: "22-April-2026: Priya, Aman and Priya's parents during their visit from Pune",
+    people: 'Applicant A, Applicant B, Family',
+    description: 'Family visit',
+    formatted: '22-April-2026: Applicant A and Applicant B during a family visit',
     bg: 'oklch(72% 0.05 240)',
   },
 ];
@@ -126,9 +126,9 @@ const PAST_SESSIONS = [
 
 const EMAIL_CONFIG = {
   to: 'documents@visa-coordinator.example',
-  cc: 'priya.sharma@example.com',
+  cc: 'applicant@example.com',
   greeting: 'team',
-  signoff: 'Aman & Priya',
+  signoff: 'Applicant A & Applicant B',
 };
 
 const SCAN_LOG = [
